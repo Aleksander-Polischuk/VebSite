@@ -1,6 +1,5 @@
 /* Custom Alert Styles */
 
-/* Змінні (дублюємо для автономності або використовуємо з cabinet_ent.css) */
 :root {
     --z-alert-overlay: 3000;
     --z-alert-box: 3001;
