@@ -1,0 +1,105 @@
+/* Custom Alert Styles */
+
+/* Змінні (дублюємо для автономності або використовуємо з cabinet_ent.css) */
+:root {
+    --z-alert-overlay: 3000;
+    --z-alert-box: 3001;
+    --color-primary: #3C9ADC;
+    --color-primary-dark: #3178aa;
+    --bg-overlay: rgba(0, 0, 0, 0.5);
+    --bg-white: #ffffff;
+    --text-main: #444444;
+}
+
+/* Затемнений фон */
+.custom-alert-overlay {
+    display: none; /* Приховано за замовчуванням */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-overlay);
+    z-index: var(--z-alert-overlay);
+    justify-content: center;
+    align-items: center;
+    animation: fadeInOverlay 0.2s ease-out;
+}
+
+/* Саме вікно */
+.custom-alert-box {
+    background: var(--bg-white);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    position: relative;
+    z-index: var(--z-alert-box);
+    animation: scaleInBox 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Заголовок */
+.custom-alert-header {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    padding: 12px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert-close {
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 20px;
+    opacity: 0.8;
+}
+.alert-close:hover { opacity: 1; }
+
+/* Тіло повідомлення */
+.custom-alert-body {
+    padding: 20px 15px;
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+/* Футер з кнопкою */
+.custom-alert-footer {
+    padding: 0 15px 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-alert-ok {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    padding: 8px 30px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    outline: none;
+}
+
+.btn-alert-ok:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* Анімації */
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInBox {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

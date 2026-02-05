@@ -171,3 +171,4 @@ while ($row = mysqli_fetch_assoc($s_res)) {
         </tbody>
     </table>
 </div>
+<script src="../../js/CustomAlert.js" type="text/javascript"></script>

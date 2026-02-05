@@ -107,9 +107,10 @@ if ($activeRow) {
 
 // 5. ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
-$list_css = ['/css/cabinet_ent.css'];
+$list_css = ['/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 ?>
+
 
 <header class="header">
   <div class="header-main-row">
@@ -179,6 +180,7 @@ include "page_head.php";
 
 <script src="/js/cabinet_ent.js"></script>
 <script src="/js/table_tree.js"></script>
+<script src="js/CustomAlert.js"></script>
 
 <script>
 const userSelect = document.querySelector('.user-select');
@@ -230,5 +232,7 @@ document.querySelectorAll('.sidebar a').forEach(a => {
     a.classList.toggle('active', a.innerText.trim() === activeMenu);
 });
 </script>
+<?php include "CustomAlert.php"; ?>
+
 </body>
 </html>
