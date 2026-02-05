@@ -91,7 +91,7 @@ while ($row = mysqli_fetch_assoc($s_res)) {
     }
 }
 ?>
-<!--Comment -->
+
 <link href="../../css/ent_list_accounts.css" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header" id="history-start">
