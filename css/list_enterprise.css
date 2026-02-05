@@ -1,0 +1,57 @@
+/* =========================================
+   SPECIFIC STYLES FOR ENTERPRISE LIST
+   ========================================= */
+.simple-list th:first-child,
+.simple-list td:first-child {
+    width: 75% !important;      
+    max-width: none !important; 
+    white-space: normal;  
+    vertical-align: middle;       
+}
+
+.simple-list th:last-child,
+.simple-list td:last-child {
+    width: 25% !important;
+    min-width: 150px;               
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+@media (max-width: 850px) {
+    .data-table.simple-list {
+        width: 100% !important;
+        min-width: 100% !important; 
+        table-layout: fixed !important; 
+    }
+
+    .simple-list th:first-child,
+    .simple-list td:first-child {
+        width: auto !important;
+        min-width: 0 !important; 
+        white-space: normal !important; 
+        
+        position: static !important;
+        border-right: none !important; 
+        padding: 10px !important;
+        text-align: left;
+    }
+
+    .simple-list th:first-child {
+        background-color: var(--bg-table-header) !important;
+        color: var(--text-white) !important;
+    }
+
+    .simple-list td:first-child {
+        background-color: transparent !important;
+    }
+
+    .simple-list th:last-child,
+    .simple-list td:last-child {
+        width: 110px !important; 
+        min-width: 110px !important;
+        white-space: nowrap !important;
+        text-align: center;
+        padding: 10px 5px !important;
+    }
+}

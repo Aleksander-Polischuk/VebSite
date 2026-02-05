@@ -1,0 +1,168 @@
+/* METER READINGS (INPUTS & VALIDATION) */
+.input-reading {
+    width: 100%;
+    max-width: 120px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s ease;
+    background-color: var(--bg-white);
+}
+
+.input-reading:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(60, 154, 220, 0.1);
+}
+
+.input-reading::-webkit-outer-spin-button,
+.input-reading::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.input-reading[type=number] { -moz-appearance: textfield; }
+
+.input-reading.error {
+    border-color: var(--color-error) !important;
+    background-color: var(--color-error-bg) !important;
+    color: var(--color-error-text) !important;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
+}
+
+.input-reading.valid {
+    border-color: var(--color-success) !important;
+    background-color: var(--color-success-bg) !important;
+    color: var(--color-success-text) !important;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2) !important;
+}
+
+.diff-val {
+    font-weight: bold;
+    font-size: 14px;
+    display: inline-block;
+    min-width: 30px;
+}
+
+/* Input Tooltips */
+.input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    justify-content: center;
+}
+
+.error-icon {
+    display: none;
+    position: absolute;
+    left: 100%;            
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-error);
+    color: var(--text-white);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: help;
+}
+
+.input-reading.error ~ .error-icon {
+    display: block;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.error-tooltip {
+    visibility: hidden;
+    background-color: var(--text-dark);
+    color: var(--text-white);
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 6px;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 200px;
+    font-size: 12px;
+    font-weight: normal;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.error-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--text-dark) transparent transparent transparent;
+}
+
+.error-icon:hover .error-tooltip { visibility: visible; opacity: 1; }
+
+/* BOTTOM CONTROLS (BUTTONS) */
+.bottom-controls {
+    display: flex;
+    justify-content: flex-end; 
+    padding-top: 20px;          
+    padding-bottom: 30px;       
+}
+
+.btn-save {
+    background-color: var(--color-primary);
+    color: var(--text-white);
+    border: none;
+    padding: 10px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    white-space: nowrap;
+    height: auto;
+}
+
+.btn-save:hover { background-color: var(--color-primary-dark); }
+.btn-save:active { transform: translateY(1px); box-shadow: none; }
+
+/* RESPONSIVE */
+@media (max-width: 850px) {
+    .input-reading {
+        padding: 8px;
+        font-size: 16px; 
+        max-width: 100%;
+        min-width: 80px; 
+    }
+    .bottom-controls {
+        position: fixed;     
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-white);       
+        padding: 15px;
+        border-top: 1px solid var(--border-light);
+        z-index: 800;
+        justify-content: center; 
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    .btn-save {
+        width: 100%;            
+        padding: 12px;
+    }
+}

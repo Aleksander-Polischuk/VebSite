@@ -1,0 +1,65 @@
+/* SPECIFIC STYLES FOR ENT_LIST_ACCOUNTS (ADDRESS LIST) */
+
+@media (max-width: 850px) {
+    .data-table.address-list {
+        width: 100% !important;
+        display: table !important;
+        table-layout: fixed;
+    }
+    .address-list thead { display: none; }
+    
+    .address-list .parent-row td:nth-child(2), 
+    .address-list .parent-row td:nth-child(3), 
+    .address-list .sub-parent td:nth-child(2), 
+    .address-list .sub-parent td:nth-child(3) { 
+        display: none !important; 
+    }
+    
+    .address-list .parent-row td, 
+    .address-list .sub-parent td { 
+        display: block; width: 100% !important; 
+        max-width: none !important; 
+        min-width: 0 !important; 
+        position: static !important; 
+        border-right: none !important; 
+        box-sizing: border-box; 
+    }
+    
+    .address-list .sub-parent td { 
+        padding-left: 20px !important; 
+    }
+    .address-list .detail-row { 
+        display: none; 
+    }
+    
+    .address-list .detail-row.show { 
+        display: flex !important; 
+        flex-direction: column; 
+        border-bottom: 1px solid var(--border-color); 
+        padding: 10px 0; 
+        background-color: var(--bg-white) !important; 
+    }
+    
+    .address-list .detail-row td { 
+        display: block; 
+        width: 100% !important; 
+        max-width: none !important; 
+        min-width: 0 !important; 
+        position: static !important; 
+        text-align: left !important; 
+        border-right: none !important; 
+        border-bottom: none !important; 
+        padding: 4px 15px 4px 35px !important; 
+    }
+    
+    .address-list .detail-row td:first-child { 
+        font-weight: bold; 
+        font-size: 14px !important; 
+        color: var(--text-dark) !important; 
+        padding-top: 8px !important; 
+    }
+    
+    .address-list .detail-row td:first-child span { display: inline !important; }
+    .address-list .detail-row td:nth-child(2) { font-size: 13px !important; }
+    .address-list .detail-row td:nth-child(3) { font-size: 13px !important; padding-bottom: 8px !important; }
+}

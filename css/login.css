@@ -1,0 +1,227 @@
+
+body {
+    margin: 0;
+    padding: 40px 0;
+}
+
+#wrapper {
+        margin-top:40px;
+        border:0px solid #000;
+	    width: 100%;
+        max-width:900px;
+	    margin: 0 auto;
+	    height: auto  !important;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    max-width: 800px;           
+}
+
+#logoIco {
+	width: 250px;
+}
+
+.register-link {
+    white-space: nowrap;
+}
+
+.LogoLine {
+  position:absolute;
+  background: #3C9ADC;	
+  width: 99.5%;
+  max-width:800px;
+  height: 3px;
+  margin-top: 70px;
+}
+
+a,
+a:visited,
+a:hover,
+a:active,
+a:focus {
+    color: #2f80ed;
+    
+}
+
+/*------------------------------*/
+
+* {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.login-box {
+    width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 32px;
+    border-radius: 12px;
+    margin-top: 80px;
+}
+
+.login-box h1 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.field {
+    display: block;
+    margin-bottom: 18px;
+}
+
+.field span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 16px;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.forgot {
+    font-size: 16px;
+    color: #2f80ed;
+    text-decoration: none;
+}
+#password, #phone {
+   width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    font-size: 18px;
+    border: 1px solid #cfd6e4;
+    border-radius: 6px;
+    background-color: #eef4ff;
+}
+select {
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    font-size: 18px;
+    border: 1px solid #cfd6e4;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+select {
+    appearance: none;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #3c9adc;
+    box-shadow: 0 0 0 3px rgba(60, 154, 220, 0.5);
+}
+
+.btn-login {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 8px;
+    background: #3C9ADC; 
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-login:hover {
+    background: #2380C2;
+}
+
+/* ===== Пароль + глазик ===== */
+
+.password-wrap {
+    position: relative;
+}
+
+.password-wrap input {
+    padding-right: 44px;
+}
+
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.6;
+    
+    background: url("/img/view.svg") 0 0 no-repeat;
+}
+
+.toggle-password.active {
+    background: url("/img/no-view.svg") 0 0 no-repeat;
+}
+
+#Enterpriseinfo {
+	margin-top: 15px;
+	font-size: 16px;
+	font-style: italic;
+}
+
+#ErrMsgLogin {
+   display: none;
+   margin-top:15px;
+   float:left;
+   margin-left:3%;
+   margin-right:3%;	
+   border: 1px solid #ff0000;
+   border-radius: 5px;
+   box-shadow: 0 0 15px rgba(255,0,0,0.5);
+}
+
+#ErrMsgServer {
+   display: none;
+   margin-top:15px;
+   float:left;
+   margin-left:3%;
+   margin-right:3%;	
+   border: 1px solid #ff0000;
+   border-radius: 5px;
+   box-shadow: 0 0 15px rgba(255,0,0,0.5);
+}
+
+.ErrMsgText {
+   margin-left:10px;
+   margin-right:10px;
+}
+
+/*====================================================*/
+
+
+@media screen and (min-width:100px) and (max-width:768px) {
+	
+	#wrapper .login-box	{
+		margin-top: 0px;
+		width: auto;
+	}
+	.register-link {
+        white-space: normal;
+    }
+    .register-link a {
+        display: block;
+        margin-right: 10px;
+    }
+    #logoIco {
+		width: 230px;
+    }
+    body {
+    	padding: 5px 0;
+    }
+}
