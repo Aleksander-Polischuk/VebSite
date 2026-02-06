@@ -1,7 +1,7 @@
 <?php
 	header('Content-Type: application/json');
 
-	if ($_SERVER['REQUEST_METHOD'] !== 'POST') { // якщо чужак 
+	if ($_SERVER['REQUEST_METHOD'] !== 'POST') { 
 	    echo json_encode([
 	        'exists' => false,
 	        'message' => 'error method'

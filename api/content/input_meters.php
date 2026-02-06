@@ -91,7 +91,7 @@ function getMetersData($link, $counteragentId, $userId, $orgId) {
 $meters_data = getMetersData($link, $selectedCounteragentId, $userId, $orgId);
 
 // SVG іконка згортання/розгортання таблиці
-$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';;
+$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
 
 ?>
 
@@ -101,13 +101,11 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
     <h3 style="margin: 0;">Передача показників</h3>
 
     <div class="header-controls">
-        <!--Стрілка згортання таблиці -->
-       <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
+        <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути рівень">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
         </button>
         
-       <!--Стрілка розгортання таблиці -->
-        <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути все">
+       <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути рівень">
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
         </button>
     </div>
@@ -165,7 +163,6 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                     </tr>
 
                     <?php 
-                    // РІВЕНЬ 3: ЛІЧИЛЬНИКИ (Тут змін немає, все вірно)
                     foreach ($meters as $meter):
                         $inputId = "reading_" . $meter['id'];
                         $diffId = "diff_" . $meter['id'];
@@ -196,6 +193,11 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                            data-account="<?php echo $meter['account_id']; ?>"
                                            data-service="<?php echo $meter['service_id']; ?>"
                                            data-counter="<?php echo $meter['counter_id']; ?>"
+                                           
+                                           /* === НОВІ АТРИБУТИ ДЛЯ CUSTOM ALERT === */
+                                           data-contract-name="<?php echo htmlspecialchars($contractName); ?>"
+                                           data-address-name="<?php echo htmlspecialchars($addrName); ?>"
+                                           data-counter-name="<?php echo htmlspecialchars($meter['name']); ?>"
 
                                            onblur="formatOnBlur(this)"
                                            oninput="handleMeterInput(this, <?php echo $rawPrevVal; ?>, '<?php echo $diffId; ?>', <?php echo $a_idx; ?>, <?php echo $c_idx; ?>)">

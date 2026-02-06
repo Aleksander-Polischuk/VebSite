@@ -116,8 +116,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     if (!empty($row['ReadingDate'])) {
         $treeData[$cID]['addresses'][$addr]['meters'][$cntID]['readings'][] = [
             'date' => $row['ReadingDate'],
-            'val'  => $row['ReadingValue'],
-            'prev' => $row['PreviousValue']
+            'val'  => $row['ReadingValue'] - $row['PreviousValue']
         ];
     }
 }
@@ -138,9 +137,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 <div class="table-container">
     <table class="data-table tree-table shadow-table" style="width: 100%; border-collapse: collapse;">
         <thead>
-            <tr style="background-color: #3C9ADC; color: white;">
+            <tr>
                 <th style="text-align: left; padding: 12px;">Об'єкт / Період</th>
-                <th style="text-align: center; width: 150px;">Показник</th>
+                <th style="text-align: center; width: 150px;">Об'єм споживання</th>
                 <th style="text-align: center; width: 150px;">Дата фіксації</th>
             </tr>
         </thead>
@@ -168,7 +167,8 @@ while ($row = mysqli_fetch_assoc($result)) {
                     $a_idx++;
                     $aGroupId = $cGroupId . "_a_" . $a_idx;
                 ?>
-                    <tr class="child-row show <?php echo $cGroupId; ?> sub-parent open" onclick="toggleTree(this, '<?php echo $aGroupId; ?>')">
+                    <tr class="child-row show <?php echo $cGroupId; ?> sub-parent open" 
+                        onclick="toggleTree(this, '<?php echo $aGroupId; ?>')">
                         <td style="padding-left: 30px; background-color: #F2F5FF;">
                             <?php echo $caret_icon; ?>
                             <?php echo htmlspecialchars($addrName); ?>
@@ -183,16 +183,13 @@ while ($row = mysqli_fetch_assoc($result)) {
                         $m_idx++;
                         $mGroupId = $aGroupId . "_m_" . $m_idx;
                         $hasReadings = !empty($meterData['readings']);
-
-                        $meterClass = "child-row show " . $aGroupId . " open";
                     ?>
-                        <tr class="<?php echo $meterClass; ?>" 
+                        <tr class="child-row show <?php echo $aGroupId; ?> sub-parent open" 
                             style="cursor: pointer; background-color: #fff;"
                             onclick="toggleTree(this, '<?php echo $mGroupId; ?>')">
 
                             <td style="padding-left: 60px; font-weight: bold; color: #444;">
                                 <?php echo $caret_icon; ?>
-                                
                                 <?php echo htmlspecialchars($meterData['CounterName']); ?> 
                             </td>
                             <td></td>
@@ -214,14 +211,6 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr class="child-row show <?php echo $mGroupId; ?> detail-row">
-                                <td style="padding-left: 100px; color: #999; font-style: italic;">
-                                    Історія відсутня
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
                         <?php endif; ?>
 
                     <?php endforeach; // кінець лічильників ?>

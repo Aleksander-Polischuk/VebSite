@@ -15,10 +15,17 @@ $result = [
 
 if ($selectedId > 0) {
     $sql = "
-        SELECT SUM(END_DEBT) AS summa, PERIOD
-        FROM ENT_MUTUAL_SETTLEMENTS
-        WHERE ID_ORGANIZATIONS = $orgId 
-          AND ID_REF_COUNTERAGENT = $selectedId
+        SELECT 
+            SUM(ems.END_DEBT) AS summa, 
+            org.DATE_UPDATE_ENT_MUTUAL_SETTLEMENTS as PERIOD
+        FROM ENT_MUTUAL_SETTLEMENTS ems
+
+        LEFT JOIN ORGANIZATIONS org
+        ON(org.id = ems.ID_ORGANIZATIONS)
+
+        WHERE 
+            ems.ID_ORGANIZATIONS = $orgId
+            AND ems.ID_REF_COUNTERAGENT = $selectedId
         GROUP BY PERIOD
         ORDER BY PERIOD DESC
         LIMIT 1";

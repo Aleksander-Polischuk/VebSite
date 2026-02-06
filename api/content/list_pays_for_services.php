@@ -39,11 +39,11 @@ $pays_data = getHistoryData($link, $selectedCounteragentId, $selectedYear, $orgI
 
     <div class="header-controls">
         
-       <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
+       <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути рівень">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
         </button>
         
-       <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути все">
+       <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути рівень">
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
         </button>
 
