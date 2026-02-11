@@ -72,6 +72,8 @@ include "page_head.php";
 include "CustomAlert.php";
 ?>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <header class="header">
   <div class="header-main-row">
     <div class="header-left">
@@ -122,6 +124,8 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
+        <a href="#">Історія показників_2</a>
+
 
         <h4>МОЇ ДАНІ</h4>
         <a href="#">Профіль</a>

@@ -1,3 +1,4 @@
+/*
 /* ========================================================================
    НАЛАШТУВАННЯ ТА КЕШУВАННЯ ІКОНОК
    ======================================================================== */
@@ -49,7 +50,7 @@ const alertText    = document.getElementById('customAlertText');
 const alertTitle   = document.getElementById('customAlertTitle');
 const alertIcon    = document.getElementById('customAlertIcon');
 const alertButtons = document.getElementById('customAlertButtons');
-const alertSubText = document.getElementById('customAlertSubText'); // Новий елемент
+const alertSubText = document.getElementById('customAlertSubText'); 
 
 /**
  * Показати модальне вікно (CustomAlert).
@@ -86,7 +87,7 @@ function showAlert(message, type = 'success', title = null, buttons = [], subMes
     const safeType = ['success', 'error', 'warning'].includes(type) ? type : 'success';
     alertHeader.classList.add(`type-${safeType}`);
 
-    // 5. Іконка (з підтримкою Offline)
+    // 5. Іконка
     const iconSrc = getIconSrc(safeType);
     if (iconSrc) {
         alertIcon.innerHTML = `<img src="${iconSrc}" alt="${safeType}" style="width: 100%; height: 100%;">`;
@@ -128,15 +129,12 @@ function showAlert(message, type = 'success', title = null, buttons = [], subMes
     alertOverlay.style.display = 'flex';
     
     setTimeout(() => {
-        // Фокус на останню кнопку (зазвичай це "Скасувати" або "ОК")
         const btns = alertButtons.querySelectorAll('button');
         if(btns.length > 0) btns[btns.length - 1].focus();
     }, 100);
 }
 
-/**
- * Закрити вікно та очистити дані
- */
+//Закрити вікно
 function closeAlert() {
     if (!alertOverlay) return;
 

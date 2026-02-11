@@ -27,6 +27,14 @@
 	elseif ($path == '/registration_ent') {
 		include "registration_ent.php";
 	}
+        
+        elseif ($path == '/forgotpassword') {
+            include "forgot_password.php";
+        }
+        
+        elseif ($path == '/recovery') {
+            include "recovery.php";
+        }
 	
 	elseif ($path == '/cabinet') {
 		echo "cabinet";
