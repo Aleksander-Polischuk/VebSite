@@ -7,7 +7,7 @@ function SendRecoveryMail($to, $token) {
     $subject = '=?utf-8?B?'.base64_encode($subject).'?=';
     
     // Вказати дійсну пошту домену
-    $headers .= "From: noreply@develop.kgonline.in.ua\r\n";
+    //$headers .= "From: noreply@develop.kgonline.in.ua\r\n";
     
     $headers  = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";

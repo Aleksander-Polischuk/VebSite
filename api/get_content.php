@@ -26,6 +26,9 @@ switch ($page) {
     case 'Історія показників_2':
         include "content/history_readings_2.php";
         break;
+    case 'Рахунки':
+        include "content/bilss.php";
+        break;
     case 'Профіль':
         echo "<h2>Ваш профіль</h2><p>Ім'я: ФОП АФЧО</p>";
         break;

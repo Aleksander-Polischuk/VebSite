@@ -35,6 +35,10 @@
         elseif ($path == '/recovery') {
             include "recovery.php";
         }
+        
+        elseif ($path == '/confirm') {
+            include "confirm.php";
+        }
 	
 	elseif ($path == '/cabinet') {
 		echo "cabinet";

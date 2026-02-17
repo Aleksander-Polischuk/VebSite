@@ -17,9 +17,8 @@ $(function () {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-	const form = document.getElementById('registrationForm');
-
-	const email = document.getElementById('email');
+    const form = document.getElementById('registrationForm');
+    const email = document.getElementById('email');
     const password = document.getElementById('password');
     const password2 = document.getElementById('password2');
 
@@ -36,13 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
     password2.addEventListener('input', validatePasswordConfirm);
 
     form.addEventListener('submit', (e) => {
+      e.preventDefault();  
+        
       validateEmail();
       validatePassword();
       validatePasswordConfirm();
 
       if (isFormValid()) { // Якщо все ок 
-        e.preventDefault(); // відключаєм стандартну відправку форми
-        
         const formData = new FormData(form);
 
         fetch('/api/registration_ent_check.php', {
@@ -176,15 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   	function validatePasswordConfirm() {
     	if (!password2.value) {
-      		clearError(password2, 'password2Error');
-      		return;
-    	}
+              setError(password2, 'password2Error', 'Обовʼязкове до заповнення');
+              return;
+        }
 
-    	if (password.value !== password2.value) {
-      		setError(password2, 'password2Error', 'Паролі не співпадають');
-      		return;
-    	}
-
+        if (password.value !== password2.value) {
+              setError(password2, 'password2Error', 'Паролі не співпадають');
+              return;
+        }
+        
     	clearError(password2, 'password2Error');
   	}
 
