@@ -1,6 +1,6 @@
 <?php
   $title = 'Вхід в особистий кабінет';
-  $list_css = ['/css/login.css'];
+  $list_css = ['/css/login.css', '/css/CustomAlert.css'];
   
   session_start();
   session_destroy();
@@ -11,6 +11,7 @@
   }
   
   include "page_head.php";
+  include "CustomAlert.php";
 ?>
   <div id="wrapper"> 
   	 <header id="header">
@@ -79,6 +80,6 @@
   </div>
 
 <script src="/js/login.js"></script>
-
+<script src="js/CustomAlert.js"></script>
 </body>
 </html>

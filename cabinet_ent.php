@@ -63,47 +63,6 @@ if ($activeRow) {
     $_SESSION['selected_counteragent_id'] = $activeRow['ID'];
 }
 
-// --- ОТРИМАННЯ СУМИ ТА ДАТИ ---
-$balance = "0,00"; 
-$lastDateFormatted = date('d.m.Y');
-$balanceClass = ""; // Змінна для класу кольору
-
-if ($activeRow) {
-    $activeId = (int)$activeRow['ID'];
-    $orgId = (int)$IDOrganizations;
-
-    $sqlBalance = "
-        SELECT 
-            SUM(ems.END_DEBT) AS summa, 
-            org.DATE_UPDATE_ENT_MUTUAL_SETTLEMENTS as PERIOD
-        FROM ENT_MUTUAL_SETTLEMENTS ems
-
-        LEFT JOIN ORGANIZATIONS org
-        ON(org.id = ems.ID_ORGANIZATIONS)
-
-        WHERE 
-            ems.ID_ORGANIZATIONS = $orgId 
-            AND ems.ID_REF_COUNTERAGENT = $activeId
-        GROUP BY PERIOD
-        ORDER BY PERIOD DESC
-        LIMIT 1";
-
-    $resBalance = mysqli_query($link, $sqlBalance);
-    
-    if ($resBalance && $rowB = mysqli_fetch_assoc($resBalance)) {
-        $rawSum = $rowB['summa'] ?? 0; // Отримуємо чисте число
-        $balance = number_format($rawSum, 2, ',', ' ');
-        
-        // Якщо баланс від'ємний - додаємо клас
-        if ($rawSum < 0) {
-            $balanceClass = "negative";
-        }
-        
-        if ($rowB['PERIOD']) {
-            $lastDateFormatted = date('d.m.Y', strtotime($rowB['PERIOD']));
-        }
-    }
-}
 
 // 5. ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
@@ -112,6 +71,8 @@ $list_css = ['/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 include "CustomAlert.php";
 ?>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <header class="header">
   <div class="header-main-row">
@@ -163,6 +124,8 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
+        <a href="#">Історія показників_2</a>
+        <a href="#">Рахунки</a>
 
         <h4>МОЇ ДАНІ</h4>
         <a href="#">Профіль</a>

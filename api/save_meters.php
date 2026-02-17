@@ -63,7 +63,9 @@ try {
         if ($curr < 0) {
             throw new Exception("Значення не може бути від'ємним");
         }
-
+        
+        //Додати перевірку полів ще й в БД
+        
         // Прив'язка параметрів (i - int, d - double/decimal)
         mysqli_stmt_bind_param($stmt, "iiiiidd", 
             $userId, 

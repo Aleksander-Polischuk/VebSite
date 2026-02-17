@@ -98,10 +98,10 @@ while ($row = mysqli_fetch_assoc($s_res)) {
      <h3 style="margin: 0;">Список адрес та лічильників</h3>  
      
      <div class="header-controls">
-       <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути договори">
+       <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути рівень">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
         </button>
-        <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути договори">
+        <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути рівень">
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
         </button>
     </div>

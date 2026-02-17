@@ -1,18 +1,54 @@
-/* Custom Alert Styles */
-
 :root {
+    /* Layers */
     --z-alert-overlay: 3000;
     --z-alert-box: 3001;
+
+    /* Colors: Primary (Blue) */
     --color-primary: #3C9ADC;
     --color-primary-dark: #3178aa;
+
+    /* Colors: Danger (Red) */
+    --color-danger: #f44336;
+    --color-danger-dark: #d32f2f;
+
+    /* Colors: Warning (Orange) */
+    --color-warning: #ff9800;
+    
+    /* Colors: Neutral/Gray */
+    --color-secondary: #757575;
+    --btn-gray-bg: #e0e0e0;
+    --btn-gray-hover: #d5d5d5;
+    --btn-gray-text: #333333;
+
+    /* Colors: Backgrounds & Text */
     --bg-overlay: rgba(0, 0, 0, 0.5);
     --bg-white: #ffffff;
     --text-main: #444444;
+    --text-white: #ffffff;
+
+    /* UI Elements */
+    --shadow-box: rgba(0, 0, 0, 0.25);
+    --scrollbar-track: #f1f1f1;
 }
 
-/* Затемнений фон */
+/* ===========================
+   1. АНІМАЦІЇ
+   =========================== */
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInBox {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* ===========================
+   2. ФОН 
+   =========================== */
 .custom-alert-overlay {
-    display: none; /* Приховано за замовчуванням */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -25,26 +61,30 @@
     animation: fadeInOverlay 0.2s ease-out;
 }
 
-/* Саме вікно */
+/* ===========================
+   3. ВІКНО 
+   =========================== */
 .custom-alert-box {
     background: var(--bg-white);
     width: 90%;
-    max-width: 400px;
+    max-width: 450px; 
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px var(--shadow-box);
     overflow: hidden;
     position: relative;
     z-index: var(--z-alert-box);
-    animation: scaleInBox 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
+    animation: scaleInBox 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Заголовок */
+/* ===========================
+   4. ЗАГОЛОВОК
+   =========================== */
 .custom-alert-header {
     background-color: var(--color-primary);
-    color: #ffffff;
-    padding: 12px 15px;
+    color: var(--text-white);
+    padding: 12px 20px;
     font-size: 16px;
     font-weight: bold;
     display: flex;
@@ -52,53 +92,206 @@
     align-items: center;
 }
 
+/* Варіанти заголовків */
+.custom-alert-header.type-success {
+    background-color: var(--color-primary);
+}
+.custom-alert-header.type-error {
+    background-color: var(--color-danger);
+}
+.custom-alert-header.type-warning {
+    background-color: var(--color-warning);
+    color: var(--text-white);
+}
+
 .alert-close {
     cursor: pointer;
     font-size: 24px;
-    line-height: 20px;
+    line-height: 1;
     opacity: 0.8;
+    transition: opacity 0.2s;
 }
 .alert-close:hover { opacity: 1; }
 
-/* Тіло повідомлення */
+/* ===========================
+   5. ТІЛО (BODY)
+   =========================== */
 .custom-alert-body {
-    padding: 20px 15px;
-    text-align: center;
-    font-size: 15px;
+    padding: 25px 20px;
     color: var(--text-main);
+    font-size: 15px;
     line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    overflow: hidden; 
 }
 
-/* Футер з кнопкою */
-.custom-alert-footer {
-    padding: 0 15px 15px;
+/* Іконка */
+.alert-icon-area {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
     display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-.btn-alert-ok {
+.alert-icon-area img, 
+.alert-icon-area svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+/* Текстова область */
+.alert-content-area {
+    flex-grow: 1;
+    word-wrap: break-word;
+    align-self: center;
+}
+
+/* ===========================
+   6. СКРОЛ-КОНТЕЙНЕР (Для списків)
+   =========================== */
+.alert-scroll-container {
+    text-align: left;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 14px;
+    padding-right: 5px;
+    
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) var(--scrollbar-track);
+    
+    scrollbar-gutter: stable;
+}
+
+.alert-scroll-container div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+/* Scrollbar (Chrome/Safari/Edge) */
+.alert-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+.alert-scroll-container::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 3px;
+}
+.alert-scroll-container::-webkit-scrollbar-thumb {
     background-color: var(--color-primary);
-    color: #ffffff;
+    border-radius: 3px;
+}
+.alert-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* ===========================
+   7. ФУТЕР (КНОПКИ)
+   =========================== */
+.custom-alert-footer {
+    padding: 0 20px 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.custom-alert-footer button {
     border: none;
-    padding: 8px 30px;
+    padding: 8px 24px;
     border-radius: 4px;
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.2s;
     outline: none;
+    font-weight: 500;
 }
 
+/* Кнопка OK */
+.btn-alert-ok {
+    background-color: var(--color-primary);
+    color: var(--text-white);
+}
 .btn-alert-ok:hover {
     background-color: var(--color-primary-dark);
 }
 
-/* Анімації */
-@keyframes fadeInOverlay {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* Кнопка Cancel */
+.btn-alert-cancel {
+    background-color: var(--color-danger);
+    color: var(--text-white);
+}
+.btn-alert-cancel:hover {
+    background-color: var(--color-danger-dark);
 }
 
-@keyframes scaleInBox {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+/* Кнопка Сіра */
+.btn-alert-gray {
+    background-color: var(--btn-gray-bg);
+    color: var(--btn-gray-text);
+}
+.btn-alert-gray:hover {
+    background-color: var(--btn-gray-hover);
+}
+
+.alert-sub-text {
+    padding: 0 20px 15px; /* Відступи (зверху 0, бо зверху вже є відступ від body) */
+    text-align: center;   /* Центрування тексту */
+    font-size: 16px;      /* Можна зробити трохи більшим */
+    font-weight: bold;    /* Жирний шрифт для акценту (як на скріншоті) */
+    color: var(--color-primary); /* Можна використати основний колір або var(--text-main) */
+    width: 100%;          /* На всю ширину */
+    box-sizing: border-box;
+}
+
+/* ===========================
+   8. MEDIA QUERIES (АДАПТИВНІСТЬ)
+   =========================== */
+
+/* --- Desktop & Tablet (Ширше 768px) --- */
+/* Тут реалізовано розширення вікна під довгий текст */
+@media (min-width: 768px) {
+    .custom-alert-box {
+        width: fit-content;
+        min-width: 450px;
+        max-width: 80vw; /* До 80% ширини екрану */
+    }
+
+    /* Заборона перенос слів на ПК, щоб вікно розширювалось */
+    .alert-scroll-container div, 
+    .alert-content-area p {
+        white-space: nowrap;
+        max-width: none; 
+    }
+
+    /* Збільшення висоти скролу для великих екранів */
+    .alert-scroll-container {
+        max-height: 60vh; 
+    }
+}
+
+/* --- Mobile (Вужче 480px) --- */
+@media (max-width: 480px) {
+    .custom-alert-box {
+        width: 95%; /* Майже на всю ширину телефону */
+        max-width: none;
+    }
+    
+    .custom-alert-body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .alert-content-area {
+        margin-top: 10px;
+    }
+    
+    .custom-alert-footer {
+        justify-content: center;
+    }
 }
