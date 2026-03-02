@@ -532,3 +532,7 @@ function initHistoryPageLogic() {
         selContract.dispatchEvent(new Event('change'));
     }
 }
+
+function openSignWindow(invoiceId) {
+    window.open('/api/content/SigningDocs.php?id=' + invoiceId, 'sign_window_' + invoiceId);
+}

@@ -19,10 +19,26 @@
 	} 
 	
         elseif ($path == '/logout') {
-            
-	$param = ($account_type >= 0 ? '?account_type='.$account_type : '');   		
-	  header('Location: /login'.$param);	
-	}
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $_SESSION = array();
+
+            if (ini_get("session.use_cookies")) {
+                $params = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000,
+                    $params["path"], $params["domain"],
+                    $params["secure"], $params["httponly"]
+                );
+            }
+
+            session_destroy();
+
+            $param = ($account_type >= 0 ? '?account_type='.$account_type : '');           
+            header('Location: /login'.$param);    
+            exit;
+        }
         
 	elseif ($path == '/registration_ent') {
 		include "registration_ent.php";

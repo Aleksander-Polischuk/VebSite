@@ -605,3 +605,35 @@ table.data-table tbody tr.child-row:hover td {
     transition: background-color 0.15s ease-in-out;
     cursor: pointer;
 }
+
+/* SELECT YEAR CUSTOM */
+.year-select-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--bg-white) url("../img/chevron-down.svg") no-repeat right 10px center / 1em;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    padding-right: 30px;
+    height: 34px;
+}
+
+.year-select-custom:hover, .year-select-custom:focus {
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 850px) {
+    .year-select-custom {
+        flex: 1; 
+        justify-content: center;
+        min-height: 40px;
+    }
+}

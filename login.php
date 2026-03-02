@@ -3,7 +3,12 @@
   $list_css = ['/css/login.css', '/css/CustomAlert.css'];
   
   session_start();
-  session_destroy();
+
+  if (isset($_SESSION['id_users'])) {
+      $redirect = ($_SESSION['is_ent'] == 1) ? '/cabinet_ent' : '/cabinet';
+      header('Location: ' . $redirect);
+      exit;
+  }
   
   $account_type = (isset($_GET['account_type']) ? $_GET['account_type'] : -1);
   if ($account_type != 0 and $account_type != 1) {

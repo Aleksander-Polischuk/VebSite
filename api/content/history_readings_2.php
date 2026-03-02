@@ -80,9 +80,9 @@ while ($row = mysqli_fetch_assoc($result)) {
                 
                 $treeData[$cID]['addresses'][$addrKey]['meters'][$cntID]['readings'][] = [
                     'date' => date('d.m.Y', $ts),
-                    'val' => number_format($val, 2, '.', ''), //різниця
-                    'curr' => number_format($row['ReadingValue'], 2, '.', ''), // Поточні
-                    'prev' => number_format($row['PreviousValue'], 2, '.', '')  // Попередні
+                    'val' => number_format($val, 3, '.', ''), //різниця
+                    'curr' => number_format($row['ReadingValue'], 3, '.', ''), // Поточні
+                    'prev' => number_format($row['PreviousValue'], 3, '.', '')  // Попередні
                 ];
             }
         }
@@ -96,10 +96,49 @@ function utf8ize($d) {
 }
 
 $jsonData = json_encode(utf8ize($treeData), JSON_UNESCAPED_UNICODE);
+
+
+// --- ОТРИМАННЯ ДОСТУПНИХ РОКІВ З БД ---
+$years = [];
+$sqlYears = "
+    SELECT DISTINCT YEAR(PERIOD) as y
+    FROM ENT_MUTUAL_SETTLEMENTS
+    WHERE ID_ORGANIZATIONS = ?
+      AND ID_REF_COUNTERAGENT = ?
+    ORDER BY y DESC
+";
+$stmtY = mysqli_prepare($link, $sqlYears);
+mysqli_stmt_bind_param($stmtY, "ii", $orgId, $selectedCounteragentId);
+mysqli_stmt_execute($stmtY);
+$resY = mysqli_stmt_get_result($stmtY);
+
+while($rowY = mysqli_fetch_assoc($resY)) {
+    if (!empty($rowY['y'])) {
+        $years[] = $rowY['y'];
+    }
+}
+
+// Якщо даних про роки в базі немає, виводимо хоча б поточний рік
+if (empty($years)) {
+    $years[] = date('Y');
+}
+
+// Визначаємо обраний рік 
+$selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : $years[0];
+
 ?>
 
 <div class="table-header-row sticky-header">
-     <h3 style="margin: 0;">Історія показників_2</h3>
+     <h3 style="margin: 0;">Історія показників</h3>
+     <div class="header-controls">     
+        <select id="yearSelect" class="year-select-custom" onchange="changeYear(this.value)" title="Оберіть рік">
+            <?php foreach($years as $y): ?>
+                <option value="<?php echo $y; ?>" <?php echo ($y == $selectedYear) ? 'selected' : ''; ?>>
+                    <?php echo $y; ?> рік
+                </option>
+            <?php endforeach; ?>
+        </select> 
+    </div>
 </div>
 
 <div style="padding: 20px;">
@@ -121,7 +160,7 @@ $jsonData = json_encode(utf8ize($treeData), JSON_UNESCAPED_UNICODE);
 
         <div id="table_result" style="margin-top:20px;"></div>
 
-        <div id="chart" style="margin-top: 40px; min-height: 50px;"></div>
+
         
     <?php endif; ?>
 </div>
