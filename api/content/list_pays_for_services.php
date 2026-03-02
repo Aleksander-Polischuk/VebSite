@@ -14,15 +14,44 @@ mysqli_set_charset($link, 'utf8');
 if (!function_exists('getHistoryData')) {
     die("Помилка: Функція getHistoryData все ще не знайдена у файлі data_services.php");
 }
+
 // 2 ВХІДНІ ПАРАМЕТРИ
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
-$selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : 2025;
 $orgId = (int)($IDOrganizations ?? 1);
 
 if (!$selectedCounteragentId) {
     echo "<div style='padding:20px; color: #d9534f;'>Будь ласка, оберіть підприємство у верхній панелі для перегляду розрахунків.</div>";
     exit;
 }
+
+// --- ОТРИМАННЯ ДОСТУПНИХ РОКІВ З БД ---
+$years = [];
+$sqlYears = "
+    SELECT DISTINCT YEAR(PERIOD) as y
+    FROM ENT_MUTUAL_SETTLEMENTS
+    WHERE ID_ORGANIZATIONS = ?
+      AND ID_REF_COUNTERAGENT = ?
+    ORDER BY y DESC
+";
+$stmtY = mysqli_prepare($link, $sqlYears);
+mysqli_stmt_bind_param($stmtY, "ii", $orgId, $selectedCounteragentId);
+mysqli_stmt_execute($stmtY);
+$resY = mysqli_stmt_get_result($stmtY);
+
+while($rowY = mysqli_fetch_assoc($resY)) {
+    if (!empty($rowY['y'])) {
+        $years[] = $rowY['y'];
+    }
+}
+
+// Якщо даних про роки в базі немає, виводимо хоча б поточний рік
+if (empty($years)) {
+    $years[] = date('Y');
+}
+
+// Визначаємо обраний рік 
+$selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : $years[0];
+
 
 // SVG іконка згортання/розгортання таблиці
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
@@ -47,10 +76,12 @@ $pays_data = getHistoryData($link, $selectedCounteragentId, $selectedYear, $orgI
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
         </button>
 
-        <select id="yearSelect" class="year-select-custom" onchange="changeYear(this.value)">
-            <?php for($y = 2024; $y <= 2026; $y++): ?>
-                <option value="<?= $y ?>" <?= ($y == $selectedYear) ? 'selected' : '' ?>><?= $y ?></option>
-            <?php endfor; ?>
+        <select id="yearSelect" class="year-select-custom" onchange="changeYear(this.value)" title="Оберіть рік">
+            <?php foreach($years as $y): ?>
+                <option value="<?php echo $y; ?>" <?php echo ($y == $selectedYear) ? 'selected' : ''; ?>>
+                    <?php echo $y; ?> рік
+                </option>
+            <?php endforeach; ?>
         </select>
     </div>
 </div>
@@ -72,7 +103,7 @@ $pays_data = getHistoryData($link, $selectedCounteragentId, $selectedYear, $orgI
         <?php 
         if (empty($pays_data)): ?>
             <tr>
-                <td colspan="6" style="padding: 30px; text-align: center; color: #666;">
+                <td colspan="7" style="padding: 30px; text-align: center; color: #666;">
                     Немає даних про розрахунки за <?php echo $selectedYear; ?> рік.
                 </td>
             </tr>
