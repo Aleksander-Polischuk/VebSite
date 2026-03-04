@@ -33,7 +33,7 @@ if (!$inputData || !is_array($inputData)) {
 $userId = (int)$_SESSION['id_users'];
 $orgId  = (int)($IDOrganizations ?? 1);
 
-$sql = "INSERT INTO INF_COUNTER_READINGS 
+$sql = "INSERT INTO INF_NEW_COUNTER_READINGS 
         (ID_USERS, ID_ORGANIZATIONS, ID_REF_ACCOUNT, ID_REF_SERVICE, ID_REF_COUNTER, CNT_LAST, CNT_CURRENT, SEND, ERR_CODE) 
         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)";
 

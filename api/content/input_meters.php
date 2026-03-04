@@ -18,7 +18,7 @@ if (!$selectedCounteragentId) {
 }
 
 // -------------------------------------------------------------------------
-// ФУНКЦІЯ ОТРИМАННЯ ДАНИХ
+// ОТРИМАННЯ ДАНИХ
 // -------------------------------------------------------------------------
 function getMetersData($link, $counteragentId, $userId, $orgId) {
     $sql = "
@@ -38,29 +38,56 @@ function getMetersData($link, $counteragentId, $userId, $orgId) {
                 IFNULL(rcn.FIRM_NUM, '')
             ) AS CounterName,
             
-            rcn.LAST_INDICATION as LastVal,
-            ra.id as id_ref_account,
-            rcn.id as id_ref_counter,
-            rsr.id as id_ref_service 
 
-        FROM ACCESS acc
-        LEFT JOIN REF_COUNTERAGENT rct ON (rct.id = acc.ID_REF_COUNTERAGENT)
-        LEFT JOIN REF_CONTRACT rc ON (rc.ID_REF_COUNTERAGENT = rct.id)
-        LEFT JOIN REF_ACCOUNT ra ON (ra.ID_REF_CONTRACT = rc.id)
+            iaac.LAST_INDICATION as LastVal,
+            iaac.LAST_DATE_INDICATION as LastDate,
+            
+            (SELECT CNT_CURRENT 
+             FROM INF_NEW_COUNTER_READINGS incr 
+             WHERE incr.ID_REF_COUNTER = iaac.ID_REF_COUNTER 
+               AND incr.ID_ORGANIZATIONS = iaac.ID_ORGANIZATIONS 
+               AND incr.ID_USERS = acc.ID_USERS 
+               AND MONTH(incr.MTIME) = MONTH(CURRENT_DATE())
+               AND YEAR(incr.MTIME) = YEAR(CURRENT_DATE())
+             ORDER BY incr.MTIME DESC 
+             LIMIT 1) AS CurrentVal,
+
+
+            (SELECT MTIME 
+             FROM INF_NEW_COUNTER_READINGS incr 
+             WHERE incr.ID_REF_COUNTER = iaac.ID_REF_COUNTER 
+               AND incr.ID_ORGANIZATIONS = iaac.ID_ORGANIZATIONS 
+               AND incr.ID_USERS = acc.ID_USERS 
+               AND MONTH(incr.MTIME) = MONTH(CURRENT_DATE())
+               AND YEAR(incr.MTIME) = YEAR(CURRENT_DATE())
+             ORDER BY incr.MTIME DESC 
+             LIMIT 1) AS CurrentDate,
+            
+            iaac.ID_REF_ACCOUNT as id_ref_account,
+            iaac.ID_REF_COUNTER as id_ref_counter,
+            iaac.ID_REF_SERVICE as id_ref_service 
+
+        FROM INF_ACTIVE_ACCOUNT_COUNTER iaac
+        
+        INNER JOIN REF_ACCOUNT ra ON (ra.id = iaac.ID_REF_ACCOUNT)
+        INNER JOIN REF_CONTRACT rc ON (rc.id = ra.ID_REF_CONTRACT)
+        INNER JOIN REF_COUNTER rcn ON (rcn.id = iaac.ID_REF_COUNTER)
+        
+        INNER JOIN ACCESS acc ON (
+            acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND 
+            acc.ID_ORGANIZATIONS = iaac.ID_ORGANIZATIONS
+        )
+        
         LEFT JOIN REF_HOUSE rh ON (rh.id = ra.ID_REF_HOUSE)
         LEFT JOIN REF_STREET rs ON (rs.id = rh.ID_REF_STREET)
         LEFT JOIN REF_CITY rci ON (rci.id = rs.ID_REF_CITY)
-        LEFT JOIN REF_COUNTER rcn ON (rcn.ID_REF_ACCOUNT = ra.id)
         LEFT JOIN REF_TYPE_COUNTER rtc ON (rtc.id = rcn.ID_REF_TYPE_COUNTER)
-        LEFT JOIN REF_SERVICE rsr ON (rsr.id = rcn.ID_REF_SERVICE)
-
 
         WHERE acc.ID_USERS = ?
-          AND acc.ID_ORGANIZATIONS = ?
+          AND iaac.ID_ORGANIZATIONS = ?
           AND acc.ID_REF_COUNTERAGENT = ?
-          AND rcn.ID IS NOT NULL -- Показуємо тільки якщо є лічильник
 
-        ORDER BY rc.ID, Address
+        ORDER BY rc.ID, Address, CounterName
     ";
 
     $stmt = mysqli_prepare($link, $sql);
@@ -70,18 +97,20 @@ function getMetersData($link, $counteragentId, $userId, $orgId) {
 
     $tree = [];
 
-   while ($row = mysqli_fetch_assoc($result)) {
+    while ($row = mysqli_fetch_assoc($result)) {
         $contractName = $row['ContractName'] ?: 'Без договору';
         $address = $row['Address'] ?: 'Без адреси';
 
-        // Grouping: Contract -> Address -> Meters
         $tree[$contractName]['addresses'][$address][] = [
-            'id'       => $row['CounterID'],
-            'name'     => $row['CounterName'],
-            'last_val' => (float)$row['LastVal'],
-            'account_id' => $row['id_ref_account'],
-            'service_id' => $row['id_ref_service'],
-            'counter_id' => $row['id_ref_counter']
+            'id'           => $row['CounterID'],
+            'name'         => $row['CounterName'],
+            'last_val'     => (float)$row['LastVal'],
+            'last_date'    => $row['LastDate'], // Дата старого показника
+            'current_val'  => isset($row['CurrentVal']) ? (float)$row['CurrentVal'] : null, 
+            'current_date' => $row['CurrentDate'], // Дата нової передачі
+            'account_id'   => $row['id_ref_account'],
+            'service_id'   => $row['id_ref_service'],
+            'counter_id'   => $row['id_ref_counter']
         ];
     }
     
@@ -89,10 +118,7 @@ function getMetersData($link, $counteragentId, $userId, $orgId) {
 }
 
 $meters_data = getMetersData($link, $selectedCounteragentId, $userId, $orgId);
-
-// SVG іконка згортання/розгортання таблиці
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
-
 ?>
 
 <link href="../../css/input_meters.css" rel="stylesheet" type="text/css"/>
@@ -126,7 +152,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
         if (empty($meters_data)): ?>
             <tr>
                 <td colspan="4" style="text-align:center; padding: 20px;">
-                    Немає лічильників для обраного підприємства.
+                    Немає активних лічильників для обраного підприємства.
                 </td>
             </tr>
         <?php else: 
@@ -139,8 +165,9 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
         ?>
                 <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $cId; ?>')">
                     <td><?php echo $caret_icon; ?> Договір <?php echo htmlspecialchars($contractName); ?></td>
-
-                    <td></td> <td></td> <td align="center">
+                    <td></td> 
+                    <td></td> 
+                    <td align="center">
                         <span id="sum_contract_<?php echo $c_idx; ?>" style="font-weight:bold;">0,000</span>
                     </td>
                 </tr>
@@ -155,7 +182,9 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                             <?php echo $caret_icon; ?> <?php echo htmlspecialchars($addrName); ?>
                         </td>
 
-                        <td></td> <td></td> <td align="center">
+                        <td></td> 
+                        <td></td> 
+                        <td align="center">
                             <span id="sum_address_<?php echo $a_idx; ?>" 
                                   class="sub-total-val contract-group-<?php echo $c_idx; ?>" 
                                   style="font-weight:bold; color: #555;">0,000</span>
@@ -169,6 +198,9 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
 
                         $rawPrevVal = number_format($meter['last_val'], 3, '.', '');
                         $displayPrevVal = number_format($meter['last_val'], 3, ',', ' ');
+                        
+                        // ФОРМАТУЄМО ПОТОЧНИЙ ПОКАЗНИК, ЯКЩО ВІН Є
+                        $rawCurrentVal = ($meter['current_val'] !== null) ? number_format($meter['current_val'], 3, '.', '') : '';
                     ?>
                         <tr class="child-row show <?php echo $aId; ?> detail-row">
                             <td style="padding-left: 65px; color: #444;">
@@ -188,13 +220,14 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                            class="input-reading address-group-<?php echo $a_idx; ?>" 
                                            placeholder="0.000"
                                            autocomplete="off"
+                                           
+                                           value="<?php echo $rawCurrentVal; ?>" 
 
                                            data-prev="<?php echo $rawPrevVal; ?>"
                                            data-account="<?php echo $meter['account_id']; ?>"
                                            data-service="<?php echo $meter['service_id']; ?>"
                                            data-counter="<?php echo $meter['counter_id']; ?>"
                                            
-                                           /* === НОВІ АТРИБУТИ ДЛЯ CUSTOM ALERT === */
                                            data-contract-name="<?php echo htmlspecialchars($contractName); ?>"
                                            data-address-name="<?php echo htmlspecialchars($addrName); ?>"
                                            data-counter-name="<?php echo htmlspecialchars($meter['name']); ?>"

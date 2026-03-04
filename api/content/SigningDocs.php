@@ -27,11 +27,14 @@ $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
 $sqlCheck = "
-    SELECT di.ID, di.DOC_PDF_SIGN_COUNTERAGENT
+    SELECT di.ID, di.DOC_PDF_SIGN_COUNTERAGENT, rc.EDRPOU
     FROM DOC_INVOICE di
     INNER JOIN ACCESS acc ON 
         di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
         di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+    INNER JOIN REF_COUNTERAGENT rc ON 
+	     rc.ID_ORGANIZATIONS = di.ID_ORGANIZATIONS and
+	     rc.ID = di.ID_REF_COUNTERAGENT    
     WHERE di.ID = ? 
       AND acc.ID_USERS = ? 
       AND di.ID_ORGANIZATIONS = ?
@@ -56,7 +59,7 @@ if (!$docData) {
 }
 
 // 2. Якщо поле DOC_PDF_SIGN_COUNTERAGENT не пусте — документ вже підписано
-/*
+
 if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
     die("
     <div style='font-family: sans-serif; padding: 40px; text-align: center; background: #d4edda; color: #155724; border-bottom: 3px solid #c3e6cb;'>
@@ -64,7 +67,7 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
         <p>Цей рахунок вже має ваш електронний підпис. Повторне підписання неможливе.</p>
     </div>");
 }
-*/
+
 // =========================================================================
 ?>
 
@@ -277,10 +280,13 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                     </div>
                     <div class="stage-group">
                         <span class="stage-group__title">ІПН / Код:</span>
+                        <div id="PKeyOwnerInfoSubjDRFOCodeSelect" style="display:none;"><?php echo $docData['EDRPOU']; ?></div>
                         <div id="PKeyOwnerInfoSubjDRFOCode">-</div>
+                                                
+                        <div id="PKeyOwnerInfoSubjDRFOCodeDescr" style="display:none; font-weight:bold; margin-top: 10px;">Зверніть увагу ІПН/Код не збігається з обраною організацією</div>
                     </div>
                     <button class="btn btn-danger" onclick="app.NextStage('fn_iit_module_data_verification_stage','fn_iit_module_init_key_stage')">Повернутись</button>
-                    <button class="btn btn_blue" onclick="app.NextStage('fn_iit_module_data_verification_stage','fn_iit_module_file_signature_stage')">Все вірно</button>
+                    <button class="btn btn_blue" id="BtnVerificationNext" onclick="app.NextStage('fn_iit_module_data_verification_stage','fn_iit_module_file_signature_stage')">Все вірно</button>
                 </div>
 
                 <div id="fn_iit_module_file_signature_stage" class="stage" style="display:none;">

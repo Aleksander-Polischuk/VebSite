@@ -1,0 +1,231 @@
+/* =========================================
+   ЗМІННІ
+   ========================================= */
+:root {
+    --p-card-bg: var(--bg-white, #ffffff);
+    --p-input-bg: var(--bg-white, #ffffff);
+    --p-static-bg: var(--bg-light-gray, #f2f2f2);
+    --p-accent: var(--color-primary, #3C9ADC);
+    --p-accent-hover: var(--color-primary-dark, #3178aa);
+    --p-border: var(--border-color, #cccccc);
+    --p-text-main: var(--text-main, #444444);
+    --p-text-muted: var(--text-muted, #999999);
+}
+
+.profile-page-container {
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.profile-grid {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   БЛОКИ
+   ========================================= */
+.profile-section {
+    flex: 1;
+    background: var(--p-card-bg);
+    border: 1px solid var(--p-border);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.section-title {
+    font-size: 18px;
+    color: var(--p-accent);
+    margin: 0 0 25px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light, #f0f4ff);
+    font-weight: 600;
+}
+
+/* =========================================
+   ЕЛЕМЕНТИ ФОРМ ТА ДАНИХ
+   ========================================= */
+.info-group {
+    margin-bottom: 25px;
+}
+
+.info-group label, .field-label {
+    display: block;
+    font-size: 11px;
+    color: var(--p-text-muted);
+    margin-bottom: 8px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* Поле для відображення телефону/пошти */
+.static-field {
+    background: var(--p-static-bg);
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark, #333333);
+    border: 1px solid var(--border-light, #eeeeee);
+}
+
+.profile-form input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--p-border);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    background-color: var(--p-input-bg);
+    transition: border-color 0.2s;
+}
+
+.profile-form input:focus {
+    border-color: var(--p-accent);
+}
+
+/* =========================================
+   КНОПКИ
+   ========================================= */
+.input-with-btn {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-update {
+    background: var(--p-accent);
+    border: none;
+    color: var(--text-white, #ffffff);
+    padding: 0 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btn-update:hover {
+    background: var(--p-accent-hover, #f0f4ff);
+}
+
+.spacer-line {
+    height: 1px;
+    background: var(--border-light, #eeeeee);
+    margin: 30px 0;
+}
+
+.input-stack input {
+    margin-bottom: 12px;
+}
+
+.btn-submit-blue {
+    width: 100%;
+    background: var(--p-accent);
+    color: var(--text-white, #ffffff);
+    border: none;
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+
+.btn-submit-blue:hover {
+    background: var(--p-accent-hover);
+}
+
+/* АДАПТИВ */
+@media (max-width: 1100px) {
+    .profile-grid {
+        flex-direction: column;
+    }
+}
+
+/* =========================================
+   ПОЛЯ ПАРОЛІВ З ІКОНКАМИ
+   ========================================= */
+.password-wrapper {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.password-wrapper input {
+    margin-bottom: 0; 
+    padding-right: 40px; 
+    height: 45px; 
+    box-sizing: border-box;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    user-select: none;
+}
+
+.toggle-password:hover {
+    opacity: 0.8;
+}
+
+/*Прихований пароль*/
+.profile-form input.masked-password {
+    -webkit-text-security: disc !important;
+    font-size: 24px !important; 
+    letter-spacing: 1px !important; /* Відстань між крапками */
+}
+
+/*Пароль видно*/
+.profile-form input.unmasked-password {
+    -webkit-text-security: none !important;
+    font-size: 14px !important; 
+    letter-spacing: normal !important;
+}
+
+.masked-password::placeholder,
+.unmasked-password::placeholder {
+    font-size: 14px !important;
+    letter-spacing: normal !important;
+}
+
+/* Поле з помилкою: червона рамка + тінь */
+.profile-form input.input-error {
+    border-color: #e74c3c !important;
+    background-color: #fffafa !important;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.4) !important; /* Тінь, яку буде видно */
+    transition: all 0.2s ease;
+}
+
+/* Текст помилки під полем */
+.error-message {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: 500;
+    display: none; /* З'явиться тільки при помилці */
+}
+
+/* Анімація "трусіння" для привернення уваги (опціонально) */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.shake-error {
+    animation: shake 0.3s ease-in-out;
+}

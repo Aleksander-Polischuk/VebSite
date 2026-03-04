@@ -1,0 +1,96 @@
+:root {
+    /* Кольори та межі */
+    --pg-border-color: #ddd; 
+    --pg-bg-transparent: transparent;
+    --pg-bg-header: #ffffff;
+    
+    /* Шрифти */
+    --pg-font-size-filter: 14px;
+    --pg-font-weight-bold: 600;
+    
+    /* Відступи*/
+    --pg-margin-filter-bottom: 25px;
+    --pg-margin-label-right: 15px;
+    --pg-padding-select: 8px 30px 8px 5px;
+    
+    --pg-sticky-z: 10;
+    --pg-breakpoint-mobile: 850px;
+}
+
+/* =========================================
+   СТИЛІ СТОРІНКИ
+   ========================================= */
+.content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;       
+    overflow: hidden;   
+    box-sizing: border-box;
+}
+
+.history-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;            
+    min-height: 0;      
+    height: auto !important; 
+    overflow: hidden;   
+}
+
+.table-container {
+    flex: 1;           
+    min-height: 0;     
+    overflow-y: auto;  
+    margin-top: 0 !important; 
+}
+
+.data-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: var(--pg-sticky-z);
+}
+
+/* =========================================
+   СТИЛІ ФІЛЬТРІВ
+   ========================================= */
+.filter-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--pg-margin-filter-bottom);
+}
+
+.filter-group label {
+    font-size: var(--pg-font-size-filter);
+    font-weight: var(--pg-font-weight-bold);
+    margin-right: var(--pg-margin-label-right);
+    white-space: nowrap;
+}
+
+.filter-group select {
+    flex-grow: 1;
+    font-size: var(--pg-font-size-filter);
+    padding: var(--pg-padding-select);
+    border: none;
+    border-bottom: 1px solid var(--pg-border-color);
+    background: var(--pg-bg-transparent) url('/img/chevron-down.svg') no-repeat right 5px center / 18px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+/* =========================================
+   АДАПТИВНІСТЬ
+   ========================================= */
+@media (max-width: 850px) { 
+    .filter-group { 
+        flex-direction: column; 
+        align-items: flex-start; 
+    }
+    .filter-group label { 
+        margin-bottom: 5px; 
+    }
+    .filter-group select { 
+        width: 100%; 
+    }
+}
