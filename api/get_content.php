@@ -29,8 +29,17 @@ switch ($page) {
     case 'Рахунки':
         include "content/ent_invoice.php";
         break;
+    case 'Тарифи':
+        include "content/Tariffs.php";
+        break;
+    case 'Поширені запитання':
+        include "content/Popular_Questions.php";
+        break;
     case 'Профіль':
-        echo "<h2>Ваш профіль</h2><p>Ім'я: ФОП АФЧО</p>";
+        include "content/personal_acc.php";
+        break;
+    case 'Зворотній зв\'язок':
+        include "content/feedback.php";
         break;
     default:
         echo "<h2>Помилка</h2><p>Сторінку не знайдено.</p>";

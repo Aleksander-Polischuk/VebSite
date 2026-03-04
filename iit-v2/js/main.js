@@ -1131,7 +1131,19 @@ class App {
             document.getElementById('PKeyOwnerInfoSubjCN').textContent = infoElement.infoEx.subjCN;
             document.getElementById('PKeyOwnerInfoSubjOrg').textContent = infoElement.infoEx.subjOrg;
             document.getElementById('PKeyOwnerInfoSubjDRFOCode').textContent = infoElement.infoEx.subjDRFOCode;
+            
+            const code1 = document.getElementById('PKeyOwnerInfoSubjDRFOCode').textContent;
+			const code2 = document.getElementById('PKeyOwnerInfoSubjDRFOCodeSelect').textContent;
 
+			// Кнопка буде неактивною, якщо коди НЕ збігаються
+			if (code1 !== code2) {
+			    document.getElementById('BtnVerificationNext').style.display = 'none'; 
+			    document.getElementById('PKeyOwnerInfoSubjDRFOCodeDescr').style.display = 'block';
+			} else {
+			    document.getElementById('BtnVerificationNext').style.display = 'block';
+			    document.getElementById('PKeyOwnerInfoSubjDRFOCodeDescr').style.display = 'none'; 
+			}
+                           
         }
     }
 

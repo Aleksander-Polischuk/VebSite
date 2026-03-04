@@ -1,8 +1,22 @@
-/* METER READINGS (INPUTS & VALIDATION) */
+/* =========================================
+   METER READINGS (INPUTS & VALIDATION)
+   ========================================= */
+
+/* ОБГОРТКА ІНПУТА */
+.input-wrapper {
+    position: relative;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    width: max-content; 
+    margin: 0 auto; 
+}
+
+/* САМ ІНПУТ */
 .input-reading {
-    width: 100%;
-    max-width: 120px;
-    padding: 6px 10px;
+    width: 95px !important; 
+    min-width: 95px !important;
+    padding: 6px 4px; 
     border: 1px solid var(--border-color);
     border-radius: 6px;
     text-align: center;
@@ -11,6 +25,7 @@
     outline: none;
     transition: all 0.2s ease;
     background-color: var(--bg-white);
+    flex-shrink: 0; 
 }
 
 .input-reading:focus {
@@ -25,6 +40,7 @@
 }
 .input-reading[type=number] { -moz-appearance: textfield; }
 
+/* СТАТУСИ ІНПУТІВ */
 .input-reading.error {
     border-color: var(--color-error) !important;
     background-color: var(--color-error-bg) !important;
@@ -39,6 +55,14 @@
     box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2) !important;
 }
 
+.input-reading.warning {
+    border-color: #f39c12 !important;
+    background-color: #fdf8e3 !important; 
+    color: #d68910 !important;
+    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2) !important; 
+}
+
+/* ТЕКСТ РІЗНИЦІ */
 .diff-val {
     font-weight: bold;
     font-size: 14px;
@@ -46,24 +70,15 @@
     min-width: 30px;
 }
 
-/* Input Tooltips */
-.input-wrapper {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: auto;
-    justify-content: center;
-}
-
+/* ІКОНКА (Знак оклику або i) */
 .error-icon {
-    display: none;
-    position: absolute;
-    left: 100%;            
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 8px;
+    visibility: hidden; 
+    opacity: 0; 
+    position: relative;
+    margin-left: 6px;
     width: 20px;
     height: 20px;
+    flex-shrink: 0; 
     background-color: var(--color-error);
     color: var(--text-white);
     border-radius: 50%;
@@ -72,15 +87,21 @@
     font-weight: bold;
     font-size: 14px;
     cursor: help;
+    transition: opacity 0.2s ease;
 }
 
-.input-reading.error ~ .error-icon {
-    display: block;
+/* Анімація появи іконки */
+.input-reading.error ~ .error-icon,
+.input-reading.warning ~ .error-icon {
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes popIn { 
+    from { transform: scale(0); opacity: 0; } 
+    to { transform: scale(1); opacity: 1; } 
+}
 
+/* ТУЛТИП (Підказка при наведенні) */
 .error-tooltip {
     visibility: hidden;
     background-color: var(--text-dark);
@@ -115,11 +136,13 @@
 
 .error-icon:hover .error-tooltip { visibility: visible; opacity: 1; }
 
-/* BOTTOM CONTROLS (BUTTONS) */
+/* =========================================
+   BOTTOM CONTROLS (BUTTONS)
+   ========================================= */
 .bottom-controls {
     display: flex;
     justify-content: flex-end; 
-    padding-top: 20px;          
+    padding-top: 20px;         
     padding-bottom: 30px;       
 }
 
@@ -141,19 +164,36 @@
 .btn-save:hover { background-color: var(--color-primary-dark); }
 .btn-save:active { transform: translateY(1px); box-shadow: none; }
 
-/* RESPONSIVE */
+
+/* =========================================
+   RESPONSIVE / MOBILE
+   ========================================= */
 @media (max-width: 850px) {
-    .input-reading {
-        padding: 8px;
-        font-size: 16px; 
-        max-width: 100%;
-        min-width: 80px; 
+
+    /* ФІКС БАГУ ФАНТОМНОГО СКРОЛУ (Safari/Chrome sticky conflict) */
+    .data-table {
+        border-collapse: separate !important; 
+        border-spacing: 0 !important;
     }
+
+    /* ШРИФТИ ТА РОЗМІРИ ІНПУТІВ (Твої рідні) */
+    .input-reading {
+        width: 85px !important; 
+        min-width: 85px !important;
+        padding: 8px 4px;
+        font-size: 12px !important; 
+    }
+    
+    .data-table tbody tr.detail-row td:nth-child(2),
+    .data-table tbody tr.detail-row td:nth-child(4),
+    .diff-val {
+        font-size: 12px !important; 
+    }
+    
+    /* КНОПКА ЗБЕРЕЖЕННЯ */
     .bottom-controls {
         position: fixed;     
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 0; left: 0; right: 0;
         background: var(--bg-white);       
         padding: 15px;
         border-top: 1px solid var(--border-light);
@@ -161,8 +201,22 @@
         justify-content: center; 
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     }
+    
     .btn-save {
         width: 100%;            
         padding: 12px;
+    }
+    
+    /* ФІКС ТУЛТИПА: ВІДВ'ЯЗУЄМО ВІД ЦЕНТРУ, ЩОБ НЕ РОЗТЯГУВАВ ЕКРАН */
+    .error-tooltip {
+        left: auto !important;
+        right: -5px !important; 
+        transform: none !important; 
+    }
+    
+    .error-tooltip::after {
+        left: auto !important;
+        right: 10px !important; 
+        margin-left: 0 !important;
     }
 }

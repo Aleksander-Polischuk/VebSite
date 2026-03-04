@@ -193,7 +193,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                             'sign_ca'
                         ];
 
-                        $isFullySigned = false; // За замовчуванням кнопка РОЗБЛОКОВАНА
+                        $isFullySigned = true; // За замовчуванням кнопка РОЗБЛОКОВАНА
 
                         if (!empty($requiredSignatures)) {
                             $isFullySigned = true;
@@ -215,8 +215,8 @@ while ($row = mysqli_fetch_assoc($result)) {
                             $statusHtml = '<span style="color: #3C9ADC; font-weight: 500; font-size: 13px;">Готовий до підпису</span>';
                         }
                         
-                        //$isButtonDisabled = $isFullySigned && !$forceSign;
-                        $isButtonDisabled = false; // ПРИМУСОВЕ РОЗБЛОКУВАННЯ ДЛЯ ТЕСТІВ
+                        $isButtonDisabled = $isFullySigned && !$forceSign;
+                        //$isButtonDisabled = false; // ПРИМУСОВЕ РОЗБЛОКУВАННЯ ДЛЯ ТЕСТІВ
                 ?>
                     <tr class="child-row show <?php echo $cGroupId; ?> detail-row">
                         <td style="padding-left: 40px; color: #555;">

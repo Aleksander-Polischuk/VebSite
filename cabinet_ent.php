@@ -8,7 +8,7 @@ mysqli_set_charset($link, 'utf8');
 
 
 
-// 2. ОБРОБКА POST-ЗАПИТУ (Зміна контрагента)
+// 2. Зміна контрагента
 $post_counteragent_id = filter_input(INPUT_POST, 'set_counteragent_id', FILTER_VALIDATE_INT);
 if ($post_counteragent_id !== null && $post_counteragent_id !== false) {
     $_SESSION['selected_counteragent_id'] = $post_counteragent_id;
@@ -49,16 +49,12 @@ $activeRow = null;
 while ($s_row = mysqli_fetch_assoc($s_res)) {
     $rows[] = $s_row;
     
-    // ЛОГІКА ВИБОРУ КОНТРАГЕНТА
-    // 1. Якщо користувач вже вибрав (є в сесії) і це поточний рядок -> це активний
-    // 2. АБО якщо в сесії ще нічого немає (перший вхід) і це найперший рядок -> це активний
     if (($selectedId && $s_row['ID'] == $selectedId) || (!$selectedId && $activeRow === null)) {
         $activeRow = $s_row;
     }
 }
 
-// Якщо ми знайшли активного (або вибрали першого автоматично), 
-// треба записати його в сесію, щоб інші сторінки його бачили.
+// Якщо ми знайшли активного 
 if ($activeRow) {
     $_SESSION['selected_counteragent_id'] = $activeRow['ID'];
 }
@@ -66,13 +62,13 @@ if ($activeRow) {
 
 // 5. ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
-// ВИПРАВЛЕНО: Об'єднано стилі в один масив
 $list_css = ['/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 include "CustomAlert.php";
 ?>
 
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+
 
 <header class="header">
   <div class="header-main-row">
@@ -126,10 +122,12 @@ include "CustomAlert.php";
         <a href="#">Історія показників</a>
        <!-- <a href="#">Історія показників_2</a> -->
         <a href="#">Рахунки</a>
+        <a href="#">Тарифи</a>
+        <a href="#">Поширені запитання</a>
 
         <h4>МОЇ ДАНІ</h4>
         <a href="#">Профіль</a>
-        <a href="#">Налаштування</a>
+        <a href="#">Зворотній зв'язок</a>
         
         <a href="/logout?account_type=1" class="btn-logout">Вихід</a>
     </nav>
@@ -145,54 +143,61 @@ include "CustomAlert.php";
 <script src="/js/CustomAlert.js"></script>
 <script src="/js/cabinet_ent.js"></script>
 <script src="/js/table_tree.js"></script>
+<script src="js/personal_acc.js"></script>
+<script src="js/input_meters.js"></script>
+<script src="js/history_readings_2.js"></script>
+<script src="js/feedback.js"></script>
 
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
+// Використовуємо json_encode для безпечної передачі рядків з апострофами
+<?php $activeMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
+const activeMenu = <?php echo json_encode($activeMenu); ?>; 
+
 const userSelect = document.querySelector('.user-select');
 const btn = document.getElementById('userSelectBtn');
 const dropdown = document.getElementById('userSelectDropdown');
 const textBox = btn.querySelector('.u-text');
 
-// Відкриття/закриття списку
-btn.addEventListener('click', () => userSelect.classList.toggle('open'));
+if (btn) {
+    btn.addEventListener('click', () => userSelect.classList.toggle('open'));
+}
 
-// Вибір контрагента
-dropdown.addEventListener('click', e => {
-    const item = e.target.closest('.item');
-    if (!item) return;
+if (dropdown) {
+    dropdown.addEventListener('click', e => {
+        const item = e.target.closest('.item');
+        if (!item) return;
 
-    const { id, edrpou, name } = item.dataset;
-    textBox.innerHTML = `ЄДРПОУ: ${edrpou} <span>${name}</span>`;
-    userSelect.classList.remove('open');
+        const { id, edrpou, name } = item.dataset;
+        textBox.innerHTML = `ЄДРПОУ: ${edrpou} <span>${name}</span>`;
+        userSelect.classList.remove('open');
 
-    const formData = new FormData();
-    formData.append('set_counteragent_id', id);
+        const formData = new FormData();
+        formData.append('set_counteragent_id', id);
 
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(() => {
-        console.log('Контрагент змінений:', id);
-        
-        // Оновлюємо контент в таблицях
-        if (typeof window.refreshActiveContent === 'function') {
-            window.refreshActiveContent();
-        }
-
-        // Оновлюємо баланс та дату в шапці
-        if (typeof updateHeaderBalance === 'function') {
-            updateHeaderBalance();
-        }
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(() => {
+            if (typeof window.refreshActiveContent === 'function') {
+                window.refreshActiveContent();
+            }
+            if (typeof updateHeaderBalance === 'function') {
+                updateHeaderBalance();
+            }
+        });
     });
-});
+}
 
 document.addEventListener('click', e => {
-    if (!userSelect.contains(e.target)) userSelect.classList.remove('open');
+    if (userSelect && !userSelect.contains(e.target)) userSelect.classList.remove('open');
 });
 
-<?php $activeMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
-const activeMenu = '<?php echo $activeMenu; ?>';
+// Підсвітка активного пункту меню
 document.querySelectorAll('.sidebar a').forEach(a => {
     a.classList.toggle('active', a.innerText.trim() === activeMenu);
 });

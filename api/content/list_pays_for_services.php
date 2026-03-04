@@ -64,7 +64,7 @@ $pays_data = getHistoryData($link, $selectedCounteragentId, $selectedYear, $orgI
 <link href="../../css/list_pays_for_services.css" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header" id="history-start">
-    <h3 style="margin: 0; flex-grow: 1;">Історія розрахунків</h3>
+    <h3 style="margin: 0; flex-grow: 1;">Розрахунки за послуги</h3>
 
     <div class="header-controls">
         

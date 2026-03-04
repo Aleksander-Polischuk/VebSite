@@ -1,5 +1,5 @@
 /* =========================================
-   0. VARIABLES (КОЛЬОРОВА ПАЛІТРА & НАЛАШТУВАННЯ)
+   0. VARIABLES
    ========================================= */
 :root {
     /* Brand Colors */
@@ -44,7 +44,7 @@
     --color-success-text: #27ae60;
     --color-success-bg: #e8f8f5;
 
-    /* Z-Index Layers (для порядку) */
+    /* Z-Index Layers */
     --z-dropdown: 100;
     --z-sticky-col: 100;
     --z-header-content: 110;
@@ -504,7 +504,7 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
     /* Mobile Sidebar & Overlay */
     .sidebar {
         position: fixed;
-        inset: 0 auto 0 -260px; /* top right bottom left */
+        inset: 0 auto 0 -260px;
         width: 260px;
         z-index: var(--z-sidebar);
         transition: left 0.3s ease;
@@ -587,14 +587,29 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
     .header-controls { 
         width: 100%; 
         justify-content: space-between; 
-        margin-top: 5px; 
+        margin-top: 10px; 
+        gap: 8px; 
     }
+
 
     .btn-tree-custom { 
         flex: 1; 
         justify-content: center; 
-        min-height: 40px; 
+        min-height: 44px; 
+        font-size: 16px;  
     }
+
+
+    .year-select-custom {
+        flex: 1.5; 
+        min-height: 44px; 
+        font-size: 16px;  
+        padding: 10px 35px 10px 15px; 
+        background-position: right 12px center; 
+        background-size: 1.2em; 
+        text-align-last: center; /* Центруємо текст всередині селекта */
+    }
+    
 }
 
 /* Forced Hover Effects */
@@ -628,12 +643,4 @@ table.data-table tbody tr.child-row:hover td {
 
 .year-select-custom:hover, .year-select-custom:focus {
     border-color: var(--color-primary);
-}
-
-@media (max-width: 850px) {
-    .year-select-custom {
-        flex: 1; 
-        justify-content: center;
-        min-height: 40px;
-    }
 }
