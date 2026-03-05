@@ -8,7 +8,7 @@ $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
 $userId = $_SESSION['id_users'] ?? 0;
-$orgId = $IDOrganizations ?? 1; 
+$orgId = $IDOrganizations ?? 1;
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
 if (!$selectedCounteragentId) {
@@ -16,7 +16,8 @@ if (!$selectedCounteragentId) {
     exit;
 }
 
-// SQL-запит для тарифів
+$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
+
 $sql_tariff = "
     SELECT 
         PERIOD, 
@@ -26,20 +27,19 @@ $sql_tariff = "
         PRICE_WITH_TAX 
     FROM INF_HISTORY_TARIFF 
     WHERE ID_ORGANIZATIONS = ? 
-    ORDER BY NAME_GROUP ASC, PERIOD DESC
-";
+    ORDER BY PERIOD DESC, NAME_GROUP ASC";
 
 $stmt = mysqli_prepare($link, $sql_tariff);
 mysqli_stmt_bind_param($stmt, "i", $orgId);
 mysqli_stmt_execute($stmt);
 $result_tariff = mysqli_stmt_get_result($stmt);
 
-$tariffsByGroup = [];
-
+$treeData = [];
 if ($result_tariff) {
     while ($row = mysqli_fetch_assoc($result_tariff)) {
-        $groupName = !empty($row['NAME_GROUP']) ? $row['NAME_GROUP'] : 'Інші послуги'; 
-        $tariffsByGroup[$groupName][] = $row;
+        $dateKey = date('d.m.Y', strtotime($row['PERIOD']));
+        $groupKey = !empty($row['NAME_GROUP']) ? $row['NAME_GROUP'] : 'Інші послуги';
+        $treeData[$dateKey][$groupKey][] = $row;
     }
 }
 ?>
@@ -48,54 +48,72 @@ if ($result_tariff) {
 
 <div class="table-header-row sticky-header" id="history-start">
     <h3 style="margin: 0; flex-grow: 1;">Тарифи на послуги</h3>  
+    <div class="header-controls">
+        <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
+            <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути">
+        </button>
+        <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути все">
+            <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути">
+        </button>
+    </div>
 </div>
 
-<div id="tariffs-wrapper" style="padding-bottom: 20px;">
-    <?php if (!empty($tariffsByGroup)): ?>
-        
-        <?php foreach ($tariffsByGroup as $groupName => $tariffs): ?>
-            
-            <div style="background-color: #f2f2f2; padding: 12px 15px; border-radius: 4px 4px 0 0; border: 1px solid #ddd; border-bottom: none; font-weight: bold; margin-top: 20px; color: #333; line-height: 1.4;">
-                <?php echo htmlspecialchars($groupName); ?>
-            </div>
+<div class="table-container" id="history-container">
+    <table class="data-table tree-table shadow-table" style="width: 100%; border-collapse: collapse; border: none;">
+        <thead>
+            <tr>
+                <th style="text-align: left; padding: 12px; width: 60%; border-bottom: none; border-right: none;">Послуга</th>
+                <th style="text-align: center; width: 20%; border-bottom: none; border-right: none;">Ціна (без ПДВ)</th>
+                <th style="text-align: center; width: 20%; border-bottom: none; border-right: none;">Ціна (з ПДВ)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($treeData)): ?>
+                <tr><td colspan="3" style="padding: 30px; text-align: center; color: #666; border: none;">Дані відсутні.</td></tr>
+            <?php else: 
+                $d_idx = 0;
+                foreach ($treeData as $date => $groups): 
+                    $d_idx++;
+                    $dateId = "d_" . $d_idx;
+            ?>
+                <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
+                    <td colspan="3" style="background-color: #f9f9f9; border-bottom: none; border-right: none;">
+                        <?php echo $caret_icon; ?> <strong>Період: <?php echo $date; ?></strong>
+                    </td>
+                </tr>
 
-            <div class="table-container" style="margin-bottom: 0; border-radius: 0 0 4px 4px; border: 1px solid #ddd; overflow-x: auto;">
-                <table class="data-table tree-table" style="width: 100%; border-collapse: collapse; min-width: 600px; margin: 0;">
-                    <thead style="background: #fafafa;">
-                        <tr>
-                            <th style="text-align: center; padding: 12px; width: 15%; border-bottom: 1px solid #ddd;">Період</th>
-                            <th style="text-align: left; padding: 12px; width: 45%; border-bottom: 1px solid #ddd;">Послуга</th>
-                            <th style="text-align: center; width: 20%; border-bottom: 1px solid #ddd;">Ціна (без ПДВ)</th>
-                            <th style="text-align: center; width: 20%; border-bottom: 1px solid #ddd;">Ціна (з ПДВ)</th>
+                <?php 
+                $g_idx = 0;
+                foreach ($groups as $groupName => $services): 
+                    $g_idx++;
+                    $groupId = $dateId . "_g" . $g_idx;
+                ?>
+                    <tr class="child-row <?php echo $dateId; ?> parent-row show" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
+                        <td colspan="3" style="padding-left: 30px; background-color: #fff; border-bottom: none; border-right: none;">
+                            <?php echo $caret_icon; ?> <span style="color: #555; font-weight: 600;"><?php echo htmlspecialchars($groupName); ?></span>
+                        </td>
+                    </tr>
+
+                    <?php foreach ($services as $s): ?>
+                        <tr class="child-row <?php echo $dateId; ?> <?php echo $groupId; ?> detail-row">
+                            <td style="padding-left: 60px; border-bottom: none; border-right: none; font-size: 13px;">
+                                <span style="color: #4a76f2; margin-right: 8px;">•</span> 
+                                <?php echo htmlspecialchars($s['SERVICE']); ?>
+                            </td>
+                            <td align="center" style="border-bottom: none; border-right: none; color: #666;">
+                                <?php echo number_format($s['PRICE_WITHOUT_TAX'], 3, '.', ' '); ?>
+                            </td>
+                            <td align="center" style="border-bottom: none; border-right: none; color: #666;">
+                                <?php echo number_format($s['PRICE_WITH_TAX'], 3, '.', ' '); ?>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($tariffs as $tariff): ?>
-                            <tr class="child-row detail-row show" style="display: table-row;">
-                                <td align="center" style="border-bottom: 1px solid #eee; padding: 10px;">
-                                    <?php echo date('d.m.Y', strtotime($tariff['PERIOD'])); ?>
-                                </td>
-                                <td style="padding: 10px 10px 10px 20px; border-bottom: 1px solid #eee; font-size: 13px; color: #666;">
-                                    <span style="color: #4a76f2; margin-right: 8px;">•</span> 
-                                    <?php echo htmlspecialchars($tariff['SERVICE']); ?>
-                                </td>
-                                <td align="center" style="border-bottom: 1px solid #eee; padding: 10px; font-weight: 500;">
-                                    <?php echo number_format($tariff['PRICE_WITHOUT_TAX'], 3, '.', ' '); ?>
-                                </td>
-                                <td align="center" style="border-bottom: 1px solid #eee; padding: 10px; font-weight: 500;">
-                                    <?php echo number_format($tariff['PRICE_WITH_TAX'], 3, '.', ' '); ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                    <?php endforeach; ?>
 
-        <?php endforeach; ?>
-        
-    <?php else: ?>
-        <div style="padding: 30px; text-align: center; color: #666; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-top: 20px;">
-            Дані про тарифи відсутні.
-        </div>
-    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
+
+<script src="../../js/table_tree.js" type="text/javascript"></script>

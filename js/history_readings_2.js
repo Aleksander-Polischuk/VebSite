@@ -1,5 +1,5 @@
 /* =========================================
-   5. ЛОГІКА СТОРІНКИ "Історія показників"
+   5. ЛОГІКА СТОРІНКИ "Історія показників" (Виправлено)
    ========================================= */
 
 function initHistoryPageLogic() {
@@ -9,20 +9,20 @@ function initHistoryPageLogic() {
     
     if (!selC || !selA || !mapDataEl) return;
 
-    // Зчитуємо тільки карту адрес
     const addressMap = JSON.parse(mapDataEl.value || "{}");
     const allRows = document.querySelectorAll('.history-data-row');
     const noDataRow = document.getElementById('history_no_data');
 
-    // Відновлюємо збережені в PHP значення
     const savedC = document.getElementById('php_saved_contract').value;
     let savedA = document.getElementById('php_saved_address').value;
+
+    // Прапорець, щоб не відправляти POST при ініціалізації
+    let isInitialLoad = true;
 
     if (savedC && addressMap[savedC]) {
         selC.value = savedC;
     }
 
-    // 1. Коли змінюється договір -> Оновлюємо список адрес
     selC.addEventListener('change', function() {
         const cID = this.value;
         selA.innerHTML = '';
@@ -34,47 +34,37 @@ function initHistoryPageLogic() {
                 selA.add(new Option(addressMap[cID][aKey], aKey));
             });
 
-            // Вибираємо збережену адресу або першу
             if (savedA && addressMap[cID][savedA]) {
                 selA.value = savedA;
-                savedA = ""; // Скидаємо після першого застосування
+                savedA = ""; 
             } else if (selA.options.length > 0) {
                 selA.value = selA.options[0].value;
             }
         }
         
-        selA.dispatchEvent(new Event('change')); // Тригеримо оновлення таблиці
+        selA.dispatchEvent(new Event('change')); 
     });
 
-    // 2. Коли змінюється адреса -> Фільтруємо готову таблицю і зберігаємо в сесію
     selA.addEventListener('change', function() {
         const cID = selC.value;
         const aID = selA.value;
         let visibleCount = 0;
 
-        // Просто приховуємо або показуємо рядки, які вже намалював PHP
         allRows.forEach(row => {
             if (row.dataset.contract === cID && row.dataset.address === aID) {
-                row.style.display = ''; // Показуємо
+                row.style.display = ''; 
                 visibleCount++;
             } else {
-                row.style.display = 'none'; // Ховаємо
+                row.style.display = 'none'; 
             }
         });
 
-        // Показуємо плашку "Немає даних", якщо показано 0 рядків
         if (noDataRow) {
             noDataRow.style.display = (visibleCount === 0) ? '' : 'none';
         }
-
-        // Фонове збереження стану
-        const fd = new FormData();
-        fd.append('action', 'save_state');
-        fd.append('c', cID);
-        fd.append('a', aID || '');
-        fetch(window.location.href, { method: 'POST', body: fd });
     });
 
-    // Запускаємо логіку при старті сторінки
+    // Запускаємо логіку, але позначаємо, що завантаження завершене після виконання
     selC.dispatchEvent(new Event('change'));
+    isInitialLoad = false; 
 }
