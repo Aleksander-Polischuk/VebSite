@@ -69,11 +69,11 @@
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                showAlert('❌ Помилка при збереженні статусу!', 'error');
+                showAlert('Помилка при збереженні статусу!', 'error');
             }
         })
         .catch(error => {
             console.error('Помилка:', error);
-            showAlert('❌ Помилка з\'єднання з сервером!', 'error');
+            showAlert('Помилка з\'єднання з сервером!', 'error');
         });
     }

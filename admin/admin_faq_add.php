@@ -7,25 +7,51 @@ require_once "../config.php";
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
+// === ПЕРЕВІРКА НА АДМІНІСТРАТОРА ===
+$admin_ids = [5]; //ID адміна
+$userId = $_SESSION['id_users'] ?? 0;
+
+if (!$userId || !in_array($userId, $admin_ids)) {
+    header("Location: /login"); 
+    exit;
+}
+
+// === ВИЗНАЧЕННЯ АДМІНА ОРГАНІЗАЦІЇ ===
+$orgId = 0;
+$stmt_access = mysqli_prepare($link, "SELECT ID_ORGANIZATIONS FROM ACCESS WHERE ID_USERS = ? LIMIT 1");
+mysqli_stmt_bind_param($stmt_access, "i", $userId);
+mysqli_stmt_execute($stmt_access);
+$res_access = mysqli_stmt_get_result($stmt_access);
+if ($row = mysqli_fetch_assoc($res_access)) {
+    $orgId = (int)$row['ID_ORGANIZATIONS'];
+}
+mysqli_stmt_close($stmt_access);
+
+// Якщо в базі для цього адміна не прописана організація — блокуємо сторінку
+if ($orgId === 0) {
+    die("<h3 style='text-align:center; margin-top:50px; color:#c62828;'>Помилка доступу: Ваш акаунт не прив'язаний до жодної організації. Перевірте таблицю ACCESS.</h3>");
+}
+// ======================================================================
+
 // Обробка форми (Додавання або Редагування)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    // === НОВИЙ БЛОК: Швидка зміна статусу через AJAX ===
     if ($action === 'toggle_active') {
         $id = (int)$_POST['faq_id'];
         $is_active = (int)$_POST['is_active'];
         
-        $stmt = mysqli_prepare($link, "UPDATE REF_POPULAR_QUESTIONS SET is_active = ? WHERE ID = ?");
-        mysqli_stmt_bind_param($stmt, "ii", $is_active, $id);
+        // Оновлюємо тільки якщо питання належить організації цього адміна
+        $stmt = mysqli_prepare($link, "UPDATE REF_POPULAR_QUESTIONS SET is_active = ? WHERE ID = ? AND ID_ORGANIZATION = ?");
+        mysqli_stmt_bind_param($stmt, "iii", $is_active, $id, $orgId);
         $success = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
         
-        // Повертаємо відповідь для JavaScript і зупиняємо скрипт
         echo json_encode(['success' => $success]);
         exit;
     }
-    // ====================================================
+    // =======================================
+    
     $question = mysqli_real_escape_string($link, trim($_POST['question']));
     $content_data = $_POST['content_data']; 
     $sort_order = (int)$_POST['sort_order'];
@@ -33,8 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($question) && !empty($content_data)) {
         if ($action === 'add_faq') {
-            $stmt = mysqli_prepare($link, "INSERT INTO REF_POPULAR_QUESTIONS (question, content_type, content_data, sort_order, is_active) VALUES (?, 'html', ?, ?, 1)");
-            mysqli_stmt_bind_param($stmt, "ssi", $question, $content_data, $sort_order);
+            // Зберігаємо питання від імені організації адміна
+            $stmt = mysqli_prepare($link, "INSERT INTO REF_POPULAR_QUESTIONS (question, content_type, content_data, sort_order, is_active, ID_ORGANIZATION) VALUES (?, 'html', ?, ?, 1, ?)");
+            mysqli_stmt_bind_param($stmt, "ssii", $question, $content_data, $sort_order, $orgId);
             
             if (mysqli_stmt_execute($stmt)) {
                 $_SESSION['faq_msg'] = "<div class='alert success'>✅ Нове питання успішно додано!</div>";
@@ -44,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_close($stmt);
 
         } elseif ($action === 'edit_faq' && $id > 0) {
-            $stmt = mysqli_prepare($link, "UPDATE REF_POPULAR_QUESTIONS SET question = ?, content_data = ?, sort_order = ?, content_type = 'html' WHERE ID = ?");
-            mysqli_stmt_bind_param($stmt, "ssii", $question, $content_data, $sort_order, $id);
+            // Оновлюємо питання тільки якщо воно належить організації адміна
+            $stmt = mysqli_prepare($link, "UPDATE REF_POPULAR_QUESTIONS SET question = ?, content_data = ?, sort_order = ?, content_type = 'html' WHERE ID = ? AND ID_ORGANIZATION = ?");
+            mysqli_stmt_bind_param($stmt, "ssiii", $question, $content_data, $sort_order, $id, $orgId);
             
             if (mysqli_stmt_execute($stmt)) {
                 $_SESSION['faq_msg'] = "<div class='alert success'>✅ Питання успішно оновлено!</div>";
@@ -58,20 +86,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['faq_msg'] = "<div class='alert error'>❌ Заповніть заголовок та текст відповіді!</div>";
     }
 
-    // МАГІЯ PRG: Робимо примусовий редирект на цю ж саму сторінку, щоб скинути POST-запит
     header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
 
-// Витягуємо повідомлення із сесії (якщо воно там є) і одразу видаляємо
+// Витягуємо повідомлення із сесії
 $message = '';
 if (isset($_SESSION['faq_msg'])) {
     $message = $_SESSION['faq_msg'];
     unset($_SESSION['faq_msg']);
 }
 
-// Отримуємо всі питання для таблиці
-$sql = "SELECT ID, question, content_type, content_data, sort_order, is_active FROM REF_POPULAR_QUESTIONS ORDER BY sort_order ASC";
+// Вивід в таблицю тільки ті питання, які належать до організації поточного адміна
+$sql = "SELECT ID, question, content_type, content_data, sort_order, is_active FROM REF_POPULAR_QUESTIONS WHERE ID_ORGANIZATION = $orgId ORDER BY sort_order ASC";
 $res = mysqli_query($link, $sql);
 ?>
 
@@ -82,11 +109,11 @@ $res = mysqli_query($link, $sql);
     <title>Управління FAQ</title>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link href="../css/admin_faq_add.css" rel="stylesheet" type="text/css"/>
-    <script src="../js/CustomAlert.js" type="text/javascript"></script>
+    <script src="../js/CustomAlert.js" type="text/javascript" defer></script>
     <link href="../css/CustomAlert.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
-<?php include_once "/CustomAlert.php"; ?>
+<?php include_once "../CustomAlert.php"; ?>
 <div class="admin-container">
     <h2 id="form-title">Додати нове питання в FAQ</h2>
     
