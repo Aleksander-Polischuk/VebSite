@@ -46,8 +46,10 @@ if ($result_tariff) {
 
 <link href="../../css/ent_list_accounts.css" rel="stylesheet" type="text/css"/>
 
+
 <div class="table-header-row sticky-header" id="history-start">
     <h3 style="margin: 0; flex-grow: 1;">Тарифи на послуги</h3>  
+
     <div class="header-controls">
         <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути">
@@ -56,6 +58,7 @@ if ($result_tariff) {
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути">
         </button>
     </div>
+
 </div>
 
 <div class="table-container" id="history-container">
@@ -76,7 +79,7 @@ if ($result_tariff) {
                     $d_idx++;
                     $dateId = "d_" . $d_idx;
             ?>
-                <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
+                <tr class="parent-row" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
                     <td colspan="3" style="background-color: #f9f9f9; border-bottom: none; border-right: none;">
                         <?php echo $caret_icon; ?> <strong>Період: <?php echo $date; ?></strong>
                     </td>
@@ -88,14 +91,14 @@ if ($result_tariff) {
                     $g_idx++;
                     $groupId = $dateId . "_g" . $g_idx;
                 ?>
-                    <tr class="child-row <?php echo $dateId; ?> parent-row show" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
+                    <tr class="child-row <?php echo $dateId; ?> sub-parent" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
                         <td colspan="3" style="padding-left: 30px; background-color: #fff; border-bottom: none; border-right: none;">
                             <?php echo $caret_icon; ?> <span style="color: #555; font-weight: 600;"><?php echo htmlspecialchars($groupName); ?></span>
                         </td>
                     </tr>
 
                     <?php foreach ($services as $s): ?>
-                        <tr class="child-row <?php echo $dateId; ?> <?php echo $groupId; ?> detail-row">
+                        <tr class="child-row <?php echo $groupId; ?> detail-row">
                             <td style="padding-left: 60px; border-bottom: none; border-right: none; font-size: 13px;">
                                 <span style="color: #4a76f2; margin-right: 8px;">•</span> 
                                 <?php echo htmlspecialchars($s['SERVICE']); ?>

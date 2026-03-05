@@ -38,11 +38,11 @@ function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx)
         
         if (diffSpan) {
             const diff = currentNum - prevNum;
-            diffSpan.innerText = diff.toFixed(3).replace('.', ',');
+            diffSpan.textContent = diff.toFixed(3).replace('.', ',');
             diffSpan.style.color = diff < 0 ? "#e74c3c" : "#3C9ADC";
         }
     } else if (diffSpan) {
-        diffSpan.innerText = "0,000";
+        diffSpan.textContent = "0,000";
         diffSpan.style.color = "#3C9ADC";
     }
 
@@ -50,7 +50,7 @@ function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx)
     const icon = input.nextElementSibling;
     if (icon && icon.classList.contains('error-icon')) {
         const tooltip = icon.querySelector('.error-tooltip');
-        if (tooltip) tooltip.innerText = message;
+        if (tooltip) tooltip.textContent = message;
         
         if (statusClass === 'error') {
             icon.style.visibility = 'visible'; // Робимо видимою
@@ -84,19 +84,19 @@ function recalculateTotals(addressIdx, contractIdx) {
     const addrSum = calcSum(`.input-reading.address-group-${addressIdx}`);
     const addrSpan = document.getElementById(`sum_address_${addressIdx}`);
     if (addrSpan) {
-        addrSpan.innerText = addrSum.toFixed(3).replace('.', ',');
+        addrSpan.textContent = addrSum.toFixed(3).replace('.', ',');
         addrSpan.style.color = addrSum < 0 ? "#e74c3c" : "#555";
     }
 
     let contractSum = 0;
     document.querySelectorAll(`.sub-total-val.contract-group-${contractIdx}`).forEach(s => {
-        const v = parseFloat(s.innerText.replace(',', '.'));
+        const v = parseFloat(s.textContent.replace(',', '.'));
         if (!isNaN(v)) contractSum += v;
     });
 
     const contractSpan = document.getElementById(`sum_contract_${contractIdx}`);
     if (contractSpan) {
-        contractSpan.innerText = contractSum.toFixed(3).replace('.', ',');
+        contractSpan.textContent = contractSum.toFixed(3).replace('.', ',');
         contractSpan.style.color = contractSum < 0 ? "#e74c3c" : "#000";
     }
 }
@@ -191,7 +191,7 @@ function saveReadings() {
     document.getElementById('customAlertText').innerHTML = html;
     const subText = document.getElementById('customAlertSubText');
     if (subText) {
-        subText.innerText = 'Зберегти ці дані?';
+        subText.textContent = 'Зберегти ці дані?';
         subText.style.display = 'block';
     }
     

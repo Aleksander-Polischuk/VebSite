@@ -111,20 +111,26 @@ while ($row = mysqli_fetch_assoc($result)) {
     $addrKey = md5($addrName);
     
     if (!isset($treeData[$cID]['addresses'][$addrKey])) {
-        $treeData[$cID]['addresses'][$addrKey] = ['name' => $addrName, 'meters' => []];
+        $treeData[$cID]['addresses'][$addrKey] = ['name' => $addrName, 'periods' => []];
         $addressMap[$cID][$addrKey] = $addrName;
     }
 
-    if (!empty($row['CounterID']) && !empty($row['ReadingDate'])) {
-        $cntID = (string)$row['CounterID'];
-        $cntName = ($row['CounterType'] ?? 'Лічильник') . ' №' . $row['CounterNum'];
-        if (!isset($treeData[$cID]['addresses'][$addrKey]['meters'][$cntID])) {
-            $treeData[$cID]['addresses'][$addrKey]['meters'][$cntID] = ['name' => $cntName, 'readings' => []];
+    if (!empty($row['ReadingDate'])) {
+        $dateObj = strtotime($row['ReadingDate']);
+        $periodKey = date('Y_m', $dateObj); // Ключ для сортування (2024_03)
+        $displayPeriod = date('m.Y', $dateObj);
+        
+        if (!isset($treeData[$cID]['addresses'][$addrKey]['periods'][$periodKey])) {
+            $treeData[$cID]['addresses'][$addrKey]['periods'][$periodKey] = [
+                'name' => "Період: " . $displayPeriod,
+                'readings' => []
+            ];
         }
         
         $val = $row['ReadingValue'] - $row['PreviousValue'];
-        $treeData[$cID]['addresses'][$addrKey]['meters'][$cntID]['readings'][] = [
-            'date' => date('d.m.Y', strtotime($row['ReadingDate'])),
+        $treeData[$cID]['addresses'][$addrKey]['periods'][$periodKey]['readings'][] = [
+            'meter' => ($row['CounterType'] ?? 'Лічильник') . ' №' . $row['CounterNum'],
+            'date' => date('d.m.Y', $dateObj),
             'val' => number_format($val, 3, '.', ''),
             'curr' => number_format($row['ReadingValue'], 3, '.', ''),
             'prev' => number_format($row['PreviousValue'], 3, '.', ''),
@@ -197,54 +203,53 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
                     <?php 
                     foreach ($treeData as $cID => $cData) {
                         foreach ($cData['addresses'] as $aKey => $aData) {
-                            if (!empty($aData['meters'])) {
+                            if (!empty($aData['periods'])) {
 
-                                $meterIndex = 0; // Рахуємо лічильники за цією адресою
+                                krsort($aData['periods']);
 
-                                foreach ($aData['meters'] as $mID => $mData) {
-                                    $meterIndex++;
+                                foreach ($aData['periods'] as $pKey => $pData) {
+                                    $periodId = "p_" . $aKey . "_" . $pKey;
+                                    ?>
 
-                                    if (!empty($mData['readings'])) {
-                                        $readingIndex = 0; // Рахуємо рядки (показники) для поточного лічильника
+                                    <tr class="history-data-row parent-row" 
+                                        data-contract="<?php echo $cID; ?>" 
+                                        data-address="<?php echo $aKey; ?>" 
+                                        onclick="toggleTree(this, '<?php echo $periodId; ?>')"
+                                        style="display: none; cursor: pointer; background-color: #f9f9f9;">
+                                        <td colspan="6">
+                                             <img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">
+                                                 <?php echo $pData['name']; ?>
+                                        </td>
+                                        
+                                       
+                                    </tr>
 
-                                        foreach ($mData['readings'] as $r) {
-                                            $readingIndex++;
+                                    <?php foreach ($pData['readings'] as $r): ?>
+                                        <tr class="history-data-row child-row <?php echo $periodId; ?>" 
+                                            data-contract="<?php echo $cID; ?>" 
+                                            data-address="<?php echo $aKey; ?>" 
+                                            style="display: none;">
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; font-weight:600; color:#333; padding-left: 40px;">
+                                                <span style="color: #3C9ADC;">•</span> <?php echo htmlspecialchars($r['meter']); ?>
+                                            </td>
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center"><?php echo $r['date']; ?></td>
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; color: #666;"><?php echo $r['prev']; ?></td>
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; color: #666;"><?php echo $r['curr']; ?></td>
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center"><strong><?php echo $r['val']; ?></strong></td>
+                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; font-style: italic; color: #555;">
+                                                <?php echo htmlspecialchars($r['source']); ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
 
-                                            // Якщо це перший рядок нового лічильника (і він не найперший у списку загалом)
-                                            $topBorder = ($meterIndex > 1 && $readingIndex === 1) 
-                                                ? 'border-top: 2px solid #3C9ADC;' // Малюємо синю лінію розділювача
-                                                : '';
-                                            ?>
-                                            <tr class="child-row show history-data-row" data-contract="<?php echo $cID; ?>" data-address="<?php echo $aKey; ?>" style="display: none;">
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center; font-weight:600; color:#333;">
-                                                    <?php echo htmlspecialchars($mData['name']); ?>
-                                                </td>
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center">
-                                                    <?php echo $r['date']; ?>
-                                                </td>
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center; color: #666;">
-                                                    <?php echo $r['prev']; ?>
-                                                </td>
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center; color: #666;">
-                                                    <?php echo $r['curr']; ?>
-                                                </td>
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center">
-                                                    <strong><?php echo $r['val']; ?></strong>
-                                                </td>
-                                                <td style="padding:10px; border-bottom:1px solid #ddd; <?php echo $topBorder; ?> text-align:center; font-style: italic; color: #555;">
-                                                    <?php echo htmlspecialchars($r['source']); ?>
-                                                </td>
-                                            </tr>
-                                            <?php
-                                        }
-                                    }
+                                <?php 
                                 }
                             }
                         }
                     }
                     ?>
                     <tr id="history_no_data" style="display: none;">
-                        <td colspan="6" style="padding:15px; text-align:center; color:#777;">Показників за цією адресою не знайдено</td>
+                        <td colspan="6" style="padding:15px; text-align:center; color:#777;">Показників не знайдено</td>
                     </tr>
                 </tbody>
             </table>

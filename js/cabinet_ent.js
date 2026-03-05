@@ -222,6 +222,13 @@ window.refreshActiveContent = () => {
              // Перезапуск скриптів
              if (typeof initQuillEditor === 'function') initQuillEditor();
              if (typeof initHistoryPageLogic === 'function') initHistoryPageLogic();
+             
+             const inputs = pageWrapper.querySelectorAll('.input-reading');
+             inputs.forEach(input => {
+                 if (input.value.trim() !== '') {
+                     input.dispatchEvent(new Event('input', { bubbles: true }));
+                 }
+             });
         });
 };
 
