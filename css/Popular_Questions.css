@@ -1,0 +1,68 @@
+:root {
+    /* Кольори */
+    --faq-border-color: #eee;
+    --faq-bg-main: #fff;
+    --faq-bg-question: #f9f9f9;
+    --faq-file-link-bg: #eef2ff;
+    --faq-file-link-color: #4a76f2;
+    
+    /* Розміри та рамки */
+    --faq-padding: 15px 20px;
+    --faq-border: 1px solid var(--faq-border-color);
+    --faq-border-radius: 4px;
+    
+    /* Анімації */
+    --faq-transition: 0.2s ease;
+}
+
+.faq-item { 
+    border-bottom: var(--faq-border); 
+    overflow: hidden; 
+    background: var(--faq-bg-main); 
+}
+    
+.faq-question { 
+    padding: var(--faq-padding); 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    background: var(--faq-bg-question); 
+    font-weight: 600; 
+    transition: background-color var(--faq-transition);
+}
+    
+.faq-question img.tree-icon { 
+    transition: transform var(--faq-transition); 
+    transform: rotate(-90deg); 
+}
+    
+.faq-question.open { 
+    background: var(--bg-light-blue); 
+    color: var(--color-primary); 
+}
+.faq-question.open img.tree-icon { transform: rotate(0deg); }
+
+.faq-answer { 
+    padding: var(--faq-padding); 
+    display: none; 
+    border-top: var(--faq-border); 
+    line-height: 1.6; 
+}
+
+.faq-file-link { 
+    display: inline-flex; 
+    align-items: center; 
+    padding: 8px 12px; 
+    background: var(--faq-file-link-bg); 
+    border-radius: var(--faq-border-radius); 
+    text-decoration: none; 
+    color: var(--faq-file-link-color); 
+    margin-top: 10px; 
+}
+
+.faq-links-list { 
+    list-style: none; 
+    padding: 0; 
+}
+
+.faq-links-list li { margin-bottom: 5px; }

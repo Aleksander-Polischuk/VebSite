@@ -5,7 +5,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : '';
 session_start();
 include "../config.php";
 
-$_SESSION['active_menu'] = $page;
+//$_SESSION['active_menu'] = $page;
 
 switch ($page) {
     case 'Підприємства':

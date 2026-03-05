@@ -147,20 +147,31 @@ include "CustomAlert.php";
 <script src="js/input_meters.js"></script>
 <script src="js/history_readings_2.js"></script>
 <script src="js/feedback.js"></script>
+<script src="js/Popular_Questions.js"></script>
 
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
-// Використовуємо json_encode для безпечної передачі рядків з апострофами
-<?php $activeMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
-const activeMenu = <?php echo json_encode($activeMenu); ?>; 
+// 1. Пріоритет віддаємо збереженій вкладці в браузері, якщо її немає — беремо з сесії PHP
+<?php $defaultMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
+const activeMenu = localStorage.getItem('activeCabinetPage') || <?php echo json_encode($defaultMenu); ?>; 
 
 const userSelect = document.querySelector('.user-select');
 const btn = document.getElementById('userSelectBtn');
 const dropdown = document.getElementById('userSelectDropdown');
 const textBox = btn.querySelector('.u-text');
+
+// Функція для підсвітки активного пункту (винесена для зручності)
+function highlightActiveMenu(pageName) {
+    document.querySelectorAll('.sidebar a').forEach(a => {
+        a.classList.toggle('active', a.innerText.trim() === pageName);
+    });
+}
+
+// Підсвічуємо вкладку одразу при завантаженні скрипта
+highlightActiveMenu(activeMenu);
 
 if (btn) {
     btn.addEventListener('click', () => userSelect.classList.toggle('open'));
@@ -197,9 +208,16 @@ document.addEventListener('click', e => {
     if (userSelect && !userSelect.contains(e.target)) userSelect.classList.remove('open');
 });
 
-// Підсвітка активного пункту меню
-document.querySelectorAll('.sidebar a').forEach(a => {
-    a.classList.toggle('active', a.innerText.trim() === activeMenu);
+// Додаємо обробник для кліків по сайдбару, щоб зберігати вибір
+document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', function(e) {
+        if (this.classList.contains('btn-logout')) return;
+        
+        const pageName = this.innerText.trim();
+        // Зберігаємо назву сторінки в браузері
+        localStorage.setItem('activeCabinetPage', pageName);
+        highlightActiveMenu(pageName);
+    });
 });
 </script>
 

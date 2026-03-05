@@ -4,11 +4,11 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Збереження стану в сесію через AJAX
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_state') {
+/*if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_state') {
     if (isset($_POST['c'])) $_SESSION['h2_contract'] = $_POST['c'];
     if (isset($_POST['a'])) $_SESSION['h2_address'] = $_POST['a'];
     exit('OK');
-}
+}*/
 
 include "config.php";
 

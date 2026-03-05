@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadedPages = {};
 
     const loadPage = (pageName, linkElement) => {
-        return fetch(`/api/get_content.php?page=${encodeURIComponent(pageName)}`)
+        return fetch(`api/get_content.php?page=${encodeURIComponent(pageName)}`)
             .then(r => r.text())
             .then(data => {
                 const pageWrapper = document.createElement('div');
