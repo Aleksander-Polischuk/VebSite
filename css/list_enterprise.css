@@ -1,57 +1,54 @@
 /* =========================================
    SPECIFIC STYLES FOR ENTERPRISE LIST
    ========================================= */
-.simple-list th:first-child,
-.simple-list td:first-child {
+
+.enterprise-header h3 {
+    margin: 0;
+}
+
+/* Пропорції колонок для ПК */
+.simple-list th:nth-child(1),
+.simple-list td:nth-child(1) {
     width: 75% !important;      
+    min-width: 200px !important;
     max-width: none !important; 
-    white-space: normal;  
-    vertical-align: middle;       
+    text-align: left !important;
 }
 
-.simple-list th:last-child,
-.simple-list td:last-child {
+.simple-list th:nth-child(2),
+.simple-list td:nth-child(2) {
     width: 25% !important;
-    min-width: 150px;               
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
+    min-width: 150px !important;                
+    text-align: center !important;
 }
 
+/* =========================================
+   АДАПТИВНІСТЬ
+   ========================================= */
 @media (max-width: 850px) {
+    /* Вмикаємо fixed layout, щоб змусити таблицю тримати ширину і переносити текст */
     .data-table.simple-list {
+        table-layout: fixed !important;
         width: 100% !important;
-        min-width: 100% !important; 
-        table-layout: fixed !important; 
     }
 
-    .simple-list th:first-child,
-    .simple-list td:first-child {
-        width: auto !important;
-        min-width: 0 !important; 
-        white-space: normal !important; 
-        
+    .simple-list th:nth-child(1),
+    .simple-list td:nth-child(1) {
+        width: 65% !important; /* Обмежуємо ширину для назви */
+        white-space: normal !important; /* Дозволяємо переноси тексту */
+        word-wrap: break-word !important; /* Розриваємо довгі слова, якщо вони не влазять */
+        overflow-wrap: break-word !important;
         position: static !important;
-        border-right: none !important; 
-        padding: 10px !important;
-        text-align: left;
+        text-align: left !important;
+        padding: 10px 8px !important;
+        line-height: 1.4 !important;
     }
 
-    .simple-list th:first-child {
-        background-color: var(--bg-table-header) !important;
-        color: var(--text-white) !important;
-    }
-
-    .simple-list td:first-child {
-        background-color: transparent !important;
-    }
-
-    .simple-list th:last-child,
-    .simple-list td:last-child {
-        width: 110px !important; 
-        min-width: 110px !important;
-        white-space: nowrap !important;
-        text-align: center;
+    .simple-list th:nth-child(2),
+    .simple-list td:nth-child(2) {
+        width: 35% !important; /* Решта для ЄДРПОУ */
+        min-width: 90px !important;
+        text-align: center !important;
         padding: 10px 5px !important;
     }
 }

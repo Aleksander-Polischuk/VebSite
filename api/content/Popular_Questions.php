@@ -10,44 +10,44 @@ mysqli_set_charset($link, 'utf8');
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
 if (!$selectedCounteragentId) {
-    echo "<div style='padding:20px;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
+    echo "<div class='faq-error-msg'>Будь ласка, оберіть підприємство у списку зверху.</div>";
     exit;
 }
 
 $sql = "SELECT question, content_type, content_data FROM REF_POPULAR_QUESTIONS WHERE is_active = 1 ORDER BY sort_order ASC";
 $res = mysqli_query($link, $sql);
 
-// Використовуємо клас .tree-icon, для якого в cabinet_ent.css уже прописані стилі
-$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" style="pointer-events: none;">';
+// Використовуємо клас .tree-icon, для якого в головному CSS уже прописані стилі
+$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon faq-pointer-none" width="16" height="16" alt="">';
 ?>
 
-<link href="/css/Popular_Questions.css" rel="stylesheet" type="text/css"/>
+<link href="../../css/Popular_Questions.css" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header">
-    <h3 style="margin: 0;">Поширені запитання</h3>
+    <h3 class="faq-header-title">Поширені запитання</h3>
 </div>
 
-<div style="padding: 15px 0;">
+<div class="faq-list-container">
     <?php if ($res && mysqli_num_rows($res) > 0): ?>
         <?php while ($row = mysqli_fetch_assoc($res)): 
             
-            // Якщо тип контенту - HTML, нам НЕ треба його парсити як JSON
+            // Якщо тип контенту - HTML, НЕ треба його парсити як JSON
             if ($row['content_type'] === 'html') {
-                $itemData = $row['content_data']; // Просто беремо HTML як є
+                $itemData = $row['content_data']; 
             } else {
-                // Для старих питань намагаємося розшифрувати JSON
+                // Якщо тип JSON
                 $itemData = json_decode($row['content_data'], true);
             
-                // Перевірка на помилки тільки для JSON-блоків
+                // Перевірка на помилки для JSON
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    echo "<div style='color:red; padding:10px 20px;'>Помилка JSON у питанні '{$row['question']}': " . json_last_error_msg() . "</div>";
-                    continue; // Пропускаємо малювання, якщо JSON зламаний
+                    echo "<div class='faq-error-msg faq-json-error'>Помилка JSON у питанні '{$row['question']}': " . json_last_error_msg() . "</div>";
+                    continue; 
                 }
             }
         ?>
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    <div style="margin-right: 10px;"><?php echo $caret_icon; ?></div>
+                    <div class="faq-icon-wrapper"><?php echo $caret_icon; ?></div>
                     <?php echo htmlspecialchars($row['question']); ?>
                 </div>
                 
@@ -62,7 +62,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                     <?php elseif ($row['content_type'] === 'file'): ?>
                         <p><?php echo htmlspecialchars($itemData['description'] ?? ''); ?></p>
                         <a href="<?php echo htmlspecialchars($itemData['file_url']); ?>" class="faq-file-link" download>
-                            <img src="/img/attach.svg" width="16" style="margin-right: 8px;"> 
+                            <img src="/img/attach.svg" width="16" class="faq-attach-icon" alt="Файл"> 
                             <?php echo htmlspecialchars($itemData['file_name']); ?>
                         </a>
                         
@@ -74,7 +74,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                         </ul>
                         
                     <?php elseif ($row['content_type'] === 'structure'): ?>
-                        <ul style="padding-left: 20px;">
+                        <ul class="faq-structure-list">
                             <?php foreach ($itemData as $li): ?>
                                 <li><?php echo htmlspecialchars($li); ?></li>
                             <?php endforeach; ?>
@@ -84,16 +84,16 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                         <?php foreach ($itemData['blocks'] as $block): ?>
                             
                             <?php if ($block['type'] === 'paragraph'): ?>
-                                <p style="margin-bottom: 10px; font-weight: bold;">
+                                <p class="faq-adv-paragraph">
                                     <?php echo htmlspecialchars($block['text']); ?>
                                 </p>
                             
                             <?php elseif ($block['type'] === 'paragraph_with_link'): ?>
-                                <p style="margin-bottom: 10px; line-height: 1.6;">
+                                <p class="faq-adv-paragraph-link">
                                     <?php echo htmlspecialchars($block['text_before'] ?? ''); ?>
                                     
                                     <?php if (!empty($block['link'])): ?>
-                                        <a href="<?php echo htmlspecialchars($block['link']['url']); ?>" target="_blank" style="color: #3C9ADC; text-decoration: underline;">
+                                        <a href="<?php echo htmlspecialchars($block['link']['url']); ?>" target="_blank" class="faq-styled-link">
                                             <?php echo htmlspecialchars($block['link']['text']); ?>
                                         </a>
                                     <?php endif; ?>
@@ -102,9 +102,9 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                 </p>
                                 
                             <?php elseif ($block['type'] === 'ordered_list'): ?>
-                                <ol style="padding-left: 20px; line-height: 1.6;">
+                                <ol class="faq-adv-ordered-list">
                                     <?php foreach ($block['items'] as $li): ?>
-                                        <li style="margin-bottom: 15px;">
+                                        <li class="faq-adv-list-item">
                                             <strong><?php echo htmlspecialchars($li['title']); ?></strong><br>
                                             
                                             <?php if (!empty($li['text'])): ?>
@@ -112,19 +112,19 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                             <?php endif; ?>
 
                                             <?php if (!empty($li['external_link'])): ?>
-                                                <a href="<?php echo htmlspecialchars($li['external_link']['url']); ?>" target="_blank" style="color: #3C9ADC; font-weight: bold; text-decoration: underline;">
+                                                <a href="<?php echo htmlspecialchars($li['external_link']['url']); ?>" target="_blank" class="faq-styled-link faq-link-bold">
                                                     <?php echo htmlspecialchars($li['external_link']['label']); ?>
                                                 </a>
                                             <?php endif; ?>
 
                                             <?php if (!empty($li['link'])): ?>
-                                                <a href="#" onclick="document.querySelectorAll('.sidebar a').forEach(a => { if(a.innerText.trim() === '<?php echo htmlspecialchars($li['link']['target']); ?>') a.click(); }); return false;" style="color: #3C9ADC; font-weight: bold; text-decoration: underline;">
+                                                <a href="#" onclick="document.querySelectorAll('.sidebar a').forEach(a => { if(a.innerText.trim() === '<?php echo htmlspecialchars($li['link']['target']); ?>') a.click(); }); return false;" class="faq-styled-link faq-link-bold">
                                                     <?php echo htmlspecialchars($li['link']['label']); ?>
                                                 </a>
                                             <?php endif; ?>
 
                                             <?php if (!empty($li['sublist'])): ?>
-                                                <ul style="padding-left: 20px; list-style-type: disc; margin-top: 5px;">
+                                                <ul class="faq-adv-sublist">
                                                     <?php foreach ($li['sublist'] as $sub): ?>
                                                         <li><?php echo htmlspecialchars($sub); ?></li>
                                                     <?php endforeach; ?>
@@ -132,7 +132,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                             <?php endif; ?>
 
                                             <?php if (!empty($li['text_after'])): ?>
-                                                <div style="margin-top: 5px;">
+                                                <div class="faq-adv-text-after">
                                                     <?php echo htmlspecialchars($li['text_after']); ?>
                                                 </div>
                                             <?php endif; ?>

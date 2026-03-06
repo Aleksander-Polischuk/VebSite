@@ -38,11 +38,11 @@ function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx)
         
         if (diffSpan) {
             const diff = currentNum - prevNum;
-            diffSpan.textContent = diff.toFixed(3).replace('.', ',');
+            diffSpan.innerText = diff.toFixed(3).replace('.', ',');
             diffSpan.style.color = diff < 0 ? "#e74c3c" : "#3C9ADC";
         }
     } else if (diffSpan) {
-        diffSpan.textContent = "0,000";
+        diffSpan.innerText = "0,000";
         diffSpan.style.color = "#3C9ADC";
     }
 
@@ -51,19 +51,16 @@ function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx)
     if (icon && icon.classList.contains('error-icon')) {
         const tooltip = icon.querySelector('.error-tooltip');
         if (tooltip) tooltip.textContent = message;
-        
-        if (statusClass === 'error') {
-            icon.style.visibility = 'visible'; // Робимо видимою
+
+        if (statusClass === 'error' || statusClass === 'warning') {
+            icon.style.display = 'flex'; // Використовуємо flex для центрування
+            icon.style.visibility = 'visible';
             icon.style.opacity = '1';
-            icon.style.backgroundColor = '#e74c3c'; // Червоний
-            icon.childNodes[0].nodeValue = '!'; 
-        } else if (statusClass === 'warning') {
-            icon.style.visibility = 'visible'; // Робимо видимою
-            icon.style.opacity = '1';
-            icon.style.backgroundColor = '#f39c12'; // Помаранчевий
-            icon.childNodes[0].nodeValue = 'i'; 
+            icon.style.backgroundColor = (statusClass === 'error') ? '#e74c3c' : '#f39c12';
+            icon.childNodes[0].nodeValue = (statusClass === 'error') ? '!' : 'i';
         } else {
-            icon.style.visibility = 'hidden';  // Ховаємо, але місце залишається
+            icon.style.display = 'none';
+            icon.style.visibility = 'hidden';
             icon.style.opacity = '0';
         }
     }
@@ -84,19 +81,19 @@ function recalculateTotals(addressIdx, contractIdx) {
     const addrSum = calcSum(`.input-reading.address-group-${addressIdx}`);
     const addrSpan = document.getElementById(`sum_address_${addressIdx}`);
     if (addrSpan) {
-        addrSpan.textContent = addrSum.toFixed(3).replace('.', ',');
+        addrSpan.innerText = addrSum.toFixed(3).replace('.', ',');
         addrSpan.style.color = addrSum < 0 ? "#e74c3c" : "#555";
     }
 
     let contractSum = 0;
     document.querySelectorAll(`.sub-total-val.contract-group-${contractIdx}`).forEach(s => {
-        const v = parseFloat(s.textContent.replace(',', '.'));
+        const v = parseFloat(s.innerText.replace(',', '.'));
         if (!isNaN(v)) contractSum += v;
     });
 
     const contractSpan = document.getElementById(`sum_contract_${contractIdx}`);
     if (contractSpan) {
-        contractSpan.textContent = contractSum.toFixed(3).replace('.', ',');
+        contractSpan.innerText = contractSum.toFixed(3).replace('.', ',');
         contractSpan.style.color = contractSum < 0 ? "#e74c3c" : "#000";
     }
 }
@@ -191,7 +188,7 @@ function saveReadings() {
     document.getElementById('customAlertText').innerHTML = html;
     const subText = document.getElementById('customAlertSubText');
     if (subText) {
-        subText.textContent = 'Зберегти ці дані?';
+        subText.innerText = 'Зберегти ці дані?';
         subText.style.display = 'block';
     }
     
