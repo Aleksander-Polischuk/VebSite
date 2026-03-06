@@ -1,65 +1,85 @@
-/* SPECIFIC STYLES FOR ENT_LIST_ACCOUNTS (ADDRESS LIST) */
+/* =========================================
+   СПИСОК АДРЕС ТА ЛІЧИЛЬНИКІВ
+   ========================================= */
 
+.accounts-header h3 { margin: 0; }
+
+/* Унікальна ширина колонок для цієї таблиці */
+.address-list th:nth-child(1) { width: 40% !important; }
+.address-list th:nth-child(2),
+.address-list th:nth-child(3),
+.address-list th:nth-child(4) { width: 20% !important; }
+
+/* =========================================
+   АДАПТИВНІСТЬ (МОБІЛЬНА ВЕРСІЯ)
+   ========================================= */
 @media (max-width: 850px) {
     .data-table.address-list {
         width: 100% !important;
         display: table !important;
         table-layout: fixed;
     }
+    
     .address-list thead { display: none; }
     
-    .address-list .parent-row td:nth-child(2), 
-    .address-list .parent-row td:nth-child(3), 
-    .address-list .sub-parent td:nth-child(2), 
-    .address-list .sub-parent td:nth-child(3) { 
+    /* Скидаємо сходинку для мобілок, щоб було більше місця */
+    .address-list .parent-row td:first-child,
+    .address-list .sub-parent td:first-child,
+    .address-list .detail-row td:first-child { 
+        padding-left: 15px !important; 
+    }
+
+    .address-list .parent-row td:not(:first-child), 
+    .address-list .sub-parent td:not(:first-child) { 
         display: none !important; 
     }
     
     .address-list .parent-row td, 
     .address-list .sub-parent td { 
-        display: block; width: 100% !important; 
-        max-width: none !important; 
-        min-width: 0 !important; 
-        position: static !important; 
+        display: block; 
+        width: 100% !important; 
         border-right: none !important; 
-        box-sizing: border-box; 
-    }
-    
-    .address-list .sub-parent td { 
-        padding-left: 20px !important; 
-    }
-    .address-list .detail-row { 
-        display: none; 
     }
     
     .address-list .detail-row.show { 
         display: flex !important; 
         flex-direction: column; 
-        border-bottom: 1px solid var(--border-color); 
-        padding: 10px 0; 
-        background-color: var(--bg-white) !important; 
+        padding: 12px 0; 
+        background-color: var(--bg-white) !important;
+        border-bottom: 2px solid var(--border-light);
     }
     
     .address-list .detail-row td { 
-        display: block; 
+        display: flex !important; /* Міняємо на flex для вирівнювання підпису та значення */
+        justify-content: space-between;
         width: 100% !important; 
-        max-width: none !important; 
-        min-width: 0 !important; 
-        position: static !important; 
-        text-align: left !important; 
-        border-right: none !important; 
-        border-bottom: none !important; 
-        padding: 4px 15px 4px 35px !important; 
+        text-align: right !important; /* Значення праворуч */
+        border: none !important; 
+        padding: 6px 15px !important; 
+        font-size: 13px !important;
     }
     
     .address-list .detail-row td:first-child { 
+        justify-content: flex-start;
         font-weight: bold; 
         font-size: 14px !important; 
-        color: var(--text-dark) !important; 
-        padding-top: 8px !important; 
+        color: var(--color-primary);
+        padding-bottom: 8px !important;
+        margin-bottom: 4px;
     }
-    
-    .address-list .detail-row td:first-child span { display: inline !important; }
-    .address-list .detail-row td:nth-child(2) { font-size: 13px !important; }
-    .address-list .detail-row td:nth-child(3) { font-size: 13px !important; padding-bottom: 8px !important; }
+
+    /* Виводимо підпис з атрибута data-label */
+    .address-list .detail-row td[data-label]::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: var(--text-secondary);
+        text-align: left;
+        padding-right: 10px;
+    }
+
+    /* Щоб попередження про повірку не злітало вбік */
+    .address-list .detail-row td span.text-danger {
+        display: inline-block;
+        text-align: right;
+    }
 }

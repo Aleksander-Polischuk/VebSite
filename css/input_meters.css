@@ -1,36 +1,50 @@
-/* =========================================
-   METER READINGS (INPUTS & VALIDATION)
-   ========================================= */
-
-/* ОБГОРТКА ІНПУТА */
-.input-wrapper {
-    position: relative;
-    display: flex; 
-    align-items: center;
-    justify-content: center;
-    width: max-content; 
-    margin: 0 auto; 
+:root {
+    --input-width: 95px;
+    --input-width-mobile: 85px;
+    --input-gap: 10px;
+    --input-gap-mobile: 8px;
+    --icon-size: 20px;
+    --icon-size-mobile: 18px;
+    
+    --glow-primary: rgba(60, 154, 220, 0.4);
+    --glow-error: rgba(231, 76, 60, 0.2);
+    --glow-success: rgba(46, 204, 113, 0.2);
+    --glow-warning: rgba(243, 156, 18, 0.2);
+    
+    --warning-border: #f39c12;
+    --warning-bg: #fdf8e3;
+    --warning-text: #d68910;
+    
+    --tooltip-bg: #333;
+    --tooltip-font-size: 11px;
 }
 
-/* САМ ІНПУТ */
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: max-content;
+    margin: 0 auto;
+    gap: var(--input-gap);
+}
+
 .input-reading {
-    width: 95px !important; 
-    min-width: 95px !important;
-    padding: 6px 4px; 
+    width: var(--input-width) !important;
+    min-width: var(--input-width) !important;
+    padding: 6px 4px !important;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     text-align: center;
     font-size: 14px;
-    color: var(--text-main);
     outline: none;
     transition: all 0.2s ease;
     background-color: var(--bg-white);
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .input-reading:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(60, 154, 220, 0.1);
+    box-shadow: 0 0 8px var(--glow-primary);
 }
 
 .input-reading::-webkit-outer-spin-button,
@@ -38,31 +52,32 @@
     -webkit-appearance: none;
     margin: 0;
 }
-.input-reading[type=number] { -moz-appearance: textfield; }
 
-/* СТАТУСИ ІНПУТІВ */
+.input-reading[type=number] {
+    -moz-appearance: textfield;
+}
+
 .input-reading.error {
     border-color: var(--color-error) !important;
     background-color: var(--color-error-bg) !important;
     color: var(--color-error-text) !important;
-    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
+    box-shadow: 0 0 0 3px var(--glow-error) !important;
 }
 
 .input-reading.valid {
     border-color: var(--color-success) !important;
     background-color: var(--color-success-bg) !important;
     color: var(--color-success-text) !important;
-    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2) !important;
+    box-shadow: 0 0 0 3px var(--glow-success) !important;
 }
 
 .input-reading.warning {
-    border-color: #f39c12 !important;
-    background-color: #fdf8e3 !important; 
-    color: #d68910 !important;
-    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2) !important; 
+    border-color: var(--warning-border) !important;
+    background-color: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
+    box-shadow: 0 0 0 3px var(--glow-warning) !important;
 }
 
-/* ТЕКСТ РІЗНИЦІ */
 .diff-val {
     font-weight: bold;
     font-size: 14px;
@@ -70,43 +85,45 @@
     min-width: 30px;
 }
 
-/* ІКОНКА (Знак оклику або i) */
 .error-icon {
-    visibility: hidden; 
-    opacity: 0; 
     position: relative;
-    margin-left: 6px;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0; 
+    width: var(--icon-size);
+    height: var(--icon-size);
     background-color: var(--color-error);
     color: var(--text-white);
     border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
     text-align: center;
-    line-height: 20px;
-    font-weight: bold;
-    font-size: 14px;
+    padding-top: 1px;
     cursor: help;
     transition: opacity 0.2s ease;
+    z-index: 5;
 }
 
-/* Анімація появи іконки */
 .input-reading.error ~ .error-icon,
 .input-reading.warning ~ .error-icon {
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes popIn { 
-    from { transform: scale(0); opacity: 0; } 
-    to { transform: scale(1); opacity: 1; } 
+@keyframes popIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
-/* ТУЛТИП (Підказка при наведенні) */
 .error-tooltip {
     visibility: hidden;
-    background-color: var(--text-dark);
-    color: var(--text-white);
-    text-align: center;
+    background-color: var(--tooltip-bg);
+    color: #fff;
     padding: 5px 10px;
     border-radius: 6px;
     position: absolute;
@@ -114,13 +131,10 @@
     left: 50%;
     transform: translateX(-50%);
     width: max-content;
-    max-width: 200px;
-    font-size: 12px;
-    font-weight: normal;
-    z-index: 1000;
+    font-size: var(--tooltip-font-size);
     opacity: 0;
     transition: opacity 0.3s;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    line-height: normal;
 }
 
 .error-tooltip::after {
@@ -134,16 +148,16 @@
     border-color: var(--text-dark) transparent transparent transparent;
 }
 
-.error-icon:hover .error-tooltip { visibility: visible; opacity: 1; }
+.error-icon:hover .error-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
 
-/* =========================================
-   BOTTOM CONTROLS (BUTTONS)
-   ========================================= */
 .bottom-controls {
     display: flex;
-    justify-content: flex-end; 
-    padding-top: 20px;         
-    padding-bottom: 30px;       
+    justify-content: flex-end;
+    padding-top: 20px;
+    padding-bottom: 30px;
 }
 
 .btn-save {
@@ -161,62 +175,70 @@
     height: auto;
 }
 
-.btn-save:hover { background-color: var(--color-primary-dark); }
-.btn-save:active { transform: translateY(1px); box-shadow: none; }
+.btn-save:hover {
+    background-color: var(--color-primary-dark);
+}
 
+.btn-save:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
 
-/* =========================================
-   RESPONSIVE / MOBILE
-   ========================================= */
 @media (max-width: 850px) {
-
-    /* ФІКС БАГУ ФАНТОМНОГО СКРОЛУ (Safari/Chrome sticky conflict) */
     .data-table {
-        border-collapse: separate !important; 
+        border-collapse: separate !important;
         border-spacing: 0 !important;
     }
 
-    /* ШРИФТИ ТА РОЗМІРИ ІНПУТІВ (Твої рідні) */
     .input-reading {
-        width: 85px !important; 
-        min-width: 85px !important;
+        width: var(--input-width-mobile) !important;
+        min-width: var(--input-width-mobile) !important;
         padding: 8px 4px;
-        font-size: 12px !important; 
+        font-size: 12px !important;
     }
-    
+
     .data-table tbody tr.detail-row td:nth-child(2),
     .data-table tbody tr.detail-row td:nth-child(4),
     .diff-val {
-        font-size: 12px !important; 
+        font-size: 12px !important;
     }
-    
-    /* КНОПКА ЗБЕРЕЖЕННЯ */
+
     .bottom-controls {
-        position: fixed;     
-        bottom: 0; left: 0; right: 0;
-        background: var(--bg-white);       
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-white);
         padding: 15px;
         border-top: 1px solid var(--border-light);
         z-index: 800;
-        justify-content: center; 
+        justify-content: center;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     }
-    
+
     .btn-save {
-        width: 100%;            
+        width: 100%;
         padding: 12px;
     }
-    
-    /* ФІКС ТУЛТИПА: ВІДВ'ЯЗУЄМО ВІД ЦЕНТРУ, ЩОБ НЕ РОЗТЯГУВАВ ЕКРАН */
+
     .error-tooltip {
         left: auto !important;
-        right: -5px !important; 
-        transform: none !important; 
+        right: -5px !important;
+        transform: none !important;
     }
-    
+
     .error-tooltip::after {
         left: auto !important;
-        right: 10px !important; 
+        right: 10px !important;
         margin-left: 0 !important;
+    }
+
+    .input-wrapper {
+        gap: var(--input-gap-mobile);
+    }
+    
+    .error-icon {
+        width: var(--icon-size-mobile);
+        height: var(--icon-size-mobile);
     }
 }

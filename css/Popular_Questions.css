@@ -4,7 +4,6 @@
     --faq-bg-main: #fff;
     --faq-bg-question: #f9f9f9;
     --faq-file-link-bg: #eef2ff;
-    --faq-file-link-color: #4a76f2;
     
     /* Розміри та рамки */
     --faq-padding: 15px 20px;
@@ -13,6 +12,26 @@
     
     /* Анімації */
     --faq-transition: 0.2s ease;
+}
+
+/* =========================================
+   ОСНОВНІ СТИЛІ
+   ========================================= */
+.faq-header-title {
+    margin: 0;
+}
+
+.faq-list-container {
+    padding: 15px 0;
+}
+
+.faq-error-msg {
+    padding: 20px;
+}
+
+.faq-json-error {
+    color: red;
+    padding: 10px 20px;
 }
 
 .faq-item { 
@@ -30,17 +49,26 @@
     font-weight: 600; 
     transition: background-color var(--faq-transition);
 }
+
+.faq-icon-wrapper {
+    margin-right: 10px;
+}
     
 .faq-question img.tree-icon { 
     transition: transform var(--faq-transition); 
     transform: rotate(-90deg); 
+}
+.faq-pointer-none {
+    pointer-events: none;
 }
     
 .faq-question.open { 
     background: var(--bg-light-blue); 
     color: var(--color-primary); 
 }
-.faq-question.open img.tree-icon { transform: rotate(0deg); }
+.faq-question.open img.tree-icon { 
+    transform: rotate(0deg); 
+}
 
 .faq-answer { 
     padding: var(--faq-padding); 
@@ -49,6 +77,9 @@
     line-height: 1.6; 
 }
 
+/* =========================================
+   СТИЛІ КОНТЕНТУ (Файли, Посилання, Списки)
+   ========================================= */
 .faq-file-link { 
     display: inline-flex; 
     align-items: center; 
@@ -56,13 +87,61 @@
     background: var(--faq-file-link-bg); 
     border-radius: var(--faq-border-radius); 
     text-decoration: none; 
-    color: var(--faq-file-link-color); 
+    color: var(--color-primary); 
     margin-top: 10px; 
+}
+
+.faq-attach-icon {
+    margin-right: 8px;
 }
 
 .faq-links-list { 
     list-style: none; 
     padding: 0; 
 }
+.faq-links-list li { 
+    margin-bottom: 5px; 
+}
 
-.faq-links-list li { margin-bottom: 5px; }
+.faq-structure-list {
+    padding-left: 20px;
+}
+
+/* Розширена структура (advanced_structure) */
+.faq-adv-paragraph {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.faq-adv-paragraph-link {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.faq-styled-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.faq-link-bold {
+    font-weight: bold;
+}
+
+.faq-adv-ordered-list {
+    padding-left: 20px;
+    line-height: 1.6;
+}
+
+.faq-adv-list-item {
+    margin-bottom: 15px;
+}
+
+.faq-adv-sublist {
+    padding-left: 20px;
+    list-style-type: disc;
+    margin-top: 5px;
+}
+
+.faq-adv-text-after {
+    margin-top: 5px;
+}

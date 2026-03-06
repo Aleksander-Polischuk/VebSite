@@ -266,8 +266,16 @@ body {
     color: var(--text-main);
     vertical-align: middle;
     border-right: 1px solid var(--text-muted);
+    text-align: center; 
 }
-.data-table td:last-child { border-right: none; }
+
+.data-table td:last-child { 
+    border-right: none; 
+}
+
+.data-table td:first-child {
+    text-align: left;
+}
 
 /* Table Rows Colors */
 .parent-row { 
@@ -286,6 +294,20 @@ body {
 .child-row { 
     background-color: var(--bg-lvl-3) !important; 
     display: none; 
+}
+
+.data-table .parent-row td:first-child {
+    padding-left: 15px;
+}
+
+/* 2-й рівень: Під-рядок (Адреса - якщо використовується) */
+.data-table .sub-parent td:first-child {
+    padding-left: 35px;
+}
+
+/* 3-й рівень: Деталі (Лічильники) */
+.data-table .detail-row td:first-child {
+    padding-left: 55px; /* Збільшений відступ для ефекту сходинки */
 }
 
 .detail-row, .tree-table tbody tr.detail-row { background-color: var(--bg-white) !important; }
@@ -387,13 +409,20 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
 .btn-tree-custom svg { pointer-events: none; }
 
 /* Desktop 1st Column Width */
-.data-table th:first-child, .data-table td:first-child {
-    width: 350px; 
-    max-width: 350px; 
-    min-width: 250px;
+.data-table th:first-child, 
+.data-table td:first-child {
+    width: auto; 
+    min-width: 200px;
     white-space: normal; 
     word-wrap: break-word;
+    text-align: left;
 }
+
+.data-table.fixed-layout {
+    table-layout: fixed;
+    width: 100%;
+}
+
 .detail-row td:first-child { 
     padding-right: 10px; 
     line-height: 1.4; 
@@ -541,6 +570,7 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
         font-size: 13px !important;
         border-bottom: 1px solid var(--border-table);
         border-right: 1px solid var(--text-muted);
+        text-align: center;
     }
 
     .data-table thead th { 
@@ -556,6 +586,7 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
         border-right: 1px solid var(--text-muted);
         background-color: var(--bg-white);
         display: table-cell !important;
+        text-align: left;   
     }
 
     .data-table thead th:first-child { 
@@ -643,4 +674,31 @@ table.data-table tbody tr.child-row:hover td {
 
 .year-select-custom:hover, .year-select-custom:focus {
     border-color: var(--color-primary);
+}
+
+.bullet-icon {
+    color: #4a76f2; /* Синій колір */
+    margin-right: 8px; /* Невеликий відступ від тексту лічильника */
+    font-size: 16px; /* За бажанням можна зробити крапку трохи більшою */
+    font-weight: bold;
+}
+
+/* Червоні попередження (глобально) */
+.text-danger {
+    color: #d32f2f !important;
+}
+
+.font-bold {
+    font-weight: bold !important;
+}
+
+/* Налаштування для першої колонки (щоб не розширювалась) */
+.data-table.address-list {
+    table-layout: fixed !important;
+}
+
+.address-list td, .address-list th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

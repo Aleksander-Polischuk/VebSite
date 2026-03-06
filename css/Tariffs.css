@@ -1,0 +1,14 @@
+.tariffs-table th:nth-child(1) { width: 60%; }
+.tariffs-table th:nth-child(2),
+.tariffs-table th:nth-child(3) { width: 20%; }
+
+.tariffs-table th,
+.tariffs-table td {
+    border-right: none !important;
+}
+    
+.tariffs-table .detail-row td {
+    border-bottom: none !important;
+    padding-top: 6px !important;    
+    padding-bottom: 6px !important; 
+}

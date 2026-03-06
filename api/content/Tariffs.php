@@ -12,7 +12,7 @@ $orgId = $IDOrganizations ?? 1;
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
 if (!$selectedCounteragentId) {
-    echo "<div style='padding:20px;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
+    echo "<div style='padding:20px; color: red;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
     exit;
 }
 
@@ -43,44 +43,40 @@ if ($result_tariff) {
     }
 }
 ?>
-
-<link href="../../css/ent_list_accounts.css" rel="stylesheet" type="text/css"/>
-
-
+<link href="../../css/Tariffs.css" rel="stylesheet" type="text/css"/>
 <div class="table-header-row sticky-header" id="history-start">
-    <h3 style="margin: 0; flex-grow: 1;">Тарифи на послуги</h3>  
+    <h3 style="margin: 0;">Тарифи на послуги</h3>  
 
     <div class="header-controls">
         <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
-            <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути">
+            <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
         </button>
         <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути все">
-            <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути">
+            <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
         </button>
     </div>
-
 </div>
 
 <div class="table-container" id="history-container">
-    <table class="data-table tree-table shadow-table" style="width: 100%; border-collapse: collapse; border: none;">
+    <table class="data-table tree-table shadow-table tariffs-table">
         <thead>
             <tr>
-                <th style="text-align: left; padding: 12px; width: 60%; border-bottom: none; border-right: none;">Послуга</th>
-                <th style="text-align: center; width: 20%; border-bottom: none; border-right: none;">Ціна (без ПДВ)</th>
-                <th style="text-align: center; width: 20%; border-bottom: none; border-right: none;">Ціна (з ПДВ)</th>
+                <th>Послуга</th>
+                <th>Ціна (без ПДВ)</th>
+                <th>Ціна (з ПДВ)</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($treeData)): ?>
-                <tr><td colspan="3" style="padding: 30px; text-align: center; color: #666; border: none;">Дані відсутні.</td></tr>
+                <tr><td colspan="3" class="cell-no-data">Дані відсутні.</td></tr>
             <?php else: 
                 $d_idx = 0;
                 foreach ($treeData as $date => $groups): 
                     $d_idx++;
                     $dateId = "d_" . $d_idx;
             ?>
-                <tr class="parent-row" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
-                    <td colspan="3" style="background-color: #f9f9f9; border-bottom: none; border-right: none;">
+                <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
+                    <td colspan="3">
                         <?php echo $caret_icon; ?> <strong>Період: <?php echo $date; ?></strong>
                     </td>
                 </tr>
@@ -91,22 +87,22 @@ if ($result_tariff) {
                     $g_idx++;
                     $groupId = $dateId . "_g" . $g_idx;
                 ?>
-                    <tr class="child-row <?php echo $dateId; ?> sub-parent" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
-                        <td colspan="3" style="padding-left: 30px; background-color: #fff; border-bottom: none; border-right: none;">
-                            <?php echo $caret_icon; ?> <span style="color: #555; font-weight: 600;"><?php echo htmlspecialchars($groupName); ?></span>
+                    <tr class="child-row <?php echo $dateId; ?> sub-parent show" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
+                        <td colspan="3">
+                            <?php echo $caret_icon; ?> <?php echo htmlspecialchars($groupName); ?>
                         </td>
                     </tr>
 
                     <?php foreach ($services as $s): ?>
                         <tr class="child-row <?php echo $groupId; ?> detail-row">
-                            <td style="padding-left: 60px; border-bottom: none; border-right: none; font-size: 13px;">
-                                <span style="color: #4a76f2; margin-right: 8px;">•</span> 
+                            <td>
+                                <span class="bullet-icon">•</span> 
                                 <?php echo htmlspecialchars($s['SERVICE']); ?>
                             </td>
-                            <td align="center" style="border-bottom: none; border-right: none; color: #666;">
+                            <td class="text-muted">
                                 <?php echo number_format($s['PRICE_WITHOUT_TAX'], 3, '.', ' '); ?>
                             </td>
-                            <td align="center" style="border-bottom: none; border-right: none; color: #666;">
+                            <td class="text-muted">
                                 <?php echo number_format($s['PRICE_WITH_TAX'], 3, '.', ' '); ?>
                             </td>
                         </tr>

@@ -3,13 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Збереження стану в сесію через AJAX
-/*if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_state') {
-    if (isset($_POST['c'])) $_SESSION['h2_contract'] = $_POST['c'];
-    if (isset($_POST['a'])) $_SESSION['h2_address'] = $_POST['a'];
-    exit('OK');
-}*/
-
 include "config.php";
 
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
@@ -97,7 +90,6 @@ mysqli_stmt_bind_param($stmt, "iiii", $orgId, $selectedYear, $userId, $selectedC
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
-
 $treeData = [];
 $addressMap = []; 
 
@@ -117,7 +109,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
     if (!empty($row['ReadingDate'])) {
         $dateObj = strtotime($row['ReadingDate']);
-        $periodKey = date('Y_m', $dateObj); // Ключ для сортування (2024_03)
+        $periodKey = date('Y_m', $dateObj); // Ключ для сортування
         $displayPeriod = date('m.Y', $dateObj);
         
         if (!isset($treeData[$cID]['addresses'][$addrKey]['periods'][$periodKey])) {
@@ -141,22 +133,31 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 $savedContract = $_SESSION['h2_contract'] ?? '';
 $savedAddress  = $_SESSION['h2_address'] ?? '';
+
+$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
 ?>
 
 <link href="/css/history_readings_2.css" rel="stylesheet" type="text/css"/>
 
-<div class="table-header-row sticky-header" style="flex-direction: column; align-items: stretch;">
+<div class="table-header-row sticky-header history-header-wrapper" id="history-start">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
-        <h3 style="margin: 0;">Історія показників</h3>
+    <div class="history-header-top">
+        <h3>Історія показників</h3>
         <div class="header-controls">      
-            <select id="yearSelect" class="year-select-custom" onchange="changeYear(this.value)">
+            <select id="yearSelect" class="year-select-custom history-year-select" onchange="changeYear(this.value)">
                 <?php foreach($years as $y): ?>
                     <option value="<?php echo $y; ?>" <?php echo ($y == $selectedYear) ? 'selected' : ''; ?>>
                         <?php echo $y; ?> рік
                     </option>
                 <?php endforeach; ?>
             </select> 
+            
+            <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути всі періоди">
+                <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
+            </button>
+            <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути всі періоди">
+                <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
+            </button>
         </div>
     </div>
 
@@ -170,7 +171,7 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
             </select>
         </div>
 
-        <div class="filter-group" style="margin-bottom: 5px;">
+        <div class="filter-group filter-address-group">
             <label for="sel_address">2. Адреса:</label>
             <select id="sel_address" disabled></select>
         </div>
@@ -183,20 +184,19 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
     <input type="hidden" id="php_saved_address" value="<?php echo htmlspecialchars($savedAddress); ?>">
 
     <?php if (empty($treeData)): ?>
-        <p style="font-size: 18px; color: #666;">Дані за <?php echo $selectedYear; ?> рік відсутні.</p>
+        <p class="history-no-data-msg">Дані за <?php echo $selectedYear; ?> рік відсутні.</p>
     <?php else: ?>
        
-
-        <div class="table-container">
-            <table class="data-table tree-table shadow-table" style="width: 100%; border-collapse: collapse;">
-                <thead style="background:#f2f2f2">
+        <div class="table-container" id="history-container">
+            <table class="data-table tree-table shadow-table history-table">
+                <thead>
                     <tr>
-                        <th style="padding:12px; text-align:center">Лічильник</th>
-                        <th style="padding:12px; text-align:center">Дата</th>
-                        <th style="padding:12px; text-align:center">Попередні</th>
-                        <th style="padding:12px; text-align:center">Поточні</th>
-                        <th style="padding:12px; text-align:center">Різниця, куб.м</th>
-                        <th style="padding:12px; text-align:center">Джерело</th>
+                        <th>Період / Лічильник</th>
+                        <th>Дата</th>
+                        <th>Попередні</th>
+                        <th>Поточні</th>
+                        <th>Різниця, куб.м</th>
+                        <th>Джерело</th>
                     </tr>
                 </thead>
                 <tbody id="history_tbody">
@@ -204,7 +204,6 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
                     foreach ($treeData as $cID => $cData) {
                         foreach ($cData['addresses'] as $aKey => $aData) {
                             if (!empty($aData['periods'])) {
-
                                 krsort($aData['periods']);
 
                                 foreach ($aData['periods'] as $pKey => $pData) {
@@ -215,28 +214,31 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
                                         data-contract="<?php echo $cID; ?>" 
                                         data-address="<?php echo $aKey; ?>" 
                                         onclick="toggleTree(this, '<?php echo $periodId; ?>')"
-                                        style="display: none; cursor: pointer; background-color: #f9f9f9;">
-                                        <td colspan="6">
-                                             <img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">
-                                                 <?php echo $pData['name']; ?>
+                                        style="display: none;">
+                                        <td>
+                                             <?php echo $caret_icon; ?>
+                                             <?php echo $pData['name']; ?>
                                         </td>
-                                        
-                                       
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
                                     </tr>
 
                                     <?php foreach ($pData['readings'] as $r): ?>
-                                        <tr class="history-data-row child-row <?php echo $periodId; ?>" 
+                                        <tr class="history-data-row child-row <?php echo $periodId; ?> detail-row" 
                                             data-contract="<?php echo $cID; ?>" 
                                             data-address="<?php echo $aKey; ?>" 
                                             style="display: none;">
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; font-weight:600; color:#333; padding-left: 40px;">
-                                                <span style="color: #3C9ADC;">•</span> <?php echo htmlspecialchars($r['meter']); ?>
+                                            <td>
+                                                <span class="bullet-icon">•</span> <?php echo htmlspecialchars($r['meter']); ?>
                                             </td>
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center"><?php echo $r['date']; ?></td>
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; color: #666;"><?php echo $r['prev']; ?></td>
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; color: #666;"><?php echo $r['curr']; ?></td>
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center"><strong><?php echo $r['val']; ?></strong></td>
-                                            <td style="padding:10px; border-bottom:1px solid #ddd; text-align:center; font-style: italic; color: #555;">
+                                            <td><?php echo $r['date']; ?></td>
+                                            <td style="color: #666;"><?php echo $r['prev']; ?></td>
+                                            <td style="color: #666;"><?php echo $r['curr']; ?></td>
+                                            <td><strong><?php echo $r['val']; ?></strong></td>
+                                            <td style="font-style: italic; color: #555;">
                                                 <?php echo htmlspecialchars($r['source']); ?>
                                             </td>
                                         </tr>

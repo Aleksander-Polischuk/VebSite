@@ -1,0 +1,113 @@
+/* =========================================
+   ТАБЛИЦЯ РАХУНКІВ ТА АКТІВ
+   ========================================= */
+
+/* Шапка */
+.bills-header h3 {
+    margin: 0;
+}
+
+.bills-year-select {
+    margin-left: 10px;
+}
+
+.error-msg-padding {
+    padding: 20px;
+}
+
+.icon-no-pointer {
+    pointer-events: none;
+}
+
+/* Ширина колонок таблиці */
+.bills-table {
+    width: 100%;
+}
+.bills-table th:nth-child(1) { width: auto; }   /* Договір / Період */
+.bills-table th:nth-child(2) { width: 150px; }  /* Номер */
+.bills-table th:nth-child(3) { width: 150px; }  /* Сума з ПДВ */
+.bills-table th:nth-child(4) { width: 130px; }  /* Переглянути */
+.bills-table th:nth-child(5) { width: 130px; }  /* Підписати */
+.bills-table th:nth-child(6) { width: 220px; }  /* Статус */
+
+/* Текст */
+.text-dark { color: #444; }
+.text-bold { font-weight: bold; }
+
+/* =========================================
+   СТАТУСИ ПІДПИСІВ
+   ========================================= */
+.status-badge {
+    font-size: 13px;
+}
+.status-unsigned {
+    color: #999;
+}
+.status-signed-ca {
+    color: #28a745;
+    font-weight: 500;
+}
+.status-signed-org {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+/* =========================================
+   КНОПКИ ДІЙ (Переглянути, Підписати)
+   ========================================= */
+.btn-action {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+/* Кнопка "Переглянути" */
+.btn-view {
+    background-color: var(--bg-light-blue);
+    color: var(--color-primary);
+    border-color: #d1e0ff; /* Світло-синя рамка */
+}
+.btn-view:hover {
+    background-color: var(--color-primary);
+    color: #fff;
+}
+
+/* Кнопка "Підписати" */
+.btn-sign {
+    background-color: var(--color-primary);
+    color: #fff;
+}
+.btn-sign:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+}
+
+/* Вимкнена кнопка "Підписати" */
+.btn-sign:disabled {
+    background-color: #ccc;
+    border-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* =========================================
+   АДАПТИВНІСТЬ
+   ========================================= */
+@media (max-width: 850px) {
+    .bills-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .bills-year-select {
+        margin-left: 0;
+        width: 100%;
+    }
+}

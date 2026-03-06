@@ -18,7 +18,7 @@ $orgId = $IDOrganizations ?? 1;
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
 if (!$selectedCounteragentId) {
-    echo "<div style='padding:20px;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
+    echo "<div class='error-msg-padding text-negative'>Будь ласка, оберіть підприємство у списку зверху.</div>";
     exit;
 }
 
@@ -36,7 +36,7 @@ function getUkrMonth($dateStr) {
 }
 
 // SVG іконка для дерева
-$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
+$caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon icon-no-pointer" alt="">';
 
 // -------------------------------------------------------------------------
 // 1. ОТРИМАННЯ СПИСКУ ДОСТУПНИХ РОКІВ
@@ -87,10 +87,10 @@ $sql = "
     FROM ACCESS acc
     INNER JOIN DOC_INVOICE di ON 
             di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-	    AND di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
+        AND di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
     inner JOIN REF_CONTRACT rc ON 
-	    di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS 
-	    and rc.ID = di.ID_REF_CONTRACT 
+        di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS 
+        and rc.ID = di.ID_REF_CONTRACT 
     WHERE acc.ID_USERS = ?
       AND acc.ID_ORGANIZATIONS = ?
       AND acc.ID_REF_COUNTERAGENT = ?
@@ -128,18 +128,18 @@ while ($row = mysqli_fetch_assoc($result)) {
 }
 ?>
 
-<link href="../../css/bills.css" rel="stylesheet" type="text/css"/>
+<link href="../../css/ent_invoice.css" rel="stylesheet" type="text/css"/>
 
-<div class="table-header-row sticky-header">
-    <h3 style="margin: 0;">Рахунки та акти</h3>
+<div class="table-header-row sticky-header bills-header">
+    <h3>Рахунки та акти</h3>
     <div class="header-controls">
         <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
-            <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути">
+            <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" class="icon-no-pointer">
         </button>
         <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути все">
-            <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути">
+            <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" class="icon-no-pointer">
         </button>
-        <select class="year-select-custom" onchange="changeYear(this.value)" title="Оберіть рік">
+        <select class="year-select-custom bills-year-select" onchange="changeYear(this.value)" title="Оберіть рік">
             <?php foreach($years as $y): ?>
                 <option value="<?php echo $y; ?>" <?php echo ($y == $selectedYear) ? 'selected' : ''; ?>>
                     <?php echo $y; ?> рік
@@ -150,19 +150,24 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <div class="table-container">
-    <table class="data-table tree-table shadow-table" style="width: 100%; border-collapse: collapse;">
+    <table class="data-table tree-table shadow-table bills-table">
         <thead>
             <tr>
-                <th style="text-align: left; padding: 12px;">Договір / Період</th>
-                <th style="text-align: center; width: 150px;">Номер</th>
-                <th style="text-align: center; width: 150px;">Сума з ПДВ</th>
-                <th style="text-align: center; width: 130px;"></th> <th style="text-align: center; width: 130px;"></th> <th style="text-align: center; width: 220px;">Статус</th> </tr>
+                <th>Договір / Період</th>
+                <th>Номер</th>
+                <th>Сума з ПДВ</th>
+                <th></th> 
+                <th></th> 
+                <th>Статус</th> 
+            </tr>
         </thead>
         <tbody>
             <?php if (empty($treeData)): ?>
-                <tr><td colspan="6" style="padding: 20px; text-align: center; color: #777;">
-                    За <?php echo $selectedYear; ?> рік даних не знайдено.
-                </td></tr>
+                <tr>
+                    <td colspan="6" class="cell-no-data">
+                        За <?php echo $selectedYear; ?> рік даних не знайдено.
+                    </td>
+                </tr>
             <?php else: 
                 $c_idx = 0;
                 foreach ($treeData as $contractData): 
@@ -182,21 +187,11 @@ while ($row = mysqli_fetch_assoc($result)) {
                     foreach ($contractData['invoices'] as $invoice): 
                         $windowName = "invoice_view_" . $invoice['number'];
                         
-                        // =========================================================================
-                        // ЛОГІКА БЛОКУВАННЯ КНОПКИ "ПІДПИСАТИ"
-                        // =========================================================================
-                       
-                        
-                        $requiredSignatures = [
-                            'has_pdf',
-                            'sign_org',
-                            'sign_ca'
-                        ];
-
-                        $isFullySigned = true; // За замовчуванням кнопка РОЗБЛОКОВАНА
+                        // Логіка підписів
+                        $requiredSignatures = ['has_pdf', 'sign_org', 'sign_ca'];
+                        $isFullySigned = true; 
 
                         if (!empty($requiredSignatures)) {
-                            $isFullySigned = true;
                             foreach ($requiredSignatures as $req) {
                                 if (empty($invoice[$req])) {
                                     $isFullySigned = false;
@@ -204,56 +199,49 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 }
                             }
                         }
-                        // =========================================================================
                         
-                        $statusHtml = '<span style="color: #999; font-size: 13px;">Не підписано</span>';
-                        
-                        // Статуси відображаємо незалежно від логіки блокування кнопки
+                        // Статуси
+                        $statusHtml = '<span class="status-badge status-unsigned">Не підписано</span>';
                         if ($invoice['has_pdf'] && $invoice['sign_org'] && $invoice['sign_ca']) {
-                            $statusHtml = '<span style="color: #28a745; font-weight: 500; font-size: 13px;">Підписано контрагентом</span>';
+                            $statusHtml = '<span class="status-badge status-signed-ca">Підписано контрагентом</span>';
                         } elseif ($invoice['sign_org']) {
-                            $statusHtml = '<span style="color: #3C9ADC; font-weight: 500; font-size: 13px;">Готовий до підпису</span>';
+                            $statusHtml = '<span class="status-badge status-signed-org">Готовий до підпису</span>';
                         }
                         
                         $isButtonDisabled = $isFullySigned && !$forceSign;
-                        //$isButtonDisabled = false; // ПРИМУСОВЕ РОЗБЛОКУВАННЯ ДЛЯ ТЕСТІВ
                 ?>
                     <tr class="child-row show <?php echo $cGroupId; ?> detail-row">
-                        <td style="padding-left: 40px; color: #555;">
-                            <span style="color: #3C9ADC;">•</span> 
+                        <td>
+                            <span class="bullet-icon">•</span> 
                             <?php echo getUkrMonth($invoice['period']); ?>
                         </td>
-                        <td style="text-align: center; border-left: 1px solid #eee; color: #444;">
+                        <td class="text-dark">
                             <?php echo htmlspecialchars($invoice['number']); ?>
                         </td>
-                        <td style="text-align: center; border-left: 1px solid #eee; font-weight: bold;">
+                        <td class="text-bold">
                             <?php echo number_format($invoice['sum_tax'], 2, ',', ' '); ?>
                         </td>
                         
-                        <td style="text-align: center; border-left: 1px solid #eee;">
+                        <td>
                             <a href="/api/get_ent_invoice.php?id=<?php echo htmlspecialchars($invoice['number']); ?>" 
                                target="<?php echo $windowName; ?>" 
                                class="btn-action btn-view" 
-                               title="Переглянути рахунок" 
-                               style="text-decoration: none;">
+                               title="Переглянути рахунок">
                                 Переглянути
                             </a>
                         </td>
-
-
                         
-                        <td style="text-align: center; border-left: 1px solid #eee;">
+                        <td>
                             <button type="button" 
-                                    class="btn-action btn-sign" 
-                                    data-id="<?php echo htmlspecialchars($invoice['number']); ?>"
-                                    title="<?php echo $isButtonDisabled ? 'Документ вже підписаний обома сторонами' : 'Підписати документ'; ?>" 
-                                    onclick="<?php echo $isButtonDisabled ? 'return false;' : 'openSignWindow(\'' . htmlspecialchars($invoice['number']) . '\')'; ?>"
-                                    <?php echo $isButtonDisabled ? 'disabled style="background: #ccc; border-color: #ccc; color: #666; cursor: not-allowed; opacity: 0.8;"' : ''; ?>>
-                                Підписати
-                            </button>
+                                class="btn-action btn-sign" 
+                                title="<?php echo $isButtonDisabled ? 'Документ вже підписаний обома сторонами' : 'Підписати документ'; ?>" 
+                                onclick="<?php echo $isButtonDisabled ? 'return false;' : 'window.open(\'/api/content/SigningDocs.php?id=' . htmlspecialchars($invoice['number']) . '\', \'sign_window_' . htmlspecialchars($invoice['number']) . '\')'; ?>"
+                                <?php echo $isButtonDisabled ? 'disabled' : ''; ?>>
+                            Підписати
+                        </button>
                         </td>
 
-                        <td style="text-align: center; border-left: 1px solid #eee;">
+                        <td>
                             <?php echo $statusHtml; ?>
                         </td>
                     </tr>
@@ -264,20 +252,6 @@ while ($row = mysqli_fetch_assoc($result)) {
         <?php endif; ?>
         </tbody>
     </table>
-    
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const signButtons = document.querySelectorAll('.btn-sign');
-    
-    signButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const invoiceId = this.getAttribute('data-id');
-            
-            if (this.hasAttribute('disabled')) return;
-            
-            window.open('/api/content/SigningDocs.php?id=' + invoiceId, 'sign_window_' + invoiceId);
-        });
-    });
-});
-</script>  
 </div>
+
+<script src="../../js/bills.js" type="text/javascript"></script>
