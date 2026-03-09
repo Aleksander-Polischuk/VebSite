@@ -203,32 +203,57 @@ function changeYear(year) {
         });
 }
 
-// Оновлення контенту активної вкладки
+// Оновлення контенту всіх вкладок
 window.refreshActiveContent = () => {
-    const activeLink = document.querySelector('.sidebar a.active');
-    if (!activeLink) return;
-
-    const pageName = activeLink.innerText.trim();
-    const pageWrapper = document.getElementById(`page-${pageName}`);
+    const mainContent = document.getElementById('mainContent');
+    if (!mainContent) return;
     
-    if (!pageWrapper) return;
+    mainContent.style.opacity = '0.5';
 
-    fetch(`/api/get_content.php?page=${encodeURIComponent(pageName)}`)
-        .then(r => r.text())
-        .then(data => {
-             // Оновлюємо вміст активної сторінки
-             pageWrapper.innerHTML = data;
-             
-             // Перезапуск скриптів
-             if (typeof initQuillEditor === 'function') initQuillEditor();
-             if (typeof initHistoryPageLogic === 'function') initHistoryPageLogic();
-             
-             const inputs = pageWrapper.querySelectorAll('.input-reading');
-             inputs.forEach(input => {
-                 if (input.value.trim() !== '') {
-                     input.dispatchEvent(new Event('input', { bubbles: true }));
-                 }
-             });
+    //  Беремо всі вкладки з меню
+    const links = Array.from(document.querySelectorAll('.sidebar a:not(.btn-logout)'));
+    
+    //  Створюємо запити для кожної вкладки
+    const fetchPromises = links.map(link => {
+        const pageName = link.innerText.trim();
+        const pageWrapper = document.getElementById(`page-${pageName}`);
+        
+        if (!pageWrapper) return Promise.resolve();
+
+        // Завантажуємо свіжі дані з новим контрагентом для кожної сторінки
+        return fetch(`/api/get_content.php?page=${encodeURIComponent(pageName)}`)
+            .then(r => r.text())
+            .then(data => {
+                 pageWrapper.innerHTML = data; 
+            });
+    });
+
+    //  Чекаємо, поки всі вкладки оновляться
+    Promise.all(fetchPromises)
+        .then(() => {
+            mainContent.style.opacity = '1';
+            
+            // Перезапуск скриптів
+            if (typeof initQuillEditor === 'function') initQuillEditor();
+            if (typeof initHistoryPageLogic === 'function') initHistoryPageLogic();
+            
+            const activeLink = document.querySelector('.sidebar a.active');
+            if (activeLink) {
+                const activePageName = activeLink.innerText.trim();
+                const activeWrapper = document.getElementById(`page-${activePageName}`);
+                if (activeWrapper) {
+                    const inputs = activeWrapper.querySelectorAll('.input-reading');
+                    inputs.forEach(input => {
+                        if (input.value.trim() !== '') {
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Помилка оновлення сторінок:", err);
+            mainContent.style.opacity = '1';
         });
 };
 
