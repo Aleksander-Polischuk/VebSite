@@ -114,7 +114,7 @@
 .alert-close:hover { opacity: 1; }
 
 /* ===========================
-   5. ТІЛО (BODY)
+   5.(BODY)
    =========================== */
 .custom-alert-body {
     padding: 25px 20px;
@@ -239,45 +239,39 @@
 }
 
 .alert-sub-text {
-    padding: 0 20px 15px; /* Відступи (зверху 0, бо зверху вже є відступ від body) */
-    text-align: center;   /* Центрування тексту */
-    font-size: 16px;      /* Можна зробити трохи більшим */
-    font-weight: bold;    /* Жирний шрифт для акценту (як на скріншоті) */
-    color: var(--color-primary); /* Можна використати основний колір або var(--text-main) */
-    width: 100%;          /* На всю ширину */
+    padding: 0 20px 15px; 
+    text-align: center;   
+    font-size: 16px;      
+    font-weight: bold;   
+    color: var(--color-primary); 
+    width: 100%;        
     box-sizing: border-box;
 }
 
 /* ===========================
-   8. MEDIA QUERIES (АДАПТИВНІСТЬ)
+   8.АДАПТИВНІСТЬ
    =========================== */
-
-/* --- Desktop & Tablet (Ширше 768px) --- */
-/* Тут реалізовано розширення вікна під довгий текст */
 @media (min-width: 768px) {
     .custom-alert-box {
         width: fit-content;
         min-width: 450px;
-        max-width: 80vw; /* До 80% ширини екрану */
+        max-width: 80vw; 
     }
 
-    /* Заборона перенос слів на ПК, щоб вікно розширювалось */
     .alert-scroll-container div, 
     .alert-content-area p {
         white-space: nowrap;
         max-width: none; 
     }
 
-    /* Збільшення висоти скролу для великих екранів */
     .alert-scroll-container {
         max-height: 60vh; 
     }
 }
 
-/* --- Mobile (Вужче 480px) --- */
 @media (max-width: 480px) {
     .custom-alert-box {
-        width: 95%; /* Майже на всю ширину телефону */
+        width: 95%; 
         max-width: none;
     }
     

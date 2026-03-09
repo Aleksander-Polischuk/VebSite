@@ -30,7 +30,6 @@
    $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
    mysqli_set_charset($link, 'utf8');
    
-   // 1. ДОДАЛИ ВИБІРКУ IS_CONFIRMED
    $SQLExec = "select ID, PHONE, PASSWD_HASH, IS_ENT, IS_CONFIRMED from USERS where PHONE='$phone' and IS_ENT=$account_type"; 
    $res = mysqli_query($link, $SQLExec);
     
@@ -42,7 +41,7 @@
     $id_users      = $s_row['ID'];
     $is_ent        = $s_row['IS_ENT'];
     $password_hash = $s_row['PASSWD_HASH'];
-    $is_confirmed  = $s_row['IS_CONFIRMED']; // Отримали значення
+    $is_confirmed  = $s_row['IS_CONFIRMED']; 
      
     if (password_verify($password, $password_hash)) {  // Пароль вірний
         
@@ -51,7 +50,7 @@
         if ($is_ent == 1 && $is_confirmed == 0) {
              echo json_encode([
                'success' => false,
-               'message' => 'Ваш обліковий запис не активовано. Перевірте пошту.' // Повідомлення для користувача
+               'message' => 'Ваш обліковий запис не активовано. Перевірте пошту.' 
             ]);
             exit;
         }

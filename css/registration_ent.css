@@ -1,3 +1,47 @@
+/* =========================================
+   ЗМІННІ
+   ========================================= */
+:root {
+    /* Кольори*/
+    --color-primary: #3C9ADC;
+    --color-primary-hover: #2380C2;
+    --color-link: #2f80ed;
+    --color-white: #ffffff;
+    --color-bg-light: #f8f9fa;
+    --color-input-bg: #eef4ff;
+    
+    /* Текст */
+    --color-text-main: #374151;
+    
+    /* Обведення та рамки */
+    --color-border: #cfd6e4;
+    --color-border-light: #e5e7eb;
+    
+    /* Кольори статусів (помилки та успіх) */
+    --color-error-outline: #e53935;
+    --color-error-text: red;
+    --color-error-msg: #ff0000;
+    --color-error-req: #d32f2f;
+    --color-success: #27ae60;
+    
+    /* Тіні */
+    --shadow-focus: 0 0 0 3px rgba(60, 154, 220, 0.5);
+    --shadow-error: 0 0 15px rgba(255, 0, 0, 0.5);
+    
+    /* Шрифти та радіуси */
+    --font-family-base: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+/* =========================================
+   ОСНОВНІ СТИЛІ
+   ========================================= */
+* {
+    box-sizing: border-box;
+    font-family: var(--font-family-base);
+}
 
 body {
     margin: 0;
@@ -5,12 +49,12 @@ body {
 }
 
 #wrapper {
-        margin-top:40px;
-        border:0px solid #000;
-	    width: 100%;
-        max-width:900px;
-	    margin: 0 auto;
-	    height: auto  !important;
+    margin-top: 40px;
+    border: 0px solid #000;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    height: auto !important;
 }
 
 #header {
@@ -21,7 +65,7 @@ body {
 }
 
 #logoIco {
-	width: 250px;
+    width: 250px;
 }
 
 .register-link {
@@ -29,12 +73,12 @@ body {
 }
 
 .LogoLine {
-  position:absolute;
-  background: #3C9ADC;	
-  width: 99.5%;
-  max-width:800px;
-  height: 3px;
-  margin-top: 70px;
+    position: absolute;
+    background: var(--color-primary);    
+    width: 99.5%;
+    max-width: 800px;
+    height: 3px;
+    margin-top: 70px;
 }
 
 a,
@@ -42,23 +86,18 @@ a:visited,
 a:hover,
 a:active,
 a:focus {
-    color: #2f80ed;
-    
+    color: var(--color-link);
 }
 
-/*------------------------------*/
-
-* {
-    box-sizing: border-box;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
+/* =========================================
+   БЛОК РЕЄСТРАЦІЇ
+   ========================================= */
 .registration-box {
     width: 420px;
     margin: 0 auto;
-    background: #fff;
+    background: var(--color-white);
     padding: 32px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-top: 80px;
 }
 
@@ -69,7 +108,7 @@ a:focus {
 }
 
 .field {
-    position: relative; /* + */
+    position: relative;
     display: block;
     margin-bottom: 18px;
 }
@@ -79,68 +118,56 @@ a:focus {
     margin-bottom: 6px;
     font-size: 16px;
 }
+
 .label-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+/* Інпути */
 #password, #password2, #email {
-   width: 100%;
-    height: 48px;
-    padding: 0 14px;
-    font-size: 18px;
-    border: 1px solid #cfd6e4;
-    border-radius: 6px;
-    background-color: #eef4ff;
-}
-select {
     width: 100%;
     height: 48px;
     padding: 0 14px;
     font-size: 18px;
-    border: 1px solid #cfd6e4;
-    border-radius: 6px;
-    background-color: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-input-bg);
 }
 
-select {
-    appearance: none;
-    background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23666' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-}
-
-input:focus,
-select:focus {
+input:focus{
     outline: none;
-    border-color: #3c9adc;
-    box-shadow: 0 0 0 3px rgba(60, 154, 220, 0.5);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-focus);
 }
 
 input.error {
-  outline: 1px solid #e53935;
+    outline: 1px solid var(--color-error-outline);
 }
 
+/* Кнопка */
 .btn-registration {
     width: 100%;
     height: 52px;
     border: none;
-    border-radius: 8px;
-    background: #3C9ADC; 
-    color: #fff;
+    border-radius: var(--radius-md);
+    background: var(--color-primary); 
+    color: var(--color-white);
     font-size: 18px;
     font-weight: 600;
     cursor: pointer;
 }
 
 .btn-registration:hover {
-    background: #2380C2;
+    background: var(--color-primary-hover);
 }
 
+/* =========================================
+   ПОМИЛКИ ТА ПОВІДОМЛЕННЯ
+   ========================================= */
 .error-text {
-    color: red;
+    color: var(--color-error-text);
     font-size: 12px;
     margin-top: 5px;
 }
@@ -153,23 +180,41 @@ input.error {
 }
 
 .error-icon {
-  position: absolute;
-  right: -14px;
-  top: 38px;
-  color: #e53935;
-  font-weight: bold;
-  font-size: 18px;
-  display: none;
-  pointer-events: none;
-  line-height: 1;
+    position: absolute;
+    right: -14px;
+    top: 38px;
+    color: var(--color-error-outline);
+    font-weight: bold;
+    font-size: 18px;
+    display: none;
+    pointer-events: none;
+    line-height: 1;
 }
 
 .field.error .error-icon {
-  display: block;
+    display: block;
 }
 
-/* ===== Пароль + глазик ===== */
+#ErrMsgEmail,
+#ErrMsgServer {
+    display: none;
+    margin-top: 15px;
+    float: left;
+    margin-left: 3%;
+    margin-right: 3%;    
+    border: 1px solid var(--color-error-msg);
+    border-radius: 5px;
+    box-shadow: var(--shadow-error);
+}
 
+.ErrMsgText {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+/* =========================================
+   ПАРОЛЬ + ОКО
+   ========================================= */
 .password-wrap {
     position: relative;
 }
@@ -189,7 +234,6 @@ input.error {
     background: none;
     cursor: pointer;
     opacity: 0.6;
-    
     background: url("/img/view.svg") 0 0 no-repeat;
 }
 
@@ -197,42 +241,64 @@ input.error {
     background: url("/img/no-view.svg") 0 0 no-repeat;
 }
 
-#ErrMsgEmail {
-   display: none;
-   margin-top:15px;
-   float:left;
-   margin-left:3%;
-   margin-right:3%;	
-   border: 1px solid #ff0000;
-   border-radius: 5px;
-   box-shadow: 0 0 15px rgba(255,0,0,0.5);
+/* Маскування пароля */
+.masked-password {
+    -webkit-text-security: disc;
+}
+.unmasked-password {
+    -webkit-text-security: none;
 }
 
-#ErrMsgServer {
-   display: none;
-   margin-top:15px;
-   float:left;
-   margin-left:3%;
-   margin-right:3%;	
-   border: 1px solid #ff0000;
-   border-radius: 5px;
-   box-shadow: 0 0 15px rgba(255,0,0,0.5);
+/* =========================================
+   БЛОК ВИМОГ ДО ПАРОЛЯ
+   ========================================= */
+.password-requirements {
+    margin: 15px 0 25px;
+    background: var(--color-bg-light);
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+    text-align: left;
 }
 
-.ErrMsgText {
-   margin-left:10px;
-   margin-right:10px;
+.password-requirements .req-title {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    font-size: 13px;
 }
-/*====================================================*/
 
+.password-requirements .req-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+}
 
-@media screen and (min-width:100px) and (max-width:768px) {
-	
-	#wrapper .registration-box	{
-		margin-top: 0px;
-		width: auto;
-	}
-	.register-link {
+.password-requirements li {
+    margin-bottom: 4px;
+    color: var(--color-error-req); 
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirements li::before {
+    content: "❌";
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* =========================================
+   Мобільні пристрої
+   ========================================= */
+@media screen and (min-width: 100px) and (max-width: 768px) {
+    #wrapper .registration-box {
+        margin-top: 0px;
+        width: auto;
+    }
+    .register-link {
         white-space: normal;
     }
     .register-link a {
@@ -240,9 +306,9 @@ input.error {
         margin-right: 10px;
     }
     #logoIco {
-		width: 230px;
+        width: 230px;
     }
     body {
-    	padding: 5px 0;
+        padding: 5px 0;
     }
 }

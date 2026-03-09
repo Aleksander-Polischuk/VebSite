@@ -3,11 +3,11 @@ header('Content-Type: application/json');
 
 // Функція відправки HTML листа
 function SendRecoveryMail($to, $token) {
-    $subject = "Відновлення пароля develop.kgonline.in.ua";
+    $subject = "Відновлення пароля cv.kgonline.in.ua";
     $subject = '=?utf-8?B?'.base64_encode($subject).'?=';
     
     // Вказати дійсну пошту домену
-    //$headers .= "From: noreply@develop.kgonline.in.ua\r\n";
+    $headers .= "From:<noreply@cv.kgonline.in.ua>\r\n";
     
     $headers  = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -17,12 +17,12 @@ function SendRecoveryMail($to, $token) {
     // Формуємо посилання
     $link = "http://develop.kgonline.in.ua/recovery?token=$token&email=" . urlencode($to);
 
-    // ЗМІНА 2: Завантажуємо шаблон з файлу
+    // Завантажуємо шаблон з файлу
     $templatePath = '../templates/recovery_mail.html';
     
     if (file_exists($templatePath)) {
         $message = file_get_contents($templatePath);
-        // ЗМІНА 3: Замінюємо мітку {{LINK}} на реальне посилання (двічі, бо вона є і в кнопці, і текстом)
+        // Замінюємо мітку {{LINK}} на реальне посилання
         $message = str_replace('{{LINK}}', $link, $message);
     } else {
         // Запасний варіант, якщо файл шаблону не знайдено
@@ -66,7 +66,7 @@ if (mysqli_num_rows($result) > 0) {
     $sqlToken = "UPDATE USERS SET RECOVERY_TOKEN = '$token' WHERE ID = $userId";
     mysqli_query($link, $sqlToken);
 
-    // 4. Відправляємо красивий лист
+    // 4. Відправляємо лист
     SendRecoveryMail($email, $token);
     
     echo json_encode(['success' => true]);

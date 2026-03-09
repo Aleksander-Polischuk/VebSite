@@ -1,20 +1,3 @@
-$(function () {
-   
-    // Показати / сховати пароль
-    $('.toggle-password').on('click', function () {
-        const input = $('#password');
-        const isHidden = input.attr('type') === 'password';
-
-        input.attr('type', isHidden ? 'text' : 'password');
-        $('.toggle-password').toggleClass('active');
-        
-        const inputcp = $('#password2');
-        const isHiddencp = inputcp.attr('type') === 'password';
-
-        inputcp.attr('type', isHiddencp ? 'text' : 'password');
-    });
-});
-
 document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('registrationForm');
@@ -22,193 +5,190 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('password');
     const password2 = document.getElementById('password2');
 
-    const MIN_PASSWORD_LENGTH = 6;
-    let emailCheckTimer = null;
-    let lastCheckedEmail = '';
-
-    email.addEventListener('input', () => {
-    	validateEmail();
-    	debounceCheckEmail();
-    });
-
-    password.addEventListener('input', validatePassword);
-    password2.addEventListener('input', validatePasswordConfirm);
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();  
-        
-      validateEmail();
-      validatePassword();
-      validatePasswordConfirm();
-
-      if (isFormValid()) { // Якщо все ок 
-        const formData = new FormData(form);
-
-        fetch('/api/registration_ent_check.php', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Якщо все ок 
-                window.location.href = data.redirect ?? '/login';
+    // Використовуємо перемикання класів маскування, щоб браузер не пропонував старі паролі
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            if (input.classList.contains('masked-password')) {
+                input.classList.remove('masked-password');
+                input.classList.add('unmasked-password');
+                this.classList.add('active');
             } else {
-                if (data.code === 2) { 
-                	const errMsg = document.getElementById('ErrMsgEmail');
-    				errMsg.style.display = 'block';
-
-    				setTimeout(() => {
-        				errMsg.style.display = 'none';
-    				}, 10000); // 10 секунд = 10000 мс
-                }	
+                input.classList.remove('unmasked-password');
+                input.classList.add('masked-password');
+                this.classList.remove('active');
             }
-        })
-        .catch(error => {
-            console.error(error);
-            
-            const errMsg = document.getElementById('ErrMsgServer');
-    		errMsg.style.display = 'block';
-
-    		setTimeout(() => {
-        			errMsg.style.display = 'none';
-    		}, 10000); // 10 секунд = 10000 мс
         });
-        
-        
-        
-        
-      }
     });
 
-    /* ---------- EMAIL ---------- */
-    function validateEmail() {
-    	const value = email.value.trim();
 
-    	if (!value) {
-      		setError(email, 'emailError', 'Обовʼязкове до заповнення');
-      		return false;
-    	}
+/* ---------- ДИНАМІЧНА ВАЛІДАЦІЯ ПАРОЛЯ ---------- */
+function validateRegistrationPassword() {
+    const p1 = password.value;
+    const p2 = password2.value;
+    const container = document.querySelector('.password-requirements');
 
-    	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      		setError(email, 'emailError', 'Невірний формат');
-      		return false;
-    	}
+    const reqLength = document.getElementById('req-length');
+    const reqNumber = document.getElementById('req-number');
+    const reqMatch = document.getElementById('req-match');
 
-    	clearError(email, 'emailError');
-    	return true;
-  	}
+    if (!reqLength || !reqNumber || !reqMatch || !container) return false;
 
-  	function debounceCheckEmail() {
-    	clearTimeout(emailCheckTimer);
+    // 1. Мінімум 6 символів
+    const isLengthOk = p1.length >= 6;
+    reqLength.style.display = isLengthOk ? 'none' : 'flex';
 
-    	if (!validateEmail()) return;
+    // 2. Мінімум одна цифра
+    const isNumberOk = /\d/.test(p1);
+    reqNumber.style.display = isNumberOk ? 'none' : 'flex';
 
-    	const value = email.value.trim();
-    	if (value === lastCheckedEmail) return;
+    // 3. Паролі співпадають (і не порожні)
+    const isMatchOk = (p1 === p2 && p1 !== '');
+    reqMatch.style.display = isMatchOk ? 'none' : 'flex';
 
-    	emailCheckTimer = setTimeout(() => {
-      		checkEmailInDB(value);
-    	}, 500);
-  	}
+    // Перевіряємо, чи залишився хоча б один видимий пункт
+    const anyVisible = !isLengthOk || !isNumberOk || !isMatchOk;
 
-  	async function checkEmailInDB(emailValue) {
-    	try {
-      		const response = await fetch('/api/check_email.php', {
-        		method: 'POST',
-        		headers: {
-          			'Content-Type': 'application/json'
-        		},
-        		body: JSON.stringify({ email: emailValue })
-      		});
+    // Ховаємо весь блок, якщо всі умови виконані
+    container.style.display = anyVisible ? 'block' : 'none';
 
-      		if (!response.ok) {
-       	 		throw new Error('Network error');
-      		}
+    // Якщо все ок, чистимо старі текстові помилки під полями
+    if (!anyVisible) {
+        clearError(password, 'passwordError');
+        clearError(password2, 'password2Error');
+    }
 
-      		const data = await response.json();
-      		lastCheckedEmail = emailValue;
+    return !anyVisible;
+}
 
-      		if (data.exists) {
-       			 setError(email, 'emailError', 'E-mail вже зареєстрований');
-      		} else {
-        		clearError(email, 'emailError');
-      		}
+    function validateEmailFormat() {
+        const value = email.value.trim();
 
-    	} catch (e) {
-      		console.error(e);
-    	}
-  	}
-
-  	/* ---------- PASSWORD ---------- */
-  	function validatePassword() {
-    	const value = password.value;
-
-    	if (!value) {
-      		setError(password, 'passwordError', 'Обовʼязкове до заповнення');
-      		return;
-    	}
-
-    	if (value.length < MIN_PASSWORD_LENGTH) {
-      		setError(
-        		password,
-        		'passwordError',
-        		`Мінімум ${MIN_PASSWORD_LENGTH} символів`
-      		);
-      		return;
-    	}
-
-    	clearError(password, 'passwordError');
-
-    	if (password2.value) {
-      		validatePasswordConfirm();
-    	}
-  	}
-
-  	function validatePasswordConfirm() {
-    	if (!password2.value) {
-              setError(password2, 'password2Error', 'Обовʼязкове до заповнення');
-              return;
+        if (!value) {
+            setError(email, 'emailError', 'Обовʼязкове до заповнення');
+            return false;
         }
 
-        if (password.value !== password2.value) {
-              setError(password2, 'password2Error', 'Паролі не співпадають');
-              return;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            setError(email, 'emailError', 'Невірний формат');
+            return false;
         }
+
+        clearError(email, 'emailError');
+        return true;
+    }
+
+    function debounceCheckEmail() {
+        clearTimeout(emailCheckTimer);
+
+        const value = email.value.trim();
+        if (value === lastCheckedEmail) return;
+
+        emailCheckTimer = setTimeout(() => {
+            checkEmailInDB(value);
+        }, 500);
+    }
+
+    async function checkEmailInDB(emailValue) {
+        try {
+            const response = await fetch('/api/check_email.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: emailValue })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network error');
+            }
+
+            const data = await response.json();
+            lastCheckedEmail = emailValue;
+
+            if (data.exists) {
+                setError(email, 'emailError', 'E-mail вже зареєстрований');
+            } else {
+                clearError(email, 'emailError');
+            }
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+
+    /* ---------- ВІДПРАВКА ФОРМИ ---------- */
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();  
         
-    	clearError(password2, 'password2Error');
-  	}
+        const isEmailFormatOk = validateEmailFormat();
+        const isPassOk = validateRegistrationPassword();
+        
+        // Перевіряємо, чи немає помилок, виставлених з БД
+        const isEmailUnique = !email.classList.contains('error'); 
 
-  	/* ---------- HELPERS ---------- */
-  	function setError(input, errorId, message) {
-    	input.classList.add('error');
-    	input.closest('.field').classList.add('error');
-    	document.getElementById(errorId).innerText = message;
-  	}
+        if (!isPassOk) {
+            setError(password, 'passwordError', 'Будь ласка, виконайте всі вимоги до пароля');
+        }
 
-  	function clearError(input, errorId) {
-    	input.classList.remove('error');
-    	input.closest('.field').classList.remove('error');
-    	document.getElementById(errorId).innerText = '';
-  	}
+        // Відправляємо дані тільки якщо все "зелене" та пошта валідна
+        if (isEmailFormatOk && isEmailUnique && isPassOk) { 
+            const formData = new FormData(form);
 
-  	function isFormValid() {
-    	return (
-      		!email.classList.contains('error') &&
-      		!password.classList.contains('error') &&
-      		!password2.classList.contains('error') &&
-      		email.value !== '' &&
-      		password.value !== '' &&
-      		password2.value !== ''
-    	);
-  	}
+            fetch('/api/registration_ent_check.php', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP error ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect ?? '/login';
+                } else {
+                    if (data.code === 2) { 
+                        const errMsg = document.getElementById('ErrMsgEmail');
+                        errMsg.style.display = 'block';
+
+                        setTimeout(() => {
+                            errMsg.style.display = 'none';
+                        }, 10000); // 10 секунд
+                    }   
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                
+                const errMsg = document.getElementById('ErrMsgServer');
+                errMsg.style.display = 'block';
+
+                setTimeout(() => {
+                        errMsg.style.display = 'none';
+                }, 10000); // 10 секунд
+            });
+        }
+    });
+
+    /* ---------- ДОПОМІЖНІ ФУНКЦІЇ ---------- */
+    function setError(input, errorId, message) {
+        input.classList.add('error');
+        input.closest('.field').classList.add('error');
+        const errorEl = document.getElementById(errorId);
+        if (errorEl) errorEl.innerText = message;
+    }
+
+    function clearError(input, errorId) {
+        input.classList.remove('error');
+        input.closest('.field').classList.remove('error');
+        const errorEl = document.getElementById(errorId);
+        if (errorEl) errorEl.innerText = '';
+    }
 
 });

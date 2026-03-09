@@ -152,7 +152,7 @@ while ($row = mysqli_fetch_assoc($s_res)) {
                     $mId = $cId . "_m" . $a_idx;
                     $addrDate = ($addrData['min_date']) ? date('d.m.Y', strtotime($addrData['min_date'])) : '-';
                 ?>
-                    <tr class="child-row <?php echo $cId; ?> sub-parent show" onclick="toggleTree(this, '<?php echo $mId; ?>')">
+                    <tr class="child-row <?php echo $cId; ?> sub-parent show open" onclick="toggleTree(this, '<?php echo $mId; ?>')">
                         <td>
                             <?php echo $caret_icon; ?>
                             <?php echo htmlspecialchars($addressName); ?>
@@ -171,7 +171,7 @@ while ($row = mysqli_fetch_assoc($s_res)) {
                         $lastVal = ($meter['last_val'] !== null) ? number_format($meter['last_val'], 3, '.', '') : '-';
                         $lastDate = ($meter['last_date']) ? date('d.m.Y', strtotime($meter['last_date'])) : '-';
                     ?>
-                        <tr class="child-row <?php echo $mId; ?> detail-row">
+                        <tr class="child-row <?php echo $mId; ?> detail-row show">
                             <td>
                                 <span class="bullet-icon">•</span> 
                                 <?php echo htmlspecialchars($meter['name']); ?>

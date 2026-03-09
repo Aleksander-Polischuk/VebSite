@@ -86,3 +86,39 @@ function stepTree(direction) {
         });
     }
 }
+
+function toggleTreeDeep(element, parentId) {
+    // 1. Спочатку перемикаємо сам період (стандартна логіка)
+    if (typeof toggleTree === 'function') {
+        toggleTree(element, parentId);
+    }
+
+    const isOpen = element.classList.contains('open');
+    
+    // 2. Знаходимо всі групи (sub-parent), які належать до цього періоду
+    const subGroups = document.querySelectorAll(`.sub-parent.${parentId}`);
+    
+    subGroups.forEach(group => {
+        // Отримуємо ID групи (наприклад, d_1_g1) з її атрибута onclick
+        const onclickAttr = group.getAttribute('onclick');
+        const groupIdMatch = onclickAttr ? onclickAttr.match(/'([^']+)'/) : null;
+        
+        if (groupIdMatch && groupIdMatch[1]) {
+            const groupId = groupIdMatch[1];
+            
+            if (isOpen) {
+                // Якщо період відкриваємо — відкриваємо і групу
+                group.classList.add('open');
+                document.querySelectorAll(`.${groupId}`).forEach(row => {
+                    row.classList.add('show');
+                });
+            } else {
+                // Якщо період закриваємо — закриваємо і групу
+                group.classList.remove('open');
+                document.querySelectorAll(`.${groupId}`).forEach(row => {
+                    row.classList.remove('show');
+                });
+            }
+        }
+    });
+}

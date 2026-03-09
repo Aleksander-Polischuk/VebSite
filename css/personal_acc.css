@@ -10,6 +10,13 @@
     --p-border: var(--border-color, #cccccc);
     --p-text-main: var(--text-main, #444444);
     --p-text-muted: var(--text-muted, #999999);
+    
+    --color-success: #27ae60;
+    --color-error: #d32f2f;
+    --color-text-main: #374151;
+    --color-bg-light: #f8f9fa;
+    --color-border: #e5e7eb;
+    --font-size-small: 13px;
 }
 
 .profile-page-container {
@@ -228,4 +235,52 @@
 
 .shake-error {
     animation: shake 0.3s ease-in-out;
+}
+
+/* --- Блок вимог до пароля --- */
+.password-requirements {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    background: var(--color-bg-light);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.password-requirements .req-title {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    font-size: var(--font-size-small);
+}
+
+.password-requirements .req-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: var(--font-size-small);
+}
+
+.password-requirements li {
+    margin-bottom: 4px;
+    color: var(--color-error); 
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirements li::before {
+    content: "❌";
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Стан виконаної вимоги */
+.password-requirements li.valid {
+    color: var(--color-success); 
+}
+
+.password-requirements li.valid::before {
+    content: "✔";
 }

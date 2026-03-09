@@ -27,6 +27,15 @@ $selectedId = $_SESSION['selected_counteragent_id'] ?? null;
 $userId = (int)$_SESSION['id_users'];
 $orgId = (int)$IDOrganizations;
 
+
+// --- Перевірка прав адміністратора ---
+$isAdmin = false;
+$admin_ids = [5]; //ID адмінів
+
+if (in_array($userId, $admin_ids)) {
+    $isAdmin = true;
+}
+
 $SQLExec = "
     SELECT 
         RC.ID,
@@ -100,13 +109,25 @@ include "CustomAlert.php";
         </div>
       </div>
     </div>
-
+    <!--
+    <?php if ($isAdmin): ?>
+    
+    <div class="header-admin">
+        <a href="/admin/admin_faq_add.php" title="Адміністративна панель" onclick="openAdminPanel(event, this.href)">
+            <img src="/img/gear.svg" alt="Налаштування" class="admin-gear-icon">
+        </a>
+    </div>
+    
+    <?php endif; ?>
+    
+    -->
     <div class="header-right">
-  <div class="header-center">
-   <div class="balance <?php echo $balanceClass; ?>"><?php echo $balance; ?> грн</div>
-    <div class="balance-sub">До сплати станом на <br><span><?php echo $lastDateFormatted; ?></span></div>
-  </div>
-</div>
+      <div class="header-center">
+       <div class="balance <?php echo $balanceClass; ?>"><?php echo $balance; ?> грн</div>
+        <div class="balance-sub">До сплати станом на <br><span><?php echo $lastDateFormatted; ?></span></div>
+      </div>
+    </div>
+  </div> 
 </header>
 
 <div class="overlay" id="overlay"></div>
@@ -163,7 +184,7 @@ const btn = document.getElementById('userSelectBtn');
 const dropdown = document.getElementById('userSelectDropdown');
 const textBox = btn.querySelector('.u-text');
 
-// Функція для підсвітки активного пункту (винесена для зручності)
+// Функція для підсвітки активного пункту
 function highlightActiveMenu(pageName) {
     document.querySelectorAll('.sidebar a').forEach(a => {
         a.classList.toggle('active', a.innerText.trim() === pageName);
@@ -219,6 +240,28 @@ document.querySelectorAll('.sidebar a').forEach(link => {
         highlightActiveMenu(pageName);
     });
 });
+
+function openAdminPanel(event, url) {
+    event.preventDefault(); // Зупиняємо стандартний перехід за посиланням
+
+    // 1. Намагаємося отримати посилання на вікно за ім'ям, але НЕ передаємо URL.
+    // Це просто знаходить існуючу вкладку, не перевантажуючи її.
+    var adminWin = window.open('', 'admin_panel');
+
+    // 2. Перевіряємо, чи це вікно нове (пусте) або чи в ньому завантажена не та сторінка.
+    // Якщо воно щойно відкрилося, location.href буде "about:blank".
+    try {
+        if (adminWin.location.href === 'about:blank') {
+            adminWin.location.href = url; // Завантажуємо адмінку тільки якщо вкладка була порожньою
+        }
+    } catch (e) {
+        // Якщо виникла помилка безпеки, просто завантажуємо URL
+        adminWin.location.href = url;
+    }
+
+    // 3. Переводимо фокус на цю вкладку
+    adminWin.focus();
+}
 </script>
 
 </body>

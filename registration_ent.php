@@ -1,4 +1,4 @@
-<?php
+        <?php
   $title = 'Реєстрація в особистому кабінеті';
   $list_css = ['/css/registration_ent.css'];
   
@@ -37,7 +37,7 @@
 	            </div>
 	
 	            <div class="password-wrap">
-	                <input type="password" name="password" id="password" placeholder="Пароль">
+                    <input type="text" name="password" id="password" class="masked-password" autocomplete="off" placeholder="Пароль">
 	                <button type="button" class="toggle-password" aria-label="Показати пароль"></button>
 	            </div>
 	            
@@ -51,13 +51,22 @@
 	            </div>
 	
 	            <div class="password-wrap">
-	                <input type="password" name="password2" id="password2" placeholder="Підтвердіть пароль">
+                    <input type="text" name="password2" id="password2" class="masked-password" autocomplete="off" placeholder="Підтвердіть пароль">
 	                <button type="button" class="toggle-password" aria-label="Показати пароль"></button>
 	            </div>
 	            
 	            <span class="error-icon">!</span>
                 <p class="error-text" id="password2Error"></p>
 	        </label>
+	       
+            <div class="password-requirements">
+                <p class="req-title">Вимоги до пароля:</p>
+                <ul class="req-list">
+                    <li id="req-length">Мінімум 6 символів</li>
+                    <li id="req-number">Містить хоча б одну цифру</li>
+                    <li id="req-match">Паролі співпадають</li>
+                </ul>
+            </div>
 	       
 	       
 	        <button type="submit" class="btn-registration">Зареєструватися</button>

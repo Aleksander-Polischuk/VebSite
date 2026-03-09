@@ -3,37 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <title>Підтвердження реєстрації</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f4f4f4; 
+            font-family: Arial, sans-serif; 
+        }
+
+        table { 
+            border-collapse: collapse; 
+        }
+        
+        .wrapper { 
+            padding: 40px 0; 
+        }
+
+        .container { 
+            width: 600px; 
+            max-width: 100%; 
+            background-color: #ffffff; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            margin: 0 auto; 
+        }
+        
+        .header { 
+            padding: 30px 40px 20px 40px; 
+        }
+
+        .logo { 
+            display: block; 
+            border: 0; 
+            width: 250px; 
+        }
+        
+        .divider { 
+            background-color: #3C9ADC; 
+            height: 3px; 
+            font-size: 0; 
+            line-height: 0; 
+        }
+        
+        .content { 
+            padding: 40px; 
+        }
+
+        .title { 
+            color: #333333; 
+            font-size: 20px; 
+            font-weight: bold; 
+            padding-bottom: 20px; 
+        }
+
+        .text { 
+            color: #555555; 
+            font-size: 16px; 
+            line-height: 24px; 
+            padding-bottom: 30px; 
+        }
+        
+        .button-wrapper { 
+            padding-bottom: 30px; 
+            text-align: center; 
+        }
+
+        .button-bg { 
+            background-color: #3C9ADC; 
+            border-radius: 6px; 
+        }
+
+        .btn { 
+            display: inline-block; 
+            padding: 14px 30px; 
+            font-family: Arial, sans-serif; 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #ffffff; 
+            text-decoration: none; 
+            border-radius: 6px; 
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+<body>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
         <tr>
-            <td align="center" style="padding: 40px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <td align="center" class="wrapper">
+                <table border="0" cellpadding="0" cellspacing="0" class="container">
                     <tr>
-                        <td align="left" style="padding: 30px 40px 20px 40px;">
-                            <img src="http://develop.kgonline.in.ua/img/logo.png" alt="Логотип" width="250" style="display: block; border: 0;">
+                        <td align="left" class="header">
+                            <img src="http://develop.kgonline.in.ua/img/logo.png" alt="Логотип" class="logo">
                         </td>
                     </tr>
-                    <tr><td style="background-color: #3C9ADC; height: 3px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+                    <tr><td class="divider">&nbsp;</td></tr>
                     <tr>
-                        <td style="padding: 40px;">
+                        <td class="content">
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td style="color: #333333; font-size: 20px; font-weight: bold; padding-bottom: 20px;">
+                                    <td class="title">
                                         Підтвердження Email
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="color: #555555; font-size: 16px; line-height: 24px; padding-bottom: 30px;">
+                                    <td class="text">
                                         Дякуємо за реєстрацію! Для активації вашого облікового запису підтвердьте вашу електронну пошту.
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" style="padding-bottom: 30px;">
+                                    <td align="center" class="button-wrapper">
                                         <table border="0" cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td align="center" bgcolor="#3C9ADC" style="border-radius: 6px;">
-                                                    <a href="{{LINK}}" target="_blank" style="display: inline-block; padding: 14px 30px; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 6px;">Підтвердити пошту</a>
+                                                <td align="center" class="button-bg">
+                                                    <a href="{{LINK}}" target="_blank" class="btn">Підтвердити пошту</a>
                                                 </td>
                                             </tr>
                                         </table>

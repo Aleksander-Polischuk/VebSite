@@ -14,11 +14,9 @@ function togglePasswordVisibility(inputId, iconElement) {
     }
 }
 
-// Функція показу помилки з текстом
 function applyErrorStyle(inputElement, message) {
     if (!inputElement) return;
     
-    // Знаходимо блок для тексту помилки
     const errorBlock = inputElement.parentElement.querySelector('.error-message') || 
                        inputElement.closest('form').querySelector('.error-message');
 
@@ -29,7 +27,6 @@ function applyErrorStyle(inputElement, message) {
         errorBlock.style.display = 'block';
     }
 
-    // Очищення при введенні
     const clearError = () => {
         inputElement.classList.remove('input-error', 'shake-error');
         if (errorBlock) errorBlock.style.display = 'none';
@@ -39,6 +36,57 @@ function applyErrorStyle(inputElement, message) {
     inputElement.addEventListener('input', clearError);
 }
 
+/* =========================================
+   ДИНАМІЧНА ВАЛІДАЦІЯ ПАРОЛЯ
+   ========================================= */
+function validatePersonalAccPassword() {
+    const passInput = document.getElementById('new_sec_key');
+    const confirmInput = document.getElementById('confirm_sec_key');
+    const container = document.querySelector('.password-requirements'); // Весь блок з заголовком
+    
+    if (!passInput || !confirmInput || !container) return false;
+
+    const p1 = passInput.value;
+    const p2 = confirmInput.value;
+    
+    const reqLength = document.getElementById('req-length');
+    const reqNumber = document.getElementById('req-number');
+    const reqMatch = document.getElementById('req-match');
+
+    if (!reqLength || !reqNumber || !reqMatch) return false;
+
+    // 1. Перевірка довжини
+    const isLengthOk = p1.length >= 6;
+    reqLength.style.display = isLengthOk ? 'none' : 'flex';
+
+    // 2. Перевірка на наявність цифри
+    const isNumberOk = /\d/.test(p1);
+    reqNumber.style.display = isNumberOk ? 'none' : 'flex';
+
+    // 3. Перевірка на співпадіння паролів
+    // Показуємо умову, якщо паролі не однакові АБО якщо вони обидва порожні
+    const isMatchOk = (p1 === p2 && p1 !== '');
+    reqMatch.style.display = isMatchOk ? 'none' : 'flex';
+
+    // Перевіряємо, чи залишився хоча б один видимий пункт у списку
+    const anyVisible = !isLengthOk || !isNumberOk || !isMatchOk;
+
+    // Якщо всі пункти приховані (умови виконані) — ховаємо весь блок з заголовком
+    container.style.display = anyVisible ? 'block' : 'none';
+
+    return !anyVisible;
+}
+
+// Слухаємо події введення через делегування (на весь документ)
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'new_sec_key' || e.target.id === 'confirm_sec_key') {
+        validatePersonalAccPassword();
+    }
+});
+
+/* =========================================
+   ГОЛОВНА ФУНКЦІЯ ОНОВЛЕННЯ ПРОФІЛЮ
+   ========================================= */
 function updateProfileData(event, type) {
     event.preventDefault();
     const form = event.target;
@@ -56,7 +104,6 @@ function updateProfileData(event, type) {
             return applyErrorStyle(emailInput, "Введіть коректний формат (напр. user@gmail.com)");
         }
 
-        // Якщо все ок — викликаємо підтвердження
         showAlert(`Змінити пошту на <b>${emailValue}</b>?`, 'warning', 'Підтвердження', [
             { text: 'Так', className: 'btn-alert-ok', onClick: () => {
                 formData.append('action', 'update_email');
@@ -69,21 +116,17 @@ function updateProfileData(event, type) {
     } 
     else if (type === 'password') {
         const pass1 = form.new_sec_key;
-        const pass2 = form.confirm_sec_key;
 
-        if (pass1.value.length < 6) {
-            return applyErrorStyle(pass1, "Пароль занадто короткий (мінімум 6 символів)");
-        }
-        
-        if (pass1.value !== pass2.value) {
-            return applyErrorStyle(pass2, "Паролі не збігаються");
+        // Використовуємо нашу нову функцію валідації перед збереженням
+        if (!validatePersonalAccPassword()) {
+            return applyErrorStyle(pass1, "Будь ласка, виконайте всі вимоги до пароля (усі пункти мають стати зеленими)");
         }
 
         showAlert("Зберегти новий пароль?", 'warning', 'Підтвердження', [
             { text: 'Зберегти', className: 'btn-alert-ok', onClick: () => {
                 formData.append('action', 'update_password');
                 formData.append('new_password', pass1.value);
-                formData.append('confirm_password', pass2.value);
+                formData.append('confirm_password', form.confirm_sec_key.value);
                 sendProfileUpdateToServer(formData, 'password', form);
                 return true;
             }},
@@ -106,7 +149,10 @@ function sendProfileUpdateToServer(formData, type, form = null) {
             const res = JSON.parse(text);
             if (res.status === 'success') {
                 showAlert(res.message, 'success', 'Успішно оновлено');
-                if (type === 'password' && form) form.reset();
+                if (type === 'password' && form) {
+                    form.reset();
+                    validatePersonalAccPassword(); // Скидаємо зелені галочки після очищення форми
+                }
                 if (type === 'email') {
                     if (window.refreshActiveContent) window.refreshActiveContent();
                     else setTimeout(() => window.location.reload(), 1500);
