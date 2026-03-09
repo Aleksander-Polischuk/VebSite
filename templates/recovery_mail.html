@@ -3,75 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <title>Відновлення пароля</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        .wrapper {
+            padding: 40px 0;
+        }
+
+        .container {
+            width: 600px;
+            max-width: 100%;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+        }
+
+        .header {
+            padding: 30px 40px 20px 40px;
+        }
+
+        .logo {
+            display: block;
+            border: 0;
+            width: 250px;
+        }
+
+        .divider {
+            background-color: #3C9ADC;
+            height: 3px;
+            font-size: 0;
+            line-height: 0;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .title {
+            color: #333333;
+            font-size: 20px;
+            font-weight: bold;
+            padding-bottom: 20px;
+        }
+
+        .text {
+            color: #555555;
+            font-size: 16px;
+            line-height: 24px;
+            padding-bottom: 30px;
+        }
+
+        .button-wrapper {
+            padding-bottom: 30px;
+            text-align: center;
+        }
+
+        .button-bg {
+            background-color: #3C9ADC;
+            border-radius: 6px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        .fallback-box {
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .fallback-text {
+            color: #999999;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .fallback-link {
+            color: #3C9ADC;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .footer {
+            background-color: #f9f9f9;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #999999;
+            line-height: 18px;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-    
+<body>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
         <tr>
-            <td align="center" style="padding: 40px 0;">
-                
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    
+            <td align="center" class="wrapper">
+                <table border="0" cellpadding="0" cellspacing="0" class="container">
                     <tr>
-                        <td align="left" style="padding: 30px 40px 20px 40px;">
-                            <img src="http://develop.kgonline.in.ua/img/logo.png" alt="Логотип" width="250" style="display: block; border: 0;">
+                        <td align="left" class="header">
+                            <img src="http://develop.kgonline.in.ua/img/logo.png" alt="Логотип" class="logo">
                         </td>
                     </tr>
-
                     <tr>
-                        <td style="background-color: #3C9ADC; height: 3px; font-size: 0; line-height: 0;">
-                            &nbsp;
-                        </td>
+                        <td class="divider">&nbsp;</td>
                     </tr>
-
                     <tr>
-                        <td style="padding: 40px;">
+                        <td class="content">
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td style="color: #333333; font-size: 20px; font-weight: bold; padding-bottom: 20px;">
+                                    <td class="title">
                                         Відновлення доступу
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="color: #555555; font-size: 16px; line-height: 24px; padding-bottom: 30px;">
-                                        Ми отримали запит на скидання пароля для вашого облікового запису. <br>
+                                    <td class="text">
+                                        Ми отримали запит на скидання пароля для вашого облікового запису.<br><br>
                                         Щоб створити новий пароль, натисніть кнопку нижче:
                                     </td>
                                 </tr>
-                                
                                 <tr>
-                                    <td align="center" style="padding-bottom: 30px;">
+                                    <td align="center" class="button-wrapper">
                                         <table border="0" cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td align="center" bgcolor="#3C9ADC" style="border-radius: 6px;">
-                                                    <a href="{{LINK}}" target="_blank" style="display: inline-block; padding: 14px 30px; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 6px;">Створити новий пароль</a>
+                                                <td align="center" class="button-bg">
+                                                    <a href="{{LINK}}" target="_blank" class="btn">Створити новий пароль</a>
                                                 </td>
                                             </tr>
                                         </table>
                                     </td>
                                 </tr>
-
                                 <tr>
-                                    <td style="color: #999999; font-size: 14px; line-height: 20px; border-top: 1px solid #eeeeee; padding-top: 20px;">
-                                        Якщо кнопка не працює, перейдіть за посиланням:<br>
-                                        <a href="{{LINK}}" style="color: #3C9ADC; word-break: break-all;">{{LINK}}</a>
+                                    <td class="fallback-box">
+                                        <p class="fallback-text">
+                                            Якщо кнопка не працює, перейдіть за посиланням:<br><br>
+                                            <a href="{{LINK}}" class="fallback-link">{{LINK}}</a>
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
-
                     <tr>
-                        <td style="background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+                        <td class="footer">
                             Ви отримали цей лист, тому що зробили запит на відновлення пароля.<br>
                             Якщо це були не ви, просто проігноруйте повідомлення.
                         </td>
                     </tr>
                 </table>
-
             </td>
         </tr>
     </table>
-
 </body>
 </html>

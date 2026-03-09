@@ -17,7 +17,6 @@ if (!$selectedCounteragentId) {
 $sql = "SELECT question, content_type, content_data FROM REF_POPULAR_QUESTIONS WHERE is_active = 1 ORDER BY sort_order ASC";
 $res = mysqli_query($link, $sql);
 
-// Використовуємо клас .tree-icon, для якого в головному CSS уже прописані стилі
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon faq-pointer-none" width="16" height="16" alt="">';
 ?>
 

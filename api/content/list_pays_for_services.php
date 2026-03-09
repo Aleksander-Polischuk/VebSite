@@ -74,67 +74,67 @@ function formatCurrency($value) {
 
 <div class="table-container">
     <table class="data-table tree-table shadow-table pays-history-table">
-    <thead>
-        <tr>
-            <th>Період</th>
-            <th>Початкове сальдо</th>
-            <th>Нараховано, куб. м</th>
-            <th>Нараховано, грн</th>
-            <th>Перерахунок, грн</th>
-            <th>Оплачено, грн</th>
-            <th>Кінцеве сальдо</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if (empty($pays_data)): ?>
+        <thead>
             <tr>
-                <td colspan="7" class="cell-no-data">
-                    Немає даних про розрахунки за <?php echo $selectedYear; ?> рік.
-                </td>
+                <th>Період</th>
+                <th>Початкове сальдо</th>
+                <th>Нараховано, куб. м</th>
+                <th>Нараховано, грн</th>
+                <th>Перерахунок, грн</th>
+                <th>Оплачено, грн</th>
+                <th>Кінцеве сальдо</th>
             </tr>
-        <?php else: 
-            $c_idx = 0;
-            foreach ($pays_data as $contractName => $data): 
-                $c_idx++; $cId = "c_" . $c_idx; ?>
-                <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $cId; ?>')">
-                    <td><?php echo $caret_icon; ?> <?php echo htmlspecialchars($contractName); ?></td>
-                    <td>---</td> 
-                    <td><?php echo number_format($data['total']['vol'], 3, ',', ' '); ?></td>
-                    <td><?php echo formatCurrency($data['total']['acc']); ?></td>
-                    <td><?php echo formatCurrency($data['total']['recalc']); ?></td> 
-                    <td><?php echo formatCurrency($data['total']['paid']); ?></td>
-                    <td>---</td>
+        </thead>
+        <tbody>
+            <?php if (empty($pays_data)): ?>
+                <tr>
+                    <td colspan="7" class="cell-no-data">
+                        Немає даних про розрахунки за <?php echo $selectedYear; ?> рік.
+                    </td>
                 </tr>
-
-                <?php 
-                $m_idx = 0;
-                foreach ($data['months'] as $mName => $m): 
-                    $m_idx++; $mId = $cId . "_m" . $m_idx; ?>
-                    <tr class="child-row show <?php echo $cId; ?> sub-parent" onclick="toggleTree(this, '<?php echo $mId; ?>')">
-                        <td><?php echo $caret_icon; ?> <?php echo htmlspecialchars($mName); ?></td>
-                        <td><?php echo formatCurrency($m['beg']); ?></td>
-                        <td><?php echo number_format($m['vol'], 3, ',', ' '); ?></td>
-                        <td><?php echo formatCurrency($m['acc']); ?></td>
-                        <td><?php echo formatCurrency($m['recalc']); ?></td>
-                        <td><?php echo formatCurrency($m['paid']); ?></td>
-                        <td><?php echo formatCurrency($m['end']); ?></td>
+            <?php else: 
+                $c_idx = 0;
+                foreach ($pays_data as $contractName => $data): 
+                    $c_idx++; $cId = "c_" . $c_idx; ?>
+                    <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $cId; ?>')">
+                        <td><?php echo $caret_icon; ?> <?php echo htmlspecialchars($contractName); ?></td>
+                        <td>---</td> 
+                        <td><?php echo number_format($data['total']['vol'], 3, ',', ' '); ?></td>
+                        <td><?php echo formatCurrency($data['total']['acc']); ?></td>
+                        <td><?php echo formatCurrency($data['total']['recalc']); ?></td> 
+                        <td><?php echo formatCurrency($data['total']['paid']); ?></td>
+                        <td>---</td>
                     </tr>
 
-                    <?php foreach ($m['details'] as $service): ?>
-                        <tr class="child-row <?php echo $mId; ?> detail-row">
-                            <td><span class="bullet-icon">•</span> <?php echo htmlspecialchars($service['name']); ?></td>
-                            <td data-label="Початкове сальдо:"><?php echo formatCurrency($service['beg']); ?></td>
-                            <td data-label="Нараховано, куб. м:"><?php echo number_format($service['vol'], 3, ',', ' '); ?></td>
-                            <td data-label="Нараховано, грн:"><?php echo formatCurrency($service['acc']); ?></td>
-                            <td data-label="Перерахунок, грн:"><?php echo formatCurrency($service['recalc']); ?></td>
-                            <td data-label="Оплачено, грн:"><?php echo formatCurrency($service['paid']); ?></td>
-                            <td data-label="Кінцеве сальдо:"><?php echo formatCurrency($service['end']); ?></td>
+                    <?php 
+                    $m_idx = 0;
+                    foreach ($data['months'] as $mName => $m): 
+                        $m_idx++; $mId = $cId . "_m" . $m_idx; ?>
+                        <tr class="child-row show open <?php echo $cId; ?> sub-parent" onclick="toggleTree(this, '<?php echo $mId; ?>')">
+                            <td><?php echo $caret_icon; ?> <?php echo htmlspecialchars($mName); ?></td>
+                            <td><?php echo formatCurrency($m['beg']); ?></td>
+                            <td><?php echo number_format($m['vol'], 3, ',', ' '); ?></td>
+                            <td><?php echo formatCurrency($m['acc']); ?></td>
+                            <td><?php echo formatCurrency($m['recalc']); ?></td>
+                            <td><?php echo formatCurrency($m['paid']); ?></td>
+                            <td><?php echo formatCurrency($m['end']); ?></td>
                         </tr>
+
+                        <?php foreach ($m['details'] as $service): ?>
+                            <tr class="child-row show <?php echo $mId; ?> detail-row">
+                                <td><span class="bullet-icon">•</span> <?php echo htmlspecialchars($service['name']); ?></td>
+                                <td data-label="Початкове сальдо:"><?php echo formatCurrency($service['beg']); ?></td>
+                                <td data-label="Нараховано, куб. м:"><?php echo number_format($service['vol'], 3, ',', ' '); ?></td>
+                                <td data-label="Нараховано, грн:"><?php echo formatCurrency($service['acc']); ?></td>
+                                <td data-label="Перерахунок, грн:"><?php echo formatCurrency($service['recalc']); ?></td>
+                                <td data-label="Оплачено, грн:"><?php echo formatCurrency($service['paid']); ?></td>
+                                <td data-label="Кінцеве сальдо:"><?php echo formatCurrency($service['end']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php endforeach; ?>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </tbody>
+            <?php endif; ?>
+        </tbody>
     </table>
 </div>
 

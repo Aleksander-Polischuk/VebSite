@@ -2,21 +2,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('recoveryForm');
     const submitBtn = document.getElementById('submitBtn');
     
-    // Блоки
     const loginBox = document.querySelector('.login-box');
     const errMsgDiv = document.getElementById('ErrMsgServer');
     const successMsgDiv = document.getElementById('SuccessMsg');
 
-    // Оченята для паролів
+    const passInput = document.getElementById('password');
+    const confirmInput = document.getElementById('password_confirm');
+
+    // Контейнер та елементи вимог
+    const reqContainer = document.querySelector('.password-requirements');
+    const reqLength = document.getElementById('req-length');
+    const reqNumber = document.getElementById('req-number');
+    const reqMatch = document.getElementById('req-match');
+
+    // Оченята (залишаємо без змін)
     document.querySelectorAll('.toggle-password').forEach(btn => {
         btn.addEventListener('click', function() {
             const input = this.previousElementSibling;
-            if (input.type === 'password') {
-                input.type = 'text';
-                this.classList.add('active');
+            if (input.classList.contains('masked-password')) {
+                input.classList.remove('masked-password');
+                input.classList.add('unmasked-password');
+                this.classList.add('active'); 
             } else {
-                input.type = 'password';
-                this.classList.remove('active');
+                input.classList.remove('unmasked-password');
+                input.classList.add('masked-password');
+                this.classList.remove('active'); 
             }
         });
     });
@@ -26,20 +36,44 @@ document.addEventListener('DOMContentLoaded', () => {
         errMsgDiv.style.display = 'block';
     }
 
+    // --- ФУНКЦІЯ ДИНАМІЧНОЇ ВАЛІДАЦІЇ ---
+    function validatePassword() {
+        if (!reqContainer) return false;
+
+        const p1 = passInput.value;
+        const p2 = confirmInput.value;
+
+        // 1. Мінімум 6 символів
+        const isLengthOk = p1.length >= 6;
+        reqLength.style.display = isLengthOk ? 'none' : 'flex';
+
+        // 2. Мінімум одна цифра
+        const isNumberOk = /\d/.test(p1);
+        reqNumber.style.display = isNumberOk ? 'none' : 'flex';
+
+        // 3. Паролі співпадають
+        const isMatchOk = (p1 === p2 && p1 !== '');
+        reqMatch.style.display = isMatchOk ? 'none' : 'flex';
+
+        // Перевіряємо, чи залишився хоча б один видимий пункт
+        const anyVisible = !isLengthOk || !isNumberOk || !isMatchOk;
+
+        // Ховаємо весь блок, якщо всі умови виконані
+        reqContainer.style.display = anyVisible ? 'block' : 'none';
+
+        return !anyVisible;
+    }
+
+    passInput.addEventListener('input', validatePassword);
+    confirmInput.addEventListener('input', validatePassword);
+
+    // Відправка форми
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         errMsgDiv.style.display = 'none';
 
-        const p1 = form.password.value;
-        const p2 = form.password_confirm.value;
-
-        if (p1.length < 6) {
-            showError('Пароль має бути не менше 6 символів');
-            return;
-        }
-
-        if (p1 !== p2) {
-            showError('Паролі не співпадають');
+        if (!validatePassword()) {
+            showError('Будь ласка, виконайте всі вимоги до пароля');
             return;
         }
 
@@ -56,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Ховаємо форму, показуємо успіх
                 loginBox.style.display = 'none';
                 successMsgDiv.style.display = 'block';
+                reqContainer.style.display = 'none'; // Про всяк випадок
             } else {
                 showError(data.message || 'Помилка зміни пароля');
             }

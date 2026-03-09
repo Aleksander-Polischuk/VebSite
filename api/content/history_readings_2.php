@@ -144,6 +144,13 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
     <div class="history-header-top">
         <h3>Історія показників</h3>
         <div class="header-controls">      
+            <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути всі періоди">
+                <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
+            </button>
+            <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути всі періоди">
+                <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
+            </button>
+            
             <select id="yearSelect" class="year-select-custom history-year-select" onchange="changeYear(this.value)">
                 <?php foreach($years as $y): ?>
                     <option value="<?php echo $y; ?>" <?php echo ($y == $selectedYear) ? 'selected' : ''; ?>>
@@ -151,13 +158,6 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                     </option>
                 <?php endforeach; ?>
             </select> 
-            
-            <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути всі періоди">
-                <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" style="pointer-events: none;">
-            </button>
-            <button type="button" class="btn-tree-custom" onclick="stepTree(1)" title="Розгорнути всі періоди">
-                <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути" style="pointer-events: none;">
-            </button>
         </div>
     </div>
 
@@ -210,7 +210,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                     $periodId = "p_" . $aKey . "_" . $pKey;
                                     ?>
 
-                                    <tr class="history-data-row parent-row" 
+                                    <tr class="history-data-row parent-row open" 
                                         data-contract="<?php echo $cID; ?>" 
                                         data-address="<?php echo $aKey; ?>" 
                                         onclick="toggleTree(this, '<?php echo $periodId; ?>')"
@@ -227,7 +227,7 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" 
                                     </tr>
 
                                     <?php foreach ($pData['readings'] as $r): ?>
-                                        <tr class="history-data-row child-row <?php echo $periodId; ?> detail-row" 
+                                        <tr class="history-data-row child-row show <?php echo $periodId; ?> detail-row" 
                                             data-contract="<?php echo $cID; ?>" 
                                             data-address="<?php echo $aKey; ?>" 
                                             style="display: none;">

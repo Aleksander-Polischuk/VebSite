@@ -483,6 +483,98 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
+/* Forced Hover Effects */
+table.data-table tbody tr.parent-row:hover td,
+table.data-table tbody tr.child-row:hover td {
+    background-color: var(--color-highlight) !important;
+    color: var(--text-black) !important;
+    transition: background-color 0.15s ease-in-out;
+    cursor: pointer;
+}
+
+/* SELECT YEAR CUSTOM */
+.year-select-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--bg-white) url("../img/chevron-down.svg") no-repeat right 10px center / 1em;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    padding-right: 30px;
+    height: 34px;
+}
+
+.year-select-custom:hover, .year-select-custom:focus {
+    border-color: var(--color-primary);
+}
+
+.bullet-icon {
+    color: #4a76f2; /* Синій колір */
+    margin-right: 8px; /* Невеликий відступ від тексту лічильника */
+    font-size: 16px; /* За бажанням можна зробити крапку трохи більшою */
+    font-weight: bold;
+}
+
+/* Червоні попередження (глобально) */
+.text-danger {
+    color: #d32f2f !important;
+}
+
+.font-bold {
+    font-weight: bold !important;
+}
+
+/* Налаштування для першої колонки (щоб не розширювалась) */
+.data-table.address-list {
+    table-layout: fixed !important;
+}
+
+.address-list td, .address-list th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Стилі для кнопки адміністратора --- */
+.header-admin {
+    display: flex;
+    align-items: center;
+    margin-right: 25px;
+}
+
+.header-admin a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;               
+    height: 40px;              
+    border: 1px solid black;
+    border-radius: 8px;        
+    background-color: transparent;
+    text-decoration: none;
+    transition: all 0.2s ease; 
+}
+
+/* Ефект при наведенні миші */
+.header-admin a:hover {
+    border-color: #9ca3af;     
+    background-color: #f3f4f6; 
+}
+
+.admin-gear-icon {
+    width: 22px; 
+    height: 22px;
+    cursor: pointer;
+}
+
 @media (max-width: 850px) {
     #scrollToTopBtn { bottom: 20px; left: 20px; width: 40px; height: 40px; }
 
@@ -641,64 +733,9 @@ tr.open .tree-icon, .parent-row.open .tree-icon, .sub-parent.open .tree-icon { t
         text-align-last: center; /* Центруємо текст всередині селекта */
     }
     
+    .header-admin {
+        display: none;
+    }
+    
 }
 
-/* Forced Hover Effects */
-table.data-table tbody tr.parent-row:hover td,
-table.data-table tbody tr.child-row:hover td {
-    background-color: var(--color-highlight) !important;
-    color: var(--text-black) !important;
-    transition: background-color 0.15s ease-in-out;
-    cursor: pointer;
-}
-
-/* SELECT YEAR CUSTOM */
-.year-select-custom {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    cursor: pointer;
-    background: var(--bg-white) url("../img/chevron-down.svg") no-repeat right 10px center / 1em;
-    font-family: inherit;
-    font-size: 14px;
-    color: var(--text-main);
-    outline: none;
-    transition: border-color 0.2s;
-    appearance: none;
-    padding-right: 30px;
-    height: 34px;
-}
-
-.year-select-custom:hover, .year-select-custom:focus {
-    border-color: var(--color-primary);
-}
-
-.bullet-icon {
-    color: #4a76f2; /* Синій колір */
-    margin-right: 8px; /* Невеликий відступ від тексту лічильника */
-    font-size: 16px; /* За бажанням можна зробити крапку трохи більшою */
-    font-weight: bold;
-}
-
-/* Червоні попередження (глобально) */
-.text-danger {
-    color: #d32f2f !important;
-}
-
-.font-bold {
-    font-weight: bold !important;
-}
-
-/* Налаштування для першої колонки (щоб не розширювалась) */
-.data-table.address-list {
-    table-layout: fixed !important;
-}
-
-.address-list td, .address-list th {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}

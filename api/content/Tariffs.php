@@ -75,7 +75,7 @@ if ($result_tariff) {
                     $d_idx++;
                     $dateId = "d_" . $d_idx;
             ?>
-                <tr class="parent-row open" onclick="toggleTree(this, '<?php echo $dateId; ?>')">
+                <tr class="parent-row open" onclick="toggleTreeDeep(this, '<?php echo $dateId; ?>')">
                     <td colspan="3">
                         <?php echo $caret_icon; ?> <strong>Період: <?php echo $date; ?></strong>
                     </td>
@@ -87,14 +87,14 @@ if ($result_tariff) {
                     $g_idx++;
                     $groupId = $dateId . "_g" . $g_idx;
                 ?>
-                    <tr class="child-row <?php echo $dateId; ?> sub-parent show" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
+                    <tr class="child-row <?php echo $dateId; ?> sub-parent show open" onclick="toggleTree(this, '<?php echo $groupId; ?>')">
                         <td colspan="3">
                             <?php echo $caret_icon; ?> <?php echo htmlspecialchars($groupName); ?>
                         </td>
                     </tr>
 
                     <?php foreach ($services as $s): ?>
-                        <tr class="child-row <?php echo $groupId; ?> detail-row">
+                        <tr class="child-row <?php echo $groupId; ?> detail-row show">
                             <td>
                                 <span class="bullet-icon">•</span> 
                                 <?php echo htmlspecialchars($s['SERVICE']); ?>

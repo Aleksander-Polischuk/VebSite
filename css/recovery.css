@@ -1,0 +1,128 @@
+/* Підзаголовок на формі зміни паролю */
+.recovery-subtitle {
+    margin-bottom: 20px;
+    color: #555;
+    font-size: 15px;
+    text-align: center;
+}
+
+/* Кнопка "Зберегти пароль" */
+.btn-recovery-submit {
+    margin-top: 10px;
+}
+
+/* Заголовок помилки, якщо токен недійсний */
+.recovery-error-title {
+    color: #d32f2f;
+}
+
+/* Текст помилки про недійсний токен */
+.recovery-error-desc {
+    text-align: center;
+    color: #555;
+}
+
+/* Обгортка для кнопки "Спробувати знову" */
+.recovery-retry-wrap {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Кнопка "Спробувати знову" */
+.btn-recovery-retry {
+    display: inline-block;
+    width: auto;
+    padding: 0 30px;
+    text-decoration: none;
+    line-height: 52px;
+    color: #fff !important;
+}
+
+/* Блок успішного повідомлення */
+.recovery-success-box {
+    text-align: center;
+    width: 420px;
+    margin: 50px auto 0;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.success-heading {
+    color: #27ae60;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.success-text {
+    color: #666;
+}
+
+/* Кнопка "Увійти" в успішному блоці */
+.btn-success-login {
+    display: block;
+    text-decoration: none;
+    line-height: 52px;
+    margin-top: 10px;
+    color: #fff !important;
+}
+
+/* Блок серверної помилки */
+.recovery-server-error {
+    width: 420px;
+    margin: 15px auto 0;
+    border: 1px solid #ff0000;
+    border-radius: 5px;
+    padding: 10px;
+    background: #fff0f0;
+    text-align: center;
+    color: #d32f2f;
+}
+
+.masked-password {
+    -webkit-text-security: disc; 
+}
+.unmasked-password {
+    -webkit-text-security: none; 
+}
+
+/* Блок вимог до пароля */
+.password-requirements {
+    margin: 10px 0 20px;
+    font-size: 13px;
+    text-align: left;
+    background: #f8f9fa;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.password-requirements p {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Стан за замовчуванням (не виконано) - Червоний */
+.password-requirements li {
+    margin-bottom: 4px;
+    color: #d32f2f; 
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirements li::before {
+    content: "❌";
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+}

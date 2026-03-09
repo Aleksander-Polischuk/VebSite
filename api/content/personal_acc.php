@@ -55,7 +55,18 @@ $userData = mysqli_stmt_get_result($stmt)->fetch_assoc();
                         <div class="error-message" id="error-confirm_sec_key"></div>
                     </div>
                 </div>
+
+                <div class="password-requirements">
+                    <p class="req-title">Вимоги до пароля:</p>
+                    <ul class="req-list">
+                        <li id="req-length">Мінімум 6 символів</li>
+                        <li id="req-number">Містить хоча б одну цифру</li>
+                        <li id="req-match">Паролі співпадають</li>
+                    </ul>
+                </div>
+
                 <button type="submit" class="btn-submit-blue">Зберегти новий пароль</button>
+            </form>
             </form>
         </div>
         

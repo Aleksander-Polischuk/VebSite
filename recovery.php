@@ -3,7 +3,6 @@
   $token = $_GET['token'] ?? '';
   $email = $_GET['email'] ?? '';
 
-  // Підключаємо БД для перевірки токена
   include ('config.php');
   $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
   mysqli_set_charset($link, 'utf8');
@@ -22,7 +21,7 @@
   }
 
   $title = 'Новий пароль';
-  $list_css = ['/css/login.css', '/css/forgot_password.css']; 
+  $list_css = ['/css/login.css', '/css/forgot_password.css', '/css/recovery.css']; 
   include "page_head.php";
 ?>
 
@@ -35,7 +34,7 @@
      <main class="login-box">
         <?php if ($isValid): ?>
             <h1>Новий пароль</h1>
-            <p style="margin-bottom: 20px; color: #555; font-size: 15px; text-align: center;">
+            <p class="recovery-subtitle">
                 Придумайте новий пароль для входу.
             </p>
 
@@ -46,7 +45,7 @@
                 <label class="field">
                     <span>Новий пароль</span>
                     <div class="password-wrap">
-                        <input type="password" name="password" id="password"required>
+                        <input type="text" name="password" id="password" class="masked-password" autocomplete="off" required>
                         <button type="button" class="toggle-password"></button>
                     </div>
                 </label>
@@ -54,32 +53,40 @@
                 <label class="field">
                     <span>Підтвердження</span>
                     <div class="password-wrap">
-                        <input type="password" name="password_confirm" id="password_confirm" required>
+                        <input type="text" name="password_confirm" id="password_confirm" class="masked-password" autocomplete="off" required>
                         <button type="button" class="toggle-password"></button>
                     </div>
                 </label>
             
-                <button type="submit" id="submitBtn" class="btn-login" style="margin-top: 10px;">Зберегти пароль</button>
+                <div class="password-requirements">
+                    <p class="req-title">Вимоги до пароля:</p>
+                    <ul class="req-list">
+                        <li id="req-length">Мінімум 6 символів</li>
+                        <li id="req-number">Містить хоча б одну цифру</li>
+                        <li id="req-match">Паролі співпадають</li>
+                    </ul>
+                </div>
+                <button type="submit" id="submitBtn" class="btn-login btn-recovery-submit">Зберегти пароль</button>
             </form>
 
         <?php else: ?>
-            <h1 style="color: #d32f2f;">Помилка посилання</h1>
-            <p style="text-align: center; color: #555;">
+            <h1 class="recovery-error-title">Помилка посилання</h1>
+            <p class="recovery-error-desc">
                 Це посилання для відновлення пароля недійсне або застаріло.
             </p>
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="/forgotpassword" class="btn-login" style="display:inline-block; width:auto; padding: 0 30px; text-decoration:none; line-height: 52px; color: #fff !important;">Спробувати знову</a>
+            <div class="recovery-retry-wrap">
+                <a href="/forgotpassword" class="btn-login btn-recovery-retry">Спробувати знову</a>
             </div>
         <?php endif; ?>
      </main>
 
-     <div id="SuccessMsg" style="display:none; text-align:center; width: 420px; margin: 50px auto 0; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-        <div style="color: #27ae60; font-size: 16px; font-weight: bold; margin-bottom: 10px;">Пароль змінено!</div>
-        <p style="color: #666;">Тепер ви можете увійти з новим паролем.</p>
-        <a href="/login" class="btn-login" style="display:block; text-decoration:none; line-height:52px; margin-top:10px; color: #fff !important;">Увійти</a>
+     <div id="SuccessMsg" class="recovery-success-box" style="display:none;">
+        <div class="success-heading">Пароль змінено!</div>
+        <p class="success-text">Тепер ви можете увійти з новим паролем.</p>
+        <a href="/login" class="btn-login btn-success-login">Увійти</a>
      </div>
 
-     <div id="ErrMsgServer" style="display:none; width: 420px; margin: 15px auto 0; border: 1px solid #ff0000; border-radius: 5px; padding: 10px; background: #fff0f0; text-align:center; color: #d32f2f;"></div>
+     <div id="ErrMsgServer" class="recovery-server-error" style="display:none;"></div>
 
 </div>
 
