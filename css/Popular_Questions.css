@@ -3,7 +3,6 @@
     --faq-border-color: #eee;
     --faq-bg-main: #fff;
     --faq-bg-question: #f9f9f9;
-    --faq-file-link-bg: #eef2ff;
     
     /* Розміри та рамки */
     --faq-padding: 15px 20px;
@@ -27,11 +26,7 @@
 
 .faq-error-msg {
     padding: 20px;
-}
-
-.faq-json-error {
     color: red;
-    padding: 10px 20px;
 }
 
 .faq-item { 
@@ -58,14 +53,16 @@
     transition: transform var(--faq-transition); 
     transform: rotate(-90deg); 
 }
+
 .faq-pointer-none {
     pointer-events: none;
 }
     
 .faq-question.open { 
-    background: var(--bg-light-blue); 
-    color: var(--color-primary); 
+    background: var(--bg-light-blue, #eef2ff); 
+    color: var(--color-primary, #0078D7); 
 }
+
 .faq-question.open img.tree-icon { 
     transform: rotate(0deg); 
 }
@@ -75,72 +72,4 @@
     display: none; 
     border-top: var(--faq-border); 
     line-height: 1.6; 
-}
-
-/* =========================================
-   СТИЛІ КОНТЕНТУ (Файли, Посилання, Списки)
-   ========================================= */
-.faq-file-link { 
-    display: inline-flex; 
-    align-items: center; 
-    padding: 8px 12px; 
-    background: var(--faq-file-link-bg); 
-    border-radius: var(--faq-border-radius); 
-    text-decoration: none; 
-    color: var(--color-primary); 
-    margin-top: 10px; 
-}
-
-.faq-attach-icon {
-    margin-right: 8px;
-}
-
-.faq-links-list { 
-    list-style: none; 
-    padding: 0; 
-}
-.faq-links-list li { 
-    margin-bottom: 5px; 
-}
-
-.faq-structure-list {
-    padding-left: 20px;
-}
-
-.faq-adv-paragraph {
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-
-.faq-adv-paragraph-link {
-    margin-bottom: 10px;
-    line-height: 1.6;
-}
-
-.faq-styled-link {
-    color: var(--color-primary);
-    text-decoration: underline;
-}
-
-.faq-link-bold {
-    font-weight: bold;
-}
-
-.faq-adv-ordered-list {
-    padding-left: 20px;
-    line-height: 1.6;
-}
-
-.faq-adv-list-item {
-    margin-bottom: 15px;
-}
-
-.faq-adv-sublist {
-    padding-left: 20px;
-    list-style-type: disc;
-    margin-top: 5px;
-}
-
-.faq-adv-text-after {
-    margin-top: 5px;
 }

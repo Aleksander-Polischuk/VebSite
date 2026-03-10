@@ -1,4 +1,3 @@
-// Глобальна функція для FAQ, доступна для всіх завантажених сторінок
 function toggleFaq(element) {
     const answer = element.nextElementSibling;
     if (!answer) return;
@@ -19,32 +18,38 @@ function toggleFaq(element) {
     }
 }
 
-// Обробник кліків для внутрішніх посилань (наприклад, на вкладки кабінету)
-// Використовуємо делегування подій, щоб працювало для динамічно завантаженого контенту
+// Перехоплювач кліків для посилань всередині відповідей FAQ
 document.addEventListener('click', function(e) {
-    // Шукаємо найближчий тег <a> по якому клікнули
-    const link = e.target.closest('a');
-    
-    // Якщо клік був по посиланню, і його href починається з "#tab-"
-    if (link && link.getAttribute('href') && link.getAttribute('href').startsWith('#tab-')) {
-        e.preventDefault(); // Зупиняємо стандартний перехід браузера
+    // 1. Перевіряємо, чи клік був саме по посиланню всередині нашого редактора
+    const link = e.target.closest('.quill-content a');
+    if (!link) return;
+
+    // 2. Отримуємо те, що адмін ввів у поле "URL"
+    let href = link.getAttribute('href');
+    if (!href) return;
+
+    // 3. Якщо це зовнішнє посилання (на інший сайт або пошту), нічого не робимо
+    if (href.startsWith('http') || href.startsWith('mailto')) {
+        link.setAttribute('target', '_blank'); // Хай відкривається в новому вікні
+        return; 
+    }
+
+    // 4. Очищаємо назву (прибираємо можливі решітки або слеші, якщо адмін ввів "#Тарифи")
+    let targetName = decodeURIComponent(href).replace(/^#|^\//, '').trim().toLowerCase();
+
+    // 5. Шукаємо відповідну вкладку в боковому меню
+    const sidebarLinks = document.querySelectorAll('.sidebar a');
+    for (let sidebarLink of sidebarLinks) {
+        let linkText = sidebarLink.innerText.trim().toLowerCase();
         
-        // Витягуємо назву вкладки (наприклад, "Передача показників")
-        // decodeURIComponent перетворює закодовані символи (%D0%9F...) назад у нормальну кирилицю
-        const targetName = decodeURIComponent(link.getAttribute('href').replace('#tab-', ''));
-        
-        // Шукаємо цю вкладку в боковому меню і "клікаємо" по ній
-        let tabFound = false;
-        document.querySelectorAll('.sidebar a').forEach(function(a) { 
-            if (a.innerText.trim() === targetName) {
-                a.click();
-                tabFound = true;
-            }
-        });
-        
-        // Якщо хтось помилився в назві вкладки при створенні питання, виводимо попередження в консоль
-        if (!tabFound) {
-            console.warn('Вкладку з назвою "' + targetName + '" не знайдено в меню.');
+        // Якщо назва збіглася з назвою вкладки (наприклад, "тарифи" == "тарифи")
+        if (linkText === targetName) {
+            e.preventDefault(); // Зупиняємо стандартний перехід браузера
+            sidebarLink.click(); // Програмно "клікаємо" по вкладці меню
+            
+            // Прокручуємо сторінку нагору, щоб користувач побачив нову вкладку
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
         }
     }
 });

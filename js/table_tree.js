@@ -11,9 +11,12 @@ function getGroupIdFromOnclick(element) {
 }
 
 function toggleTree(element, groupId) {
-    // 1. Знаходимо рядок TR
+    // 1. Знаходимо рядок TR та його батьківську таблицю
     const row = element.closest('tr');
     if (!row) return;
+    
+    const table = row.closest('table'); // Шукаємо тільки в поточній таблиці
+    if (!table) return;
 
     const isOpening = !row.classList.contains('open');
     
@@ -25,14 +28,14 @@ function toggleTree(element, groupId) {
     }
 
     if (isOpening) {
-        // ВІДКРИТТЯ
-        const directChildren = document.getElementsByClassName(groupId);
+        // ВІДКРИТТЯ (Шукаємо класи тільки в поточній таблиці)
+        const directChildren = table.getElementsByClassName(groupId);
         Array.from(directChildren).forEach(child => {
             child.classList.add('show');
         });
     } else {
-        // ЗАКРИТТЯ
-        const descendants = document.querySelectorAll(`tr[class*="${groupId}"]`);
+        // ЗАКРИТТЯ (Шукаємо класи тільки в поточній таблиці)
+        const descendants = table.querySelectorAll(`tr[class*="${groupId}"]`);
         
         descendants.forEach(el => {
             if (el !== row) {
@@ -45,8 +48,10 @@ function toggleTree(element, groupId) {
 }
 
 function stepTree(direction) {
-    // Отримуємо всі рядки, які мають можливість перемикання
-    const allTriggers = Array.from(document.querySelectorAll('tr[onclick*="toggleTree"]'));
+    // Беремо ТІЛЬКИ ті рядки, які зараз видимі на екрані
+    // (у прихованих вкладок offsetParent дорівнює null)
+    const allTriggers = Array.from(document.querySelectorAll('tr[onclick*="toggleTree"]'))
+        .filter(row => row.offsetParent !== null);
 
     if (direction === 1) {
         // --- РОЗГОРТАННЯ ПО ОДНОМУ РІВНЮ ---
@@ -58,7 +63,7 @@ function stepTree(direction) {
 
         toOpen.forEach(row => {
             const gid = getGroupIdFromOnclick(row);
-            if (gid) toggleTree(row, gid); // Використовуємо нашу робочу функцію
+            if (gid) toggleTree(row, gid);
         });
     } else {
         // --- ЗГОРТАННЯ ПО ОДНОМУ РІВНЮ ---
@@ -68,7 +73,11 @@ function stepTree(direction) {
             const gid = getGroupIdFromOnclick(parentRow);
             if (!gid) return true;
 
-            const children = document.getElementsByClassName(gid);
+            const table = parentRow.closest('table');
+            if (!table) return true;
+
+            // Шукаємо відкриті елементи тільки в поточній таблиці
+            const children = table.getElementsByClassName(gid);
             let hasOpenChildTrigger = false;
             
             for (let child of children) {
@@ -88,18 +97,20 @@ function stepTree(direction) {
 }
 
 function toggleTreeDeep(element, parentId) {
-    // 1. Спочатку перемикаємо сам період (стандартна логіка)
+    // 1. Спочатку перемикаємо сам період
     if (typeof toggleTree === 'function') {
         toggleTree(element, parentId);
     }
 
+    const table = element.closest('table'); // Ізолюємо пошук поточною таблицею
+    if (!table) return;
+
     const isOpen = element.classList.contains('open');
     
-    // 2. Знаходимо всі групи (sub-parent), які належать до цього періоду
-    const subGroups = document.querySelectorAll(`.sub-parent.${parentId}`);
+    // 2. Знаходимо всі групи, які належать до цього періоду тільки в цій таблиці
+    const subGroups = table.querySelectorAll(`.sub-parent.${parentId}`);
     
     subGroups.forEach(group => {
-        // Отримуємо ID групи (наприклад, d_1_g1) з її атрибута onclick
         const onclickAttr = group.getAttribute('onclick');
         const groupIdMatch = onclickAttr ? onclickAttr.match(/'([^']+)'/) : null;
         
@@ -107,15 +118,13 @@ function toggleTreeDeep(element, parentId) {
             const groupId = groupIdMatch[1];
             
             if (isOpen) {
-                // Якщо період відкриваємо — відкриваємо і групу
                 group.classList.add('open');
-                document.querySelectorAll(`.${groupId}`).forEach(row => {
+                table.querySelectorAll(`.${groupId}`).forEach(row => {
                     row.classList.add('show');
                 });
             } else {
-                // Якщо період закриваємо — закриваємо і групу
                 group.classList.remove('open');
-                document.querySelectorAll(`.${groupId}`).forEach(row => {
+                table.querySelectorAll(`.${groupId}`).forEach(row => {
                     row.classList.remove('show');
                 });
             }

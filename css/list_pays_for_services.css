@@ -1,7 +1,3 @@
-.history-pays-header h3 {
-    margin: 0;
-}
-
 .pays-history-table th:nth-child(1),
 .pays-history-table td:nth-child(1) {
     width: 25% !important;
@@ -14,64 +10,3 @@
     text-align: center !important;
 }
 
-@media (max-width: 850px) {
-    .pays-history-table {
-        table-layout: fixed !important;
-        width: 100% !important;
-    }
-
-    .pays-history-table thead {
-        display: none;
-    }
-
-    /* Рівень 1 та 2: Ховаємо всі колонки крім назви */
-    .pays-history-table .parent-row td:not(:first-child),
-    .pays-history-table .sub-parent td:not(:first-child) {
-        display: none !important;
-    }
-
-    .pays-history-table .parent-row td,
-    .pays-history-table .sub-parent td {
-        display: block;
-        width: 100% !important;
-        position: static !important;
-        border-right: none !important;
-    }
-
-    /* Рівень 3: Перетворюємо на картку з підписами */
-    .pays-history-table .detail-row.show {
-        display: flex !important;
-        flex-direction: column;
-        padding: 12px 0;
-        background-color: var(--bg-white) !important;
-        border-bottom: 2px solid var(--border-light);
-    }
-
-    .pays-history-table .detail-row td {
-        display: flex !important;
-        justify-content: space-between;
-        width: 100% !important;
-        text-align: right !important;
-        border: none !important;
-        padding: 6px 15px !important;
-        font-size: 13px !important;
-    }
-
-    .pays-history-table .detail-row td:first-child {
-        justify-content: flex-start;
-        font-weight: bold;
-        font-size: 14px !important;
-        color: var(--color-primary);
-        padding-bottom: 8px !important;
-        border-bottom: 1px solid #f0f0f0 !important;
-        margin-bottom: 4px;
-    }
-
-    .pays-history-table .detail-row td[data-label]::before {
-        content: attr(data-label);
-        font-weight: bold;
-        color: var(--text-secondary);
-        text-align: left;
-        padding-right: 10px;
-    }
-}

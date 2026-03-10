@@ -51,7 +51,7 @@ function formatCurrency($value) {
 
 <link href="../../css/list_pays_for_services.css" rel="stylesheet" type="text/css"/>
 
-<div class="table-header-row sticky-header history-pays-header">
+<div class="table-header-row sticky-header">
     <h3>Розрахунки за послуги</h3>
 
     <div class="header-controls">
@@ -124,9 +124,7 @@ function formatCurrency($value) {
                             <tr class="child-row show <?php echo $mId; ?> detail-row">
                                 <td><span class="bullet-icon">•</span> <?php echo htmlspecialchars($service['name']); ?></td>
                                 <td data-label="Початкове сальдо:"><?php echo formatCurrency($service['beg']); ?></td>
-                               <td data-label="Нараховано, куб. м:">
-                                    <?php echo ($service['vol'] !== null) ? number_format($service['vol'], 3, ',', ' ') : '<span style="color:#aaa;">—</span>'; ?>
-                                </td>
+                                <td data-label="Нараховано, куб. м:"><?php echo number_format($service['vol'], 3, ',', ' '); ?></td>
                                 <td data-label="Нараховано, грн:"><?php echo formatCurrency($service['acc']); ?></td>
                                 <td data-label="Перерахунок, грн:"><?php echo formatCurrency($service['recalc']); ?></td>
                                 <td data-label="Оплачено, грн:"><?php echo formatCurrency($service['paid']); ?></td>

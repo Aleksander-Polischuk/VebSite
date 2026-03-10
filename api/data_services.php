@@ -1,6 +1,6 @@
 <?php
 function getHistoryData($link, $counteragentId, $year, $orgId) {
-    // ДОДАНО: res.ID_ENUM_GROUP_TYPE_SERVICE AS service_group
+
     $sql = "SELECT 
                 rc.NAME AS contract_num, 
                 ems.PERIOD, 
@@ -12,12 +12,19 @@ function getHistoryData($link, $counteragentId, $year, $orgId) {
                 ems.RECALC_SUM, 
                 ems.PAY_SUM, 
                 ems.END_DEBT
+                
             FROM ENT_MUTUAL_SETTLEMENTS ems
-            INNER JOIN REF_CONTRACT rc ON ems.ID_REF_CONTRACT = rc.ID
-            LEFT JOIN ENUM_TYPE_SERVICE res ON ems.ID_ENUM_TYPE_SERVICE = res.ID
+            
+            INNER JOIN REF_CONTRACT rc 
+            ON ems.ID_REF_CONTRACT = rc.ID
+            
+            LEFT JOIN ENUM_TYPE_SERVICE res 
+            ON ems.ID_ENUM_TYPE_SERVICE = res.ID
+            
             WHERE ems.ID_ORGANIZATIONS = ? 
               AND ems.ID_REF_COUNTERAGENT = ? 
               AND YEAR(ems.PERIOD) = ?
+              
             ORDER BY ems.PERIOD DESC, ems.ID_REF_CONTRACT ASC, ems.ID_ENUM_TYPE_SERVICE ASC";
 
     $stmt = mysqli_prepare($link, $sql);
@@ -56,7 +63,7 @@ function getHistoryData($link, $counteragentId, $year, $orgId) {
         $service = [
             'name'   => $row['service_name'],
             'beg'    => (float)$row['BEG_DEBT'],
-            'vol'    => $isVolumeService ? $volValue : null, // Якщо абонплата, передаємо null
+            'vol'    => $volValue, 
             'acc'    => (float)$row['ACCRUAL_SUM'],
             'recalc' => (float)$row['RECALC_SUM'],
             'paid'   => (float)$row['PAY_SUM'],
@@ -66,7 +73,6 @@ function getHistoryData($link, $counteragentId, $year, $orgId) {
         $tree[$cName]['months'][$mName]['details'][] = $service;
 
         // --- РОЗРАХУНОК МІСЯЦЯ ---
-        // Об'єм додаємо до загальної суми ТІЛЬКИ для води та стоків!
         if ($isVolumeService) {
             $tree[$cName]['months'][$mName]['vol'] += $volValue;
             $tree[$cName]['total']['vol']          += $volValue;
@@ -78,7 +84,7 @@ function getHistoryData($link, $counteragentId, $year, $orgId) {
         $tree[$cName]['months'][$mName]['beg']    += $service['beg'];
         $tree[$cName]['months'][$mName]['end']    += $service['end'];
 
-        // --- РОЗРАХУНОК ДОГОВОРУ (Підсумки) ---
+        // --- РОЗРАХУНОК ДОГОВОРУ ---
         $tree[$cName]['total']['acc']    += $service['acc'];
         $tree[$cName]['total']['recalc'] += $service['recalc'];
         $tree[$cName]['total']['paid']   += $service['paid'];
