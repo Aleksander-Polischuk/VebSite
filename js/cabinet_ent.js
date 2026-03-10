@@ -1,5 +1,5 @@
 /* =========================================
-   1. ІНІЦІАЛІЗАЦІЯ ТА НАВІГАЦІЯ (Оновлено)
+   1. ІНІЦІАЛІЗАЦІЯ ТА НАВІГАЦІЯ
    ========================================= */
 document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('mainContent');
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('overlay');
     const scrollBtn = document.getElementById("scrollToTopBtn");
 
-    // === НОВЕ: Відновлюємо збережену вкладку ДО завантаження ===
+    // === Відновлюємо збережену вкладку до завантаження ===
     const savedPage = localStorage.getItem('activeCabinetPage');
     if (savedPage) {
         document.querySelectorAll('.sidebar a:not(.btn-logout)').forEach(link => {
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Promise.all(fetchPromises)
             .then(() => {
                 mainContent.style.opacity = '1';
-                // Шукаємо вкладку з класом active (вона тепер або з localStorage, або дефолтна)
+                // Шукаємо вкладку з класом active
                 const activeLink = document.querySelector('.sidebar a.active');
                 if (activeLink) {
                    showPage(activeLink.innerText.trim());
@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const pageName = this.innerText.trim();
             
-            // === НОВЕ: Зберігаємо вибір вкладки в пам'ять браузера ===
+            // === Зберігаємо вибір вкладки в пам'ять браузера ===
             localStorage.setItem('activeCabinetPage', pageName);
             // ==========================================================
 

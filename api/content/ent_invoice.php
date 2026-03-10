@@ -3,7 +3,6 @@
 
 $forceSign = isset($_GET['force_sign']) && $_GET['force_sign'] == '1';
 
-// Перевірка сесії
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -12,7 +11,6 @@ include "config.php";
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
-// Вхідні параметри
 $userId = $_SESSION['id_users'] ?? 0;
 $orgId = $IDOrganizations ?? 1; 
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
@@ -35,19 +33,20 @@ function getUkrMonth($dateStr) {
     return $months[$m] . ' ' . $y;
 }
 
-// SVG іконка для дерева
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon icon-no-pointer" alt="">';
 
 // -------------------------------------------------------------------------
-// 1. ОТРИМАННЯ СПИСКУ ДОСТУПНИХ РОКІВ
+// ОТРИМАННЯ СПИСКУ ДОСТУПНИХ РОКІВ
 // -------------------------------------------------------------------------
 $years = [];
 $sqlYears = "
     SELECT DISTINCT YEAR(di.PERIOD) as y
     FROM ACCESS acc
+    
     INNER JOIN DOC_INVOICE di 
-        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
-       AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+    ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+       di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+    
     WHERE acc.ID_USERS = ?
       AND acc.ID_ORGANIZATIONS = ?
       AND acc.ID_REF_COUNTERAGENT = ?
@@ -72,7 +71,7 @@ $selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : $years[0];
 
 
 // -------------------------------------------------------------------------
-// 2. Додано перевірку на наявність підписів
+// Перевірка на наявність підписів
 // -------------------------------------------------------------------------
 $sql = "
     SELECT 
@@ -85,12 +84,15 @@ $sql = "
         (di.DOC_PDF_SIGN_ORG IS NOT NULL) AS sign_org,
         (di.DOC_PDF_SIGN_COUNTERAGENT IS NOT NULL) AS sign_ca
     FROM ACCESS acc
-    INNER JOIN DOC_INVOICE di ON 
-            di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-        AND di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
-    inner JOIN REF_CONTRACT rc ON 
-        di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS 
-        and rc.ID = di.ID_REF_CONTRACT 
+    
+    INNER JOIN DOC_INVOICE di 
+    ON di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS AND 
+       di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
+    
+    INNER JOIN REF_CONTRACT rc 
+    ON di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS AND 
+       rc.ID = di.ID_REF_CONTRACT 
+        
     WHERE acc.ID_USERS = ?
       AND acc.ID_ORGANIZATIONS = ?
       AND acc.ID_REF_COUNTERAGENT = ?

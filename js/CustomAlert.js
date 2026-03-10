@@ -70,7 +70,7 @@ function showAlert(message, type = 'success', title = null, buttons = [], subMes
     // 1. Основний Текст
     alertText.innerHTML = message;
 
-    // 2. Додатковий текст (Питання знизу) - НОВЕ
+    // 2. Додатковий текст (Питання знизу) 
     if (subMessage) {
         alertSubText.innerText = subMessage;
         alertSubText.style.display = 'block';
