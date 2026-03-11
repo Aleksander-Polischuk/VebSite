@@ -47,6 +47,7 @@
         
         // 2. ПЕРЕВІРЯЄМО ЧИ ПІДТВЕРДЖЕНА ПОШТА
         // Якщо це юр. особа (is_ent=1) і пошта не підтверджена (is_confirmed=0)
+        /*
         if ($is_ent == 1 && $is_confirmed == 0) {
              echo json_encode([
                'success' => false,
@@ -54,7 +55,7 @@
             ]);
             exit;
         }
-
+        */
         session_start();
         
         $_SESSION['id_users']     = $id_users;

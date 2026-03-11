@@ -96,11 +96,16 @@
     mysqli_stmt_bind_param($stmt, "iiiii", $id_users, $id_ref_counteragent, $id_ref_account, $IDOrganizations, $id_ent_registration);
     mysqli_stmt_execute($stmt);
     
-    // 4. ВІДПРАВЛЯЄМО ЛИСТ
+    // 4. ВІДПРАВЛЯЄМО ЛИСТ 
     SendActivationMail($email, $token);
     
+    // 5. ОДРАЗУ АВТОРИЗУЄМО КОРИСТУВАЧА
+    $_SESSION['id_users'] = $id_users;
+    $_SESSION['is_ent']   = 1;
+    
+    // Перенаправляємо в кабінет
     echo json_encode([
         'success' => true,
-        'redirect' => '/login?msg=activation_sent'
+        'redirect' => '/cabinet_ent'
     ]);      
 ?>
