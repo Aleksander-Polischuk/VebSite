@@ -37,7 +37,10 @@ $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon faq-pointer-
                 
                 <div class="faq-answer">
                     <div class="quill-content">
-                        <?php echo $row['content_data']; ?>    
+                        <?php 
+                            $cleanHtml = str_replace(['about:/uploads', 'about:blank/uploads'], '/uploads', $row['content_data']);
+                            echo $cleanHtml; 
+                        ?>    
                     </div>
                 </div>
             </div>
