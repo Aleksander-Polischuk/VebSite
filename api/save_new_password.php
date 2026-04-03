@@ -34,7 +34,8 @@ if (mysqli_num_rows($result) > 0) {
     // Важливо видалити токен
     $updateSql = "UPDATE USERS "
                 ."SET PASSWD_HASH = ?, "
-                ."RECOVERY_TOKEN = NULL "
+                ."RECOVERY_TOKEN = NULL, "
+                ."MTIME_CH = now() "
                 ."WHERE EMAIL    = ? AND "
                 ."RECOVERY_TOKEN = ?";
     $stmtUpdate = mysqli_prepare($link, $updateSql);

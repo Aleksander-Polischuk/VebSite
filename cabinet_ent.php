@@ -6,8 +6,6 @@ include "config.php";
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
-
-
 // 2. Зміна контрагента
 $post_counteragent_id = filter_input(INPUT_POST, 'set_counteragent_id', FILTER_VALIDATE_INT);
 if ($post_counteragent_id !== null && $post_counteragent_id !== false) {
@@ -27,14 +25,6 @@ $selectedId = $_SESSION['selected_counteragent_id'] ?? null;
 $userId = (int)$_SESSION['id_users'];
 $orgId = (int)$IDOrganizations;
 
-
-// --- Перевірка прав адміністратора ---
-$isAdmin = false;
-$admin_ids = [5]; //ID адмінів
-
-if (in_array($userId, $admin_ids)) {
-    $isAdmin = true;
-}
 
 $SQLExec = "
     SELECT 
@@ -68,16 +58,12 @@ if ($activeRow) {
     $_SESSION['selected_counteragent_id'] = $activeRow['ID'];
 }
 
-
 // 5. ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
 $list_css = ['/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 include "CustomAlert.php";
 ?>
-
-
-
 
 <header class="header">
   <div class="header-main-row">
@@ -109,18 +95,6 @@ include "CustomAlert.php";
         </div>
       </div>
     </div>
-    <!--
-    <?php if ($isAdmin): ?>
-    
-    <div class="header-admin">
-        <a href="/admin/admin_faq_add.php" title="Адміністративна панель" onclick="openAdminPanel(event, this.href)">
-            <img src="/img/gear.svg" alt="Налаштування" class="admin-gear-icon">
-        </a>
-    </div>
-    
-    <?php endif; ?>
-    
-    -->
     <div class="header-right">
       <div class="header-center">
        <div class="balance <?php echo $balanceClass; ?>"><?php echo $balance; ?> грн</div>
@@ -141,7 +115,6 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
-       <!-- <a href="#">Історія показників_2</a> -->
         <a href="#">Рахунки</a>
         <a href="#">Тарифи</a>
         <a href="#">Поширені запитання</a>
@@ -166,11 +139,11 @@ include "CustomAlert.php";
 <script src="/js/table_tree.js"></script>
 <script src="js/personal_acc.js"></script>
 <script src="js/input_meters.js"></script>
-<script src="js/history_readings_2.js"></script>
+<script src="js/history_readings.js"></script>
 <script src="js/feedback.js"></script>
 <script src="js/Popular_Questions.js"></script>
 
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link href="/css/quill.snow.css" rel="stylesheet">
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
@@ -240,28 +213,6 @@ document.querySelectorAll('.sidebar a').forEach(link => {
         highlightActiveMenu(pageName);
     });
 });
-
-function openAdminPanel(event, url) {
-    event.preventDefault(); // Зупиняємо стандартний перехід за посиланням
-
-    // 1. Намагаємося отримати посилання на вікно за ім'ям, але НЕ передаємо URL.
-    // Це просто знаходить існуючу вкладку, не перевантажуючи її.
-    var adminWin = window.open('', 'admin_panel');
-
-    // 2. Перевіряємо, чи це вікно нове (пусте) або чи в ньому завантажена не та сторінка.
-    // Якщо воно щойно відкрилося, location.href буде "about:blank".
-    try {
-        if (adminWin.location.href === 'about:blank') {
-            adminWin.location.href = url; // Завантажуємо адмінку тільки якщо вкладка була порожньою
-        }
-    } catch (e) {
-        // Якщо виникла помилка безпеки, просто завантажуємо URL
-        adminWin.location.href = url;
-    }
-
-    // 3. Переводимо фокус на цю вкладку
-    adminWin.focus();
-}
 </script>
 
 </body>

@@ -17,6 +17,9 @@
   
   include "page_head.php";
   include "CustomAlert.php";
+  
+  //Доступний тільки кабінет для юридичних осіб 
+  $account_type = 1;
 ?>
   <div id="wrapper"> 
   	 <header id="header">

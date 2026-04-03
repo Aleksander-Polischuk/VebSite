@@ -15,7 +15,7 @@ function SendRecoveryMail($to, $token) {
     $headers .= "X-Priority: 2 (High)\r\n";
  
     // Формуємо посилання
-    $link = "http://develop.kgonline.in.ua/recovery?token=$token&email=" . urlencode($to);
+    $link = "https://cv.kgonline.in.ua/recovery?token=$token&email=" . urlencode($to);
 
     // Завантажуємо шаблон з файлу
     $templatePath = '../templates/recovery_mail.html';

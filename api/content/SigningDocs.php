@@ -263,6 +263,10 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                             <span class="fn_stage_status stage-header__status"></span>
                         </div>
                     </div>
+                    <div id="pkKSPQRBlock" style="text-align: center; margin-top: 15px;"></div>
+                    <div id="pkKSPQRTimerBlock" style="text-align: center; margin-top: 10px; font-weight: bold; color: #dc3545;">
+                        <label id="pkKSPQRTimerLabel"></label>
+                    </div>
                 </div>
                 
                 <div id="fn_iit_module_data_verification_stage" class="stage" style="display:none;">
@@ -339,8 +343,6 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                 <select id="pkReadFileAliasSelect"></select>
                 <div id="pkKSPUserIdBlock"></div>
                 <input id="pkKSPUserId">
-                <div id="pkKSPQRBlock"></div>
-                <div id="pkKSPQRTimerBlock"><label id="pkKSPQRTimerLabel"></label></div>
                 </div>
 
         </div>

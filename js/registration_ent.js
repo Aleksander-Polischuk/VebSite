@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('email');
     const password = document.getElementById('password');
     const password2 = document.getElementById('password2');
+    let emailCheckTimer;
+    let lastCheckedEmail = '';
 
-    // Використовуємо перемикання класів маскування, щоб браузер не пропонував старі паролі
     document.querySelectorAll('.toggle-password').forEach(btn => {
         btn.addEventListener('click', function() {
             const input = this.previousElementSibling;
@@ -21,46 +22,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    /* =========================================
+       ВАЛІДАЦІЯ ПАРОЛЯ
+       ========================================= */
+    function validateRegistrationPassword() {
+        const p1 = password.value;
+        const p2 = password2.value;
+        const container = document.querySelector('.password-requirements');
 
-/* ---------- ДИНАМІЧНА ВАЛІДАЦІЯ ПАРОЛЯ ---------- */
-function validateRegistrationPassword() {
-    const p1 = password.value;
-    const p2 = password2.value;
-    const container = document.querySelector('.password-requirements');
+        const reqLength = document.getElementById('req-length');
+        const reqNumber = document.getElementById('req-number');
+        const reqMatch = document.getElementById('req-match');
 
-    const reqLength = document.getElementById('req-length');
-    const reqNumber = document.getElementById('req-number');
-    const reqMatch = document.getElementById('req-match');
+        if (!reqLength || !reqNumber || !reqMatch || !container) return false;
 
-    if (!reqLength || !reqNumber || !reqMatch || !container) return false;
+        // 1. Мінімум 6 символів
+        const isLengthOk = p1.length >= 6;
+        reqLength.style.display = isLengthOk ? 'none' : 'flex';
 
-    // 1. Мінімум 6 символів
-    const isLengthOk = p1.length >= 6;
-    reqLength.style.display = isLengthOk ? 'none' : 'flex';
+        // 2. Мінімум одна цифра
+        const isNumberOk = /\d/.test(p1);
+        reqNumber.style.display = isNumberOk ? 'none' : 'flex';
 
-    // 2. Мінімум одна цифра
-    const isNumberOk = /\d/.test(p1);
-    reqNumber.style.display = isNumberOk ? 'none' : 'flex';
+        // 3. Паролі співпадають (і не порожні)
+        const isMatchOk = (p1 === p2 && p1 !== '');
+        reqMatch.style.display = isMatchOk ? 'none' : 'flex';
 
-    // 3. Паролі співпадають (і не порожні)
-    const isMatchOk = (p1 === p2 && p1 !== '');
-    reqMatch.style.display = isMatchOk ? 'none' : 'flex';
+        // Перевіряємо, чи залишився хоча б один видимий пункт
+        const anyVisible = !isLengthOk || !isNumberOk || !isMatchOk;
 
-    // Перевіряємо, чи залишився хоча б один видимий пункт
-    const anyVisible = !isLengthOk || !isNumberOk || !isMatchOk;
+        // Ховаємо весь блок, якщо всі умови виконані
+        container.style.display = anyVisible ? 'block' : 'none';
 
-    // Ховаємо весь блок, якщо всі умови виконані
-    container.style.display = anyVisible ? 'block' : 'none';
+        // Якщо все ок, чистимо старі текстові помилки під полями
+        if (!anyVisible) {
+            clearError(password, 'passwordError');
+            clearError(password2, 'password2Error');
+        }
 
-    // Якщо все ок, чистимо старі текстові помилки під полями
-    if (!anyVisible) {
-        clearError(password, 'passwordError');
-        clearError(password2, 'password2Error');
+        return !anyVisible;
     }
 
-    return !anyVisible;
-}
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'password' || e.target.id === 'password2') {
+            validateRegistrationPassword();
+        }
+    });
 
+
+    /* =========================================
+       ВАЛІДАЦІЯ ПОШТИ
+       ========================================= */
     function validateEmailFormat() {
         const value = email.value.trim();
 
@@ -117,22 +129,31 @@ function validateRegistrationPassword() {
         }
     }
 
+    email.addEventListener('input', () => {
+        if (validateEmailFormat()) {
+            debounceCheckEmail();
+        } else {
+            clearTimeout(emailCheckTimer);
+        }
+    });
 
-    /* ---------- ВІДПРАВКА ФОРМИ ---------- */
+
+    /* =========================================
+       ВІДПРАВКА ФОРМИ
+       ========================================= */
     form.addEventListener('submit', (e) => {
         e.preventDefault();  
         
         const isEmailFormatOk = validateEmailFormat();
         const isPassOk = validateRegistrationPassword();
         
-        // Перевіряємо, чи немає помилок, виставлених з БД
         const isEmailUnique = !email.classList.contains('error'); 
 
         if (!isPassOk) {
             setError(password, 'passwordError', 'Будь ласка, виконайте всі вимоги до пароля');
         }
 
-        // Відправляємо дані тільки якщо все "зелене" та пошта валідна
+        // Відправляємо дані тільки якщо все ok та пошта валідна
         if (isEmailFormatOk && isEmailUnique && isPassOk) { 
             const formData = new FormData(form);
 
@@ -176,7 +197,9 @@ function validateRegistrationPassword() {
         }
     });
 
-    /* ---------- ДОПОМІЖНІ ФУНКЦІЇ ---------- */
+    /* =========================================
+       ДОПОМІЖНІ ФУНКЦІЇ
+       ========================================= */
     function setError(input, errorId, message) {
         input.classList.add('error');
         input.closest('.field').classList.add('error');

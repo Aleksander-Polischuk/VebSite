@@ -16,8 +16,8 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>КП «Чернівціводоканал» :: <?php echo $title; ?></title>
 		
-	<!--	<script src="https://code.jquery.com/jquery-2.1.0.js"></script> -->
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	
+                <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 		<script type="text/javascript" src="https://kgonline.in.ua/js/jquery.mask.js"></script>
 <?php
 	    if (isset($list_css)) {

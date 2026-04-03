@@ -1,0 +1,71 @@
+﻿/* Контейнер таблиці */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: #fff;
+}
+
+/* Шапка таблиці - синій фон як у логотипу */
+.data-table thead th {
+    background-color: #3C9ADC;
+    color: #ffffff;
+    padding: 10px 10px;
+    text-align: left;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-weight: normal;
+}
+
+/* Рядки таблиці */
+.data-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid #eee;
+    color: #444;
+}
+
+/* Батьківський рядок */
+.parent-row {
+    background-color: #fcfcfc !important;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.parent-row:hover {
+    background-color: #f5f8ff !important;
+}
+
+/* Іконка дерева */
+.tree-icon {
+    display: inline-block;
+    width: 14px;
+    transition: transform 0.2s ease;
+    margin-right: 8px;
+    color: #333;
+}
+
+/* Стан при закритті */
+.parent-row.collapsed .tree-icon {
+    transform: rotate(-90deg);
+}
+
+/* Дочірні рядки */
+.child-row.hidden {
+    display: none;
+}
+
+.pl-indent {
+    padding-left: 35px !important; /* Відступ для ефекту вкладеності */
+    color: #666;
+}
+
+/* Кнопка завантаження */
+.btn-download {
+    color: #3f6df6;
+    text-decoration: none;
+    border-bottom: 1px dashed #3f6df6;
+}

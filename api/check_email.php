@@ -16,7 +16,7 @@
 	$is_ent = -1;
 	
 	if (isset($_SESSION['id_ent_registration'])) {
-		$is_ent = 1;
+            $is_ent = 1;
 	}
 			
 	//Якщо не визначили тип користувача

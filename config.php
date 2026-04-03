@@ -5,4 +5,5 @@
  	$dbName             = "zenit00_kgonline";
  	$UnderConstruction  = false;
 	$IDOrganizations    = 1;
+        //
 ?>

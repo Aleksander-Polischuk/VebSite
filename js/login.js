@@ -84,7 +84,8 @@ $(function () {
         alert('Сталася помилка з\'єднання з сервером.');
     }
 }
- 
+    // Скидаэмо на дефолт вибрану сторінку з sidebar
+    localStorage.removeItem('activeCabinetPage');
     /*=====================*/
     PrepareInput();     
 });
