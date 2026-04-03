@@ -119,6 +119,7 @@ function validateRegistrationPassword() {
 
 
     /* ---------- ВІДПРАВКА ФОРМИ ---------- */
+    
     form.addEventListener('submit', (e) => {
         e.preventDefault();  
         
