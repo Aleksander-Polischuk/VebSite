@@ -14,7 +14,7 @@ if (!$userId) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_feedback') {
-    $to = "aleksander.poliscuk@gmail.com"; 
+    $to = "abon.cv.pokazniky@gmail.com"; /// Тут необхідно вставити адресу сапорту
     $subjectText = trim($_POST['subject'] ?? 'Без теми');
     $messageBody = $_POST['message'] ?? '';
     

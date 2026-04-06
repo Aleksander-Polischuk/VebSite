@@ -7,7 +7,6 @@
 	}  
 
 	session_start();
-	
        /* Блок перевірки  */ 
         
         
@@ -62,11 +61,9 @@
     
         elseif ($path == '/cabinet_ent') {
                     include "cabinet_ent.php";
-            }
-	elseif ($path == '/admin') {
-            header('Location: /admin/admin_faq_add.php');
-            exit;
         }
+	
+        
 	else {
 	  $param = ($account_type >= 0 ? '?account_type='.$account_type : '');   		
 	  header('Location: /login'.$param);

@@ -1,45 +1,51 @@
 /* =========================================
-   3. ЛОГІКА ВВОДУ і рахування різниці
+   ВВОД і рахування різниці
    ========================================= */
 function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx) {
     let val = input.value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
     const dots = val.split('.');
     input.value = dots.length > 2 ? dots[0] + '.' + dots.slice(1).join('') : val;
 
-    // Очищаємо всі статуси
-    input.classList.remove('error', 'valid', 'warning');
+    input.classList.remove('error', 'warning', 'valid');
+    
     const diffSpan = document.getElementById(diffSpanId);
     let message = "";
     let statusClass = "";
 
+    // Отримуємо ліміти з бази
+    const maxVol = parseFloat(input.dataset.maxVol) || 0;
+    const warningVol = parseFloat(input.dataset.warningVol) || 0;
+
     if (input.value !== '') {
         const currentNum = parseFloat(input.value);
         const prevNum = parseFloat(prevValue);
+        const diff = currentNum - prevNum;
 
-        // 1. Пріоритет помилкам (червоний)
-        if (currentNum < 0) {
-            message = "Число не може бути від'ємним";
+
+        if (currentNum < 0 || currentNum < prevNum || (maxVol > 0 && diff > maxVol)) {
             statusClass = 'error';
-        } else if (currentNum < prevNum) {
-            message = "Показник менший за попередній";
-            statusClass = 'error';
+            if (currentNum < 0) message = "Число не може бути від'ємним";
+            else if (currentNum < prevNum) message = "Показник менший за попередній";
+            else message = `Перевищено ліміт: ${diff.toFixed(3)} (макс. ${maxVol})`;
         } 
-        // 2. Попередження, якщо показник вже був переданий
-        else if (input.defaultValue.trim() !== '') {
-            const savedValue = parseFloat(input.defaultValue).toFixed(3).replace('.', ',');
-            message = `Показник за поточний місяць вже передано: ${savedValue}`;
+        else if ((warningVol > 0 && diff >= warningVol) || input.defaultValue.trim() !== '') {
             statusClass = 'warning';
+            if (warningVol > 0 && diff >= warningVol) {
+                message = `Увага! Великий об'єм: ${diff.toFixed(3)}`;
+            } else {
+                const savedValue = parseFloat(input.defaultValue).toFixed(3).replace('.', ',');
+                message = `Показник за поточний місяць вже передано: ${savedValue}`;
+            }
         } 
-        // 3. Якщо все добре і це новий ввід
         else {
             statusClass = 'valid';
         }
+
         input.classList.add(statusClass);
         
         if (diffSpan) {
-            const diff = currentNum - prevNum;
             diffSpan.innerText = diff.toFixed(3).replace('.', ',');
-            diffSpan.style.color = diff < 0 ? "#e74c3c" : "#3C9ADC";
+            diffSpan.style.color = (statusClass === 'error') ? "#e74c3c" : "#3C9ADC";
         }
     } else if (diffSpan) {
         diffSpan.innerText = "0,000";
@@ -53,11 +59,11 @@ function handleMeterInput(input, prevValue, diffSpanId, addressIdx, contractIdx)
         if (tooltip) tooltip.textContent = message;
 
         if (statusClass === 'error' || statusClass === 'warning') {
-            icon.style.display = 'flex'; // Використовуємо flex для центрування
+            icon.style.display = 'flex';
             icon.style.visibility = 'visible';
             icon.style.opacity = '1';
             icon.style.backgroundColor = (statusClass === 'error') ? '#e74c3c' : '#f39c12';
-            icon.childNodes[0].nodeValue = (statusClass === 'error') ? '!' : 'i';
+            icon.childNodes[0].nodeValue = (statusClass === 'warning' && input.defaultValue.trim() !== '' && !(warningVol > 0 && (parseFloat(input.value) - parseFloat(prevValue)) >= warningVol)) ? 'i' : '!';
         } else {
             icon.style.display = 'none';
             icon.style.visibility = 'hidden';
@@ -104,71 +110,71 @@ function formatOnBlur(input) {
 }
 
 /* =========================================
-   4. ЛОГІКА ЗБЕРЕЖЕННЯ
+    ЗБЕРЕЖЕННЯ
    ========================================= */
 function saveReadings() {
     const inputs = document.querySelectorAll('.input-reading');
     const dataToSend = [];
     const summaryData = {};
-    let hasError = false;
+    let hasError = false; 
+    let isVolumeWarning = false; 
 
     inputs.forEach(input => {
         const val = input.value.trim();
         if (!val) return;
 
+        const currentValNum = parseFloat(val.replace(',', '.'));
+        const prevValNum = parseFloat(input.dataset.prev);
+        const diff = currentValNum - prevValNum;
+        const warningLimit = parseFloat(input.dataset.warningVol) || 0;
+
+        // Перевірка на червоні поля
         if (input.classList.contains('error')) {
             hasError = true;
             return;
         }
 
-        const currentVal = val.replace(',', '.');
-        const currentValNum = parseFloat(currentVal);
-        const prevVal = parseFloat(input.dataset.prev);
+        // Перевірка: чи є помаранчевий колір саме через великий об'єм?
+        if (warningLimit > 0 && diff >= warningLimit) {
+            isVolumeWarning = true;
+        }
 
-        // ВАЖЛИВО: Перевіряємо, чи змінився показник порівняно з БД
         const defaultValNum = parseFloat(input.defaultValue.replace(',', '.'));
-        
-        // Якщо поле вже було передано (є defaultValue) і цифра така сама — пропускаємо його!
-        if (!isNaN(defaultValNum) && currentValNum === defaultValNum) {
-            return; 
-        }
-
-        if (isNaN(currentValNum)) {
-            hasError = true;
-            input.classList.add('error');
-            return;
-        }
+        if (!isNaN(defaultValNum) && currentValNum === defaultValNum) return; 
 
         dataToSend.push({
             id_ref_account: input.dataset.account,
             id_ref_service: input.dataset.service,
             id_ref_counter: input.dataset.counter,
-            cnt_last: prevVal,
-            cnt_current: currentVal
+            cnt_last: prevValNum,
+            cnt_current: currentValNum
         });
 
         const c = input.dataset.contractName || ("Договір №" + input.dataset.account);
         const a = input.dataset.addressName || "Адреса не вказана";
         if (!summaryData[c]) summaryData[c] = {};
         if (!summaryData[c][a]) summaryData[c][a] = [];
-        summaryData[c][a].push({ name: input.dataset.counterName || "Лічильник", val: currentVal });
+        summaryData[c][a].push({ name: input.dataset.counterName || "Лічильник", val: currentValNum.toFixed(3) });
     });
 
-    // 1. Перевірки валідації
     if (hasError) {
         return typeof showAlert === 'function' 
-            ? showAlert("Виправте помилкові (червоні) поля перед збереженням.", 'error', 'Помилка валідації') 
-            : alert("У вас є помилкові поля.");
+            ? showAlert("Виправте помилкові (червоні) поля перед збереженням. Деякі показники перевищують ліміт або менші за попередні.", 'error', 'Помилка валідації') 
+            : alert("Виправте червоні поля.");
     }
 
-    // 2. Якщо масив порожній (нічого нового не ввели)
     if (!dataToSend.length) {
         return typeof showAlert === 'function' 
-            ? showAlert("Ви не ввели жодного НОВОГО показника. Всі заповнені дані вже передані раніше.", 'warning', 'Увага') 
-            : alert("Ви не ввели жодного нового показника.");
+            ? showAlert("Ви не ввели жодного НОВОГО показника.", 'warning', 'Увага') 
+            : alert("Нічого не змінено.");
     }
 
-    // 3. Генерація HTML для вікна підтвердження
+    // Визначаємо текст підтвердження
+    let subConfirmText = 'Зберегти ці дані?';
+    if (isVolumeWarning) {
+        subConfirmText = 'Увага! Ви ввели дуже великі об’єми споживання (виділено помаранчевим). Ви впевнені, що показники вірні?';
+    }
+
     const htmlContent = Object.entries(summaryData).map(([contract, addresses]) => `
         <div style="margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
             <strong style="color: #3C9ADC; font-size: 1.1em; display: block; margin-bottom: 5px;">📄 ${contract}</strong>
@@ -185,30 +191,11 @@ function saveReadings() {
 
     const html = `<div class="alert-scroll-container">${htmlContent}</div>`;
 
-    document.getElementById('customAlertText').innerHTML = html;
-    const subText = document.getElementById('customAlertSubText');
-    if (subText) {
-        subText.innerText = 'Зберегти ці дані?';
-        subText.style.display = 'block';
-    }
-    
-    const alertOverlay = document.getElementById('customAlertOverlay');
-    if (alertOverlay) {
-        alertOverlay.style.display = 'flex';
-    }
-
     if (typeof showAlert === 'function') {
         showAlert(html, 'warning', 'Перевірка даних', [
-            { 
-                text: 'Зберегти', 
-                className: 'btn-alert-ok', 
-                onClick: () => sendReadingsToServer(dataToSend)
-            },
-            { 
-                text: 'Скасувати', 
-                className: 'btn-alert-cancel' 
-            }
-        ], 'Зберегти ці дані?'); 
+            { text: 'Зберегти', className: 'btn-alert-ok', onClick: () => sendReadingsToServer(dataToSend) },
+            { text: 'Скасувати', className: 'btn-alert-cancel' }
+        ], subConfirmText); 
     }
 }
 
@@ -221,29 +208,10 @@ function sendReadingsToServer(data) {
     .then(response => response.json())
     .then(res => {
         if (res.status === 'success') {
-            showAlert(
-                'Дані передані в чергу на обробку!', 
-                'success', 
-                'Дані прийнято'
-            );
-            
-            if (window.refreshActiveContent) {
-                window.refreshActiveContent();
-            }
+            showAlert('Дані успішно передані!', 'success', 'Дані прийнято');
+            if (window.refreshActiveContent) window.refreshActiveContent();
         } else {
-            showAlert(
-                "Помилка при збереженні: " + (res.message || "Невідома помилка"), 
-                'error', 
-                'Відмова сервера'
-            );
+            showAlert("Помилка: " + (res.message || "Невідома помилка"), 'error', 'Відмова сервера');
         }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        showAlert(
-            "Не вдалося надіслати дані. Перевірте з'єднання з інтернетом або зверніться до підтримки.", 
-            'error', 
-            'Помилка мережі'
-        );
     });
 }

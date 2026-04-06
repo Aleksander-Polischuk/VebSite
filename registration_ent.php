@@ -1,4 +1,4 @@
-        <?php
+<?php
   $title = 'Реєстрація в особистому кабінеті';
   $list_css = ['/css/registration_ent.css'];
   
@@ -6,9 +6,9 @@
   
   // Якщо сюди потрапили без id_ent_registration
   if (!isset($_SESSION['id_ent_registration'])) {
-		header('Location: /');
-        exit; 
-	}
+    header('Location: /');
+    exit; 
+  }
   
   include "page_head.php";
 ?>

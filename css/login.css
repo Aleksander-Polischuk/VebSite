@@ -1,4 +1,3 @@
-
 body {
     margin: 0;
     padding: 40px 0;
@@ -189,7 +188,7 @@ select:focus {
 #ErrMsgServer {
    display: none;
    margin-top:15px;
-   float:left;
+   float:center;
    margin-left:3%;
    margin-right:3%;	
    border: 1px solid #ff0000;
