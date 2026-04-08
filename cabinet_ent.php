@@ -84,16 +84,30 @@ include "CustomAlert.php";
               </div>
               <span class="u-arrow">▼</span>
             </div>
-          <?php endforeach; ?>
+            <div class="user-select-dropdown" id="userSelectDropdown">      
+              <?php foreach ($rows as $row): ?>
+                <div class="item" 
+                     data-id="<?php echo $row['ID']; ?>" 
+                     data-edrpou="<?php echo $row['EDRPOU']; ?>" 
+                     data-name='<?php echo htmlspecialchars($row['NAME'], ENT_QUOTES); ?>'>
+                    <span><?php echo htmlspecialchars($row['NAME']); ?></span>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+      <?php else: ?>
+          <div class="blocking-notice-title" style="margin-left: 15px; margin-bottom: 0;">У вас немає доступних підприємств</div>
+      <?php endif; ?>
+    </div>
+    
+    <?php if (!empty($rows)): ?>
+        <div class="header-right">
+          <div class="header-center">
+           <div class="balance <?php echo $balanceClass ?? ''; ?>"><?php echo $balance ?? '0.00'; ?> грн</div>
+            <div class="balance-sub">До сплати станом на <br><span><?php echo $lastDateFormatted ?? date('d.m.Y'); ?></span></div>
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="header-center">
-       <div class="balance <?php echo $balanceClass; ?>"><?php echo $balance; ?> грн</div>
-        <div class="balance-sub">До сплати станом на <br><span><?php echo $lastDateFormatted; ?></span></div>
-      </div>
-    </div>
+    <?php endif; ?>
   </div> 
 </header>
 
@@ -137,7 +151,6 @@ include "CustomAlert.php";
 <script src="js/Popular_Questions.js"></script>
 
 <link href="/css/quill.snow.css" rel="stylesheet">
-
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
