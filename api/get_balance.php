@@ -17,19 +17,19 @@ if ($selectedId > 0) {
     $sql = "
         SELECT 
             SUM(ems.END_DEBT) AS summa, 
-            org.DATE_UPDATE_ENT_MUTUAL_SETTLEMENTS as PERIOD
+            org.DATE_UPDATE_ENT_MUTUAL_SETTLEMENTS  as  PERIOD
         FROM ENT_MUTUAL_SETTLEMENTS ems
 
-        LEFT JOIN ORGANIZATIONS org
+        INNER JOIN ORGANIZATIONS org
         ON(org.id = ems.ID_ORGANIZATIONS)
 
         WHERE 
             ems.ID_ORGANIZATIONS = $orgId
             AND ems.ID_REF_COUNTERAGENT = $selectedId
-        GROUP BY PERIOD
-        ORDER BY PERIOD DESC
+        GROUP BY ems.PERIOD
+        ORDER BY ems.PERIOD DESC
         LIMIT 1";
-
+    
     $res = mysqli_query($link, $sql);
     if ($res && $row = mysqli_fetch_assoc($res)) {
         $result['balance'] = number_format($row['summa'] ?? 0, 2, ',', ' ');

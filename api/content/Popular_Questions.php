@@ -9,10 +9,6 @@ mysqli_set_charset($link, 'utf8');
 
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
-if (!$selectedCounteragentId) {
-    echo "<div class='faq-error-msg'>Будь ласка, оберіть підприємство у списку зверху.</div>";
-    exit;
-}
 
 $sql = "SELECT question, content_data FROM REF_POPULAR_QUESTIONS WHERE is_active = 1 ORDER BY sort_order ASC";
 $res = mysqli_query($link, $sql);

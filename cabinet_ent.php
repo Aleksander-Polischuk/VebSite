@@ -59,7 +59,8 @@ if ($activeRow) {
 
 // 5. ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
-$list_css = ['/css/cabinet_ent.css', '/css/CustomAlert.css'];
+// ДОДАНО: підключаємо table_style.css, щоб запрацював клас .blocking-notice-title
+$list_css = ['/css/table_style.css', '/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 include "CustomAlert.php";
 ?>
@@ -72,23 +73,16 @@ include "CustomAlert.php";
           <img id="logoIco" src="/img/logo.png"> 
       </div>
       
-      <div class="user-select">
-        <div class="user-select-box" id="userSelectBtn">
-          <span class="u-icon">👤</span>
-          <div class="u-text">
-            <?php if ($activeRow): ?>
-              ЄДРПОУ: <?php echo $activeRow['EDRPOU']; ?> <span><?php echo htmlspecialchars($activeRow['NAME']); ?></span>
-            <?php endif; ?>
-          </div>
-          <span class="u-arrow">▼</span>
-        </div>
-        <div class="user-select-dropdown" id="userSelectDropdown">      
-          <?php foreach ($rows as $row): ?>
-            <div class="item" 
-                 data-id="<?php echo $row['ID']; ?>" 
-                 data-edrpou="<?php echo $row['EDRPOU']; ?>" 
-                 data-name='<?php echo htmlspecialchars($row['NAME'], ENT_QUOTES); ?>'>
-                <span><?php echo htmlspecialchars($row['NAME']); ?></span>
+      <?php if (!empty($rows)): ?>
+          <div class="user-select">
+            <div class="user-select-box" id="userSelectBtn">
+              <span class="u-icon">👤</span>
+              <div class="u-text">
+                <?php if ($activeRow): ?>
+                  ЄДРПОУ: <?php echo $activeRow['EDRPOU']; ?> <span><?php echo htmlspecialchars($activeRow['NAME']); ?></span>
+                <?php endif; ?>
+              </div>
+              <span class="u-arrow">▼</span>
             </div>
           <?php endforeach; ?>
         </div>
@@ -146,6 +140,8 @@ include "CustomAlert.php";
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script>
 // 1. Пріоритет віддаємо збереженій вкладці в браузері, якщо її немає — беремо з сесії PHP
 <?php $defaultMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
@@ -154,7 +150,9 @@ const activeMenu = localStorage.getItem('activeCabinetPage') || <?php echo json_
 const userSelect = document.querySelector('.user-select');
 const btn = document.getElementById('userSelectBtn');
 const dropdown = document.getElementById('userSelectDropdown');
-const textBox = btn.querySelector('.u-text');
+
+// БЕЗПЕЧНА ІНІЦІАЛІЗАЦІЯ (щоб не було помилок, коли селект відсутній в HTML)
+const textBox = btn ? btn.querySelector('.u-text') : null; 
 
 // Функція для підсвітки активного пункту
 function highlightActiveMenu(pageName) {
@@ -176,7 +174,9 @@ if (dropdown) {
         if (!item) return;
 
         const { id, edrpou, name } = item.dataset;
-        textBox.innerHTML = `ЄДРПОУ: ${edrpou} <span>${name}</span>`;
+        if (textBox) {
+            textBox.innerHTML = `ЄДРПОУ: ${edrpou} <span>${name}</span>`;
+        }
         userSelect.classList.remove('open');
 
         const formData = new FormData();

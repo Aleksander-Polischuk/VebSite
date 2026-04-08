@@ -36,6 +36,8 @@ var euSettings = {
         //     codeEDRPOU: "43395033",
         //     signAlgos: [1, 3],
         // },
+        
+        /*
         {
             name: "DepositSign - хмарний підпис",
             ksp: 4,
@@ -43,7 +45,7 @@ var euSettings = {
             port: "",
             directAccess: true,
             codeEDRPOU: "43005049",
-        },
+        },*/
         {
             name: 'Приватбанк - хмарний підпис "SmartID"',
             ksp: 6,
@@ -77,6 +79,7 @@ var euSettings = {
             mobileAppName: "CloudKey",
             codeEDRPOU: "36865753",
         },
+        /*
         {
             name: "ESign - хмарний підпис",
             ksp: 4,
@@ -84,7 +87,8 @@ var euSettings = {
             port: "",
             directAccess: true,
             codeEDRPOU: "36049014",
-        },
+        },*/
+        
         {
             name: "ПУМБ - хмарний підпис",
             ksp: 6,
@@ -96,6 +100,7 @@ var euSettings = {
             mobileAppName: "",
             codeEDRPOU: "14282829",
         },
+        /*
         {
             name: "ДПС - хмарний підпис",
             ksp: 4,
@@ -104,7 +109,7 @@ var euSettings = {
             directAccess: true,
             clientIdType: 1,
             codeEDRPOU: "43174711",
-        },
+        },*/
         {
             name: "Укргазбанк - хмарний підпис «EcoSign»",
             ksp: 6,
@@ -127,6 +132,7 @@ var euSettings = {
             mobileAppName: "",
             codeEDRPOU: "14360506",
         },
+        /*
         {
             name: "КНЕДП органів прокуратури - хмарний підпис",
             ksp: 6,
@@ -147,7 +153,7 @@ var euSettings = {
             directAccess: true,
             clientIdType: 1,
             codeEDRPOU: "44669502",
-        },
+        },*/
         {
             name: "Ощадбанк - хмарний підпис",
             ksp: 6,
@@ -159,6 +165,7 @@ var euSettings = {
             mobileAppName: "BC.C SmartID",
             codeEDRPOU: "00032129",
         },
+        /*
         {
             name: 'Сервер підпису КНЕДП "Військова частина 2428" ДПСУ',
             ksp: 6,
@@ -169,6 +176,7 @@ var euSettings = {
             directAccess: true,
             codeEDRPOU: "14321469",
         },
+        */
     ],
 
     //   KSPs: [
@@ -473,35 +481,26 @@ class App {
         let t = this;
         setStatus('Формування QR-code', 1);
         try {
-
-            switch (kspEvent.type) {
-                case EndUserConstants.EndUserEventType.ConfirmKSPOperation: {
-                    t.BeginOperationConfirmation(
-                        kspEvent.url,
-                        kspEvent.qrCode,
-                        kspEvent.mobileAppName,
-                        kspEvent.expireDate
-                    );
-                }
+            // Замість складного switch, просто перевіряємо чи є картинка в події
+            if (kspEvent && kspEvent.qrCode) {
+                t.BeginOperationConfirmation(
+                    kspEvent.url,
+                    kspEvent.qrCode,
+                    kspEvent.mobileAppName,
+                    kspEvent.expireDate
+                );
+            } else if (kspEvent && kspEvent.type === 24) { // 24 = ConfirmKSPOperation
+                t.BeginOperationConfirmation(
+                    kspEvent.url,
+                    kspEvent.qrCode,
+                    kspEvent.mobileAppName,
+                    kspEvent.expireDate
+                );
             }
-            // (this.m_listeners[kspEvent.type] ||
-            //     this.m_listeners[EndUserConstants.EndUserEventType.All]) &&
-            // this.PostMessage(null, -2, null, kspEvent);
         } catch (e) {
+            console.error("Помилка рендеру QR: ", e);
             setStatus(e, 1, 1);
         }
-
-        // console.log(kspEvent);
-        // var node = "";
-        // node += '<a href="' + encodeURI(kspEvent.url) + '" target="_blank">';
-        // node +=
-        //     '<img src="data:image/bmp;base64,' +
-        //     kspEvent.qrCode +
-        //     '" style="padding: 10px; background: white;">';
-        // node += "</a>";
-        //
-        // document.getElementById("pkKSPQRImageBlock").innerHTML = node;
-        // document.getElementById("pkKSPQRBlock").style.display = "block";
     }
 
     StopOperationConfirmationTimer() {
@@ -540,26 +539,33 @@ class App {
 
     BeginOperationConfirmation(url, qrCode, mobileAppName, expireDate) {
         let t = this;
+        
+        // 1. Стандартне перемикання етапів
         t.NextStage('fn_iit_module_init_key_stage', 'fn_iit_module_init_qr_code');
-        let $div = $("<div>");
-        $div.css("padding", "10px");
+        
+        // 2. ЗАЛІЗНЕ ВІДОБРАЖЕННЯ: примусово знімаємо класи приховування Bootstrap (якщо вони є)
+        let qrStage = $("#fn_iit_module_init_qr_code");
+        if (qrStage.length) {
+            qrStage.removeClass("d-none hidden").css("display", "block");
+        }
+
+        let $div = $("<div>").css("padding", "10px");
 
         var $a = $("<a>");
-        $a.attr("href", url), $a.attr("target", "_blank");
+        $a.attr("href", url).attr("target", "_blank");
 
         var image = new Image();
         image.src = "data:image/bmp;base64," + qrCode;
-        $(image).css("padding", "10px");
-        $(image).css("background", "white");
+        $(image).css({"padding": "10px", "background": "white", "max-width": "100%", "border-radius": "8px"});
         $a.append(image);
         $div.append($a);
 
-        var c = '<a href="' + encodeURI(url) + '" target="blank" style="color:black">' + mobileAppName + "</a>";
+        var c = '<a href="' + encodeURI(url) + '" target="_blank" style="color:#007bff; font-weight:bold;">' + mobileAppName + "</a>";
 
         let $div1 = $("<div>");
         $div1.append(
-            '<label style="color:#aaa">' +
-            StringFormatter.format('Натисність або зчитайте QR-код сканером у застосунку {0} та дотримуйтесь інструкцій', c) +
+            '<label style="color:#333; font-size:16px; margin-top:10px;">' +
+            'Натисніть на картинку або зчитайте QR-код сканером у застосунку ' + c + ' та підтвердіть операцію.' +
             "</label>"
         );
 
@@ -571,21 +577,28 @@ class App {
             }
         );
 
-        $("#pkKSPQRBlock").empty();
-        $("#pkKSPQRBlock").append($div);
-        $("#pkKSPQRBlock").append($div1);
-        $("#pkKSPQRBlock").show();
+        // 3. Знаходимо блок для QR, очищуємо його, вставляємо новий код і ПРИМУСОВО показуємо
+        let qrBlock = $("#pkKSPQRBlock");
+        qrBlock.empty().append($div).append($div1);
+        qrBlock.removeClass("d-none hidden").css("display", "block");
+        
+        // 4. Сумісність зі старим HTML (на випадок, якщо ваша верстка використовує старий ID)
+        let oldImageBlock = $("#pkKSPQRImageBlock");
+        if (oldImageBlock.length) {
+            oldImageBlock.empty().append($a.clone());
+        }
     }
 
     LoadLibrary(e) {
-        let t = this;
-        let currentLibrary = t.GetCurrentLibrary();
-        currentLibrary.IsLoading() ||
-        currentLibrary
-            .Load(function (e) {
-                t.onConfirmKSPOperation(e);
-            })
-            .then(function () {
+     let t = this;
+     let currentLibrary = t.GetCurrentLibrary();
+     currentLibrary.IsLoading() ||
+     currentLibrary
+         // Додаємо type та kspEvent, щоб правильно перехопити об'єкт з QR-кодом
+         .Load(function (type, kspEvent) {
+             t.onConfirmKSPOperation(kspEvent || type);
+         })
+         .then(function () {
                 currentLibrary == t.GetCurrentLibrary() && t.OnChangeLibraryType(e);
             })
             .catch(function (e) {
@@ -1136,13 +1149,14 @@ class App {
 			const code2 = document.getElementById('PKeyOwnerInfoSubjDRFOCodeSelect').textContent;
 
 			// Кнопка буде неактивною, якщо коди НЕ збігаються
-			if (code1 !== code2) {
+			/*
+                        if (code1 !== code2) {
 			    document.getElementById('BtnVerificationNext').style.display = 'none'; 
 			    document.getElementById('PKeyOwnerInfoSubjDRFOCodeDescr').style.display = 'block';
 			} else {
 			    document.getElementById('BtnVerificationNext').style.display = 'block';
 			    document.getElementById('PKeyOwnerInfoSubjDRFOCodeDescr').style.display = 'none'; 
-			}
+			}*/
                            
         }
     }

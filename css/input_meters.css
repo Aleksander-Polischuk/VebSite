@@ -184,6 +184,118 @@
     box-shadow: none;
 }
 
+/* =========================================
+   Попередній перегляд Акту
+   ========================================= */
+.modal-overlay {
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); 
+    z-index: 9999;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+
+.modal-content {
+    width: 80%;
+    max-width: 900px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    overflow: hidden; 
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    color: #777;
+    transition: color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    color: #e74c3c;
+}
+
+.modal-body {
+    flex-grow: 1;
+    padding: 15px;
+    background: #f5f5f5;
+}
+
+#pdf-iframe {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff; 
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end; 
+    gap: 15px;
+}
+
+.modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.modal-footer button:active {
+    transform: scale(0.98);
+}
+
+/* Індивідуальний колір: Скасувати */
+.modal-footer .modal-cancel-btn {
+    background-color: #e74c3c; 
+}
+
+.modal-footer .modal-cancel-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Індивідуальний колір: Підписати КЕП */
+.modal-footer .btn-sign-kep {
+    background-color: #28a745; 
+}
+
+.modal-footer .btn-sign-kep:hover {
+    background-color: #218838;
+}
+
 @media (max-width: 850px) {
     .data-table {
         border-collapse: separate !important;

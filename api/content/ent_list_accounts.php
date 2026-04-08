@@ -11,96 +11,112 @@ $userId = $_SESSION['id_users'] ?? 0;
 $orgId = $IDOrganizations ?? 1; 
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
-if (!$selectedCounteragentId) {
-    echo "<div style='padding:20px;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
-    exit;
-}
-
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
 $warning_text_msg = '<span style="color: #d32f2f; font-weight: normal; font-size: 12px; margin-left: 10px;">— Термін повірки спливає або минув!</span>';
 
-$SQLExec = "
-    SELECT 
-        rc.ID as ContractID,
-        rc.`NAME` as ContractName,
-        CONCAT(IFNULL(rci.`NAME`, ''), ', ', IFNULL(rs.`NAME`, ''), ', буд. ', IFNULL(rh.`NAME`, '')) AS Address,
-        rcn.ID as CounterID,
-        rcn.FIRM_NUM as CounterNum,
-        rtc.NAME as CounterType,
-        rcn.DATE_NEXT_VERIFICATION,
-        iaac.LAST_INDICATION,
-        iaac.LAST_DATE_INDICATION
-    FROM INF_ACTIVE_ACCOUNT_COUNTER iaac
-    
-
-    INNER JOIN REF_ACCOUNT ra 
-    ON (ra.id = iaac.ID_REF_ACCOUNT)
-
-    INNER JOIN REF_CONTRACT rc 
-    ON (rc.id = ra.ID_REF_CONTRACT)
-    
-    INNER JOIN REF_COUNTER rcn 
-    ON (rcn.id = iaac.ID_REF_COUNTER)
-    
-    INNER JOIN ACCESS acc ON (
-        acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND 
-        acc.ID_ORGANIZATIONS = iaac.ID_ORGANIZATIONS
-    )
-    
-    LEFT JOIN REF_TYPE_COUNTER rtc 
-    ON (rtc.id = rcn.ID_REF_TYPE_COUNTER)
-    
-    LEFT JOIN REF_HOUSE rh 
-    ON (rh.id = ra.ID_REF_HOUSE)
-    
-    LEFT JOIN REF_STREET rs 
-    ON (rs.id = rh.ID_REF_STREET)
-    
-    LEFT JOIN REF_CITY rci 
-    ON (rci.id = rs.ID_REF_CITY)
-    
-    WHERE acc.ID_USERS = " . (int)$userId . " 
-      AND iaac.ID_ORGANIZATIONS = " . (int)$orgId . "
-      AND acc.ID_REF_COUNTERAGENT = " . (int)$selectedCounteragentId . "
-    ORDER BY rc.ID, Address, CounterNum";
-
-$s_res = mysqli_query($link, $SQLExec);
-
-// --- ЛОГІКА ОБРОБКИ (3 РІВНІ) ---
+$enterprises = [];
 $treeData = [];
-$dateThreshold = date('Y-m-d', strtotime('+1 month'));
 
-while ($row = mysqli_fetch_assoc($s_res)) {
-    $cID = $row['ContractID'];
-    $addr = $row['Address'] ?: 'Адреса не вказана';
-    
-    if (!isset($treeData[$cID])) {
-        $treeData[$cID] = ['name' => $row['ContractName'] ?? 'Без номера', 'addresses' => []];
-    }
-    
-    if (!isset($treeData[$cID]['addresses'][$addr])) {
-        $treeData[$cID]['addresses'][$addr] = ['meters' => [], 'min_date' => null, 'has_warning' => false];
-    }
-    
-    if (!empty($row['CounterID'])) {
-        $currDate = $row['DATE_NEXT_VERIFICATION'];
-        $isWarning = ($currDate && $currDate <= $dateThreshold);
+// Перевіряємо, чи є доступ до обраного підприємства (DEL = 0)
+if ($selectedCounteragentId) {
+    $SQLExec = "
+        SELECT 
+            rc.ID as ContractID,
+            rc.`NAME` as ContractName,
+            CONCAT(IFNULL(rci.`NAME`, ''), ', ', IFNULL(rs.`NAME`, ''), ', буд. ', IFNULL(rh.`NAME`, '')) AS Address,
+            rcn.ID as CounterID,
+            rcn.FIRM_NUM as CounterNum,
+            rtc.NAME as CounterType,
+            rcn.DATE_NEXT_VERIFICATION,
+            iaac.LAST_INDICATION,
+            iaac.LAST_DATE_INDICATION
+        FROM INF_ACTIVE_ACCOUNT_COUNTER iaac
         
-        $treeData[$cID]['addresses'][$addr]['meters'][] = [
-            'name' => ($row['CounterType'] ?? 'Лічильник') . ' №' . $row['CounterNum'],
-            'date' => $currDate,
-            'is_warning' => $isWarning,
-            'last_val' => $row['LAST_INDICATION'],
-            'last_date' => $row['LAST_DATE_INDICATION']
-        ];
 
-        if ($currDate) {
-            if ($treeData[$cID]['addresses'][$addr]['min_date'] === null || $currDate < $treeData[$cID]['addresses'][$addr]['min_date']) {
-                $treeData[$cID]['addresses'][$addr]['min_date'] = $currDate;
+        INNER JOIN REF_ACCOUNT ra 
+        ON (ra.id = iaac.ID_REF_ACCOUNT)
+
+        INNER JOIN REF_CONTRACT rc 
+        ON (rc.id = ra.ID_REF_CONTRACT)
+        
+        INNER JOIN REF_COUNTER rcn 
+        ON (rcn.id = iaac.ID_REF_COUNTER)
+        
+        INNER JOIN ACCESS acc ON (
+            acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND 
+            acc.ID_ORGANIZATIONS = iaac.ID_ORGANIZATIONS
+        )
+        
+        LEFT JOIN REF_TYPE_COUNTER rtc 
+        ON (rtc.id = rcn.ID_REF_TYPE_COUNTER)
+        
+        LEFT JOIN REF_HOUSE rh 
+        ON (rh.id = ra.ID_REF_HOUSE)
+        
+        LEFT JOIN REF_STREET rs 
+        ON (rs.id = rh.ID_REF_STREET)
+        
+        LEFT JOIN REF_CITY rci 
+        ON (rci.id = rs.ID_REF_CITY)
+        
+        WHERE acc.ID_USERS = " . (int)$userId . " 
+          AND iaac.ID_ORGANIZATIONS = " . (int)$orgId . "
+          AND acc.ID_REF_COUNTERAGENT = " . (int)$selectedCounteragentId . "
+          AND (acc.DEL = 0 OR acc.DEL IS NULL)    
+        ORDER BY rc.ID, Address, CounterNum";
+
+    $s_res = mysqli_query($link, $SQLExec);
+
+    while ($row = mysqli_fetch_array($s_res)) {
+        if (empty($_SESSION['selected_counteragent_id']) && empty($enterprises)) {
+            $_SESSION['selected_counteragent_id'] = $row['ContractID']; // Тут був баг в оригінальному коді (row['ID'] не існувало), змінив на ContractID, хоча ця логіка вже не дуже потрібна
+        }
+        $enterprises[] = $row;
+    }
+
+    // --- ЛОГІКА ОБРОБКИ (3 РІВНІ) ---
+    if (!empty($enterprises)) {
+        mysqli_data_seek($s_res, 0); // Повертаємо вказівник на початок
+        $dateThreshold = date('Y-m-d', strtotime('+1 month'));
+
+        while ($row = mysqli_fetch_assoc($s_res)) {
+            $cID = $row['ContractID'];
+            $addr = $row['Address'] ?: 'Адреса не вказана';
+            
+            if (!isset($treeData[$cID])) {
+                $treeData[$cID] = ['name' => $row['ContractName'] ?? 'Без номера', 'addresses' => []];
             }
-            if ($isWarning) $treeData[$cID]['addresses'][$addr]['has_warning'] = true;
+            
+            if (!isset($treeData[$cID]['addresses'][$addr])) {
+                $treeData[$cID]['addresses'][$addr] = ['meters' => [], 'min_date' => null, 'has_warning' => false];
+            }
+            
+            if (!empty($row['CounterID'])) {
+                $currDate = $row['DATE_NEXT_VERIFICATION'];
+                $isWarning = ($currDate && $currDate <= $dateThreshold);
+                
+                $treeData[$cID]['addresses'][$addr]['meters'][] = [
+                    'name' => ($row['CounterType'] ?? 'Лічильник') . ' №' . $row['CounterNum'],
+                    'date' => $currDate,
+                    'is_warning' => $isWarning,
+                    'last_val' => $row['LAST_INDICATION'],
+                    'last_date' => $row['LAST_DATE_INDICATION']
+                ];
+
+                if ($currDate) {
+                    if ($treeData[$cID]['addresses'][$addr]['min_date'] === null || $currDate < $treeData[$cID]['addresses'][$addr]['min_date']) {
+                        $treeData[$cID]['addresses'][$addr]['min_date'] = $currDate;
+                    }
+                    if ($isWarning) $treeData[$cID]['addresses'][$addr]['has_warning'] = true;
+                }
+            }
         }
     }
+}
+
+// Якщо підприємств немає взагалі, очищаємо сесію
+if (empty($enterprises)) {
+    unset($_SESSION['selected_counteragent_id']);
 }
 ?>
 
@@ -108,6 +124,8 @@ while ($row = mysqli_fetch_assoc($s_res)) {
 
 <div class="table-header-row sticky-header accounts-header">
     <h3>Список адрес та лічильників</h3>  
+    
+    <?php if (!empty($enterprises)): ?>
     <div class="header-controls">
         <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути рівень">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути">
@@ -116,9 +134,21 @@ while ($row = mysqli_fetch_assoc($s_res)) {
             <img src="/img/arrow-down.svg" width="16" height="16" alt="Розгорнути">
         </button>
     </div>
+    <?php endif; ?>
 </div>
 
 <div class="table-container">
+    <?php if (empty($enterprises)): ?>
+        <div class="blocking-notice">
+            <div class="blocking-notice-icon-wrapper">
+                <img src="/img/exclamation-triangle-fill.svg" class="blocking-notice-icon" alt="Увага">
+            </div>
+            <h4 class="blocking-notice-title">У вас немає доступних підприємств</h4>
+            <p class="blocking-notice-text">
+                Наразі за вашим обліковим записом не закріплено жодного активного підприємства, або доступ було призупинено. Дякуємо за розуміння!
+            </p>
+        </div>
+    <?php else: ?>
     <table class="data-table tree-table shadow-table fixed-layout address-list">
         <thead>
             <tr>
@@ -200,6 +230,7 @@ while ($row = mysqli_fetch_assoc($s_res)) {
             <?php endif; ?>
         </tbody>
     </table>
+    <?php endif; ?>
 </div>
 
 <script src="../../js/CustomAlert.js" type="text/javascript"></script>

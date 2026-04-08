@@ -16,9 +16,15 @@ $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 $orgId = (int)($IDOrganizations ?? 1);
 $userId = $_SESSION['id_users'] ?? 0;
 
-if (!$selectedCounteragentId) {
-    echo "<div class='error-msg-padding text-negative'>Будь ласка, оберіть підприємство.</div>";
-    exit;
+$enterprises = [];
+
+// Отримуємо назву підприємства-споживача (для шапки акту)
+$counteragentName = "Назва організації не знайдена";
+if ($selectedCounteragentId) {
+    $q_ca = mysqli_query($link, "SELECT `NAME` FROM REF_COUNTERAGENT WHERE ID = $selectedCounteragentId");
+    if ($row_ca = mysqli_fetch_assoc($q_ca)) {
+        $counteragentName = $row_ca['NAME'];
+    }
 }
 
 // 1. Отримуємо налаштування організації: період прийому та ліміти об'ємів
@@ -92,7 +98,6 @@ function getMetersData($link, $counteragentId, $userId, $orgId) {
     while ($row = mysqli_fetch_assoc($result)) {
         $tree[$row['ContractName'] ?: 'Без договору']['addresses'][$row['Address'] ?: 'Без адреси'][] = $row;
     }
-    return $tree;
 }
 
 $meters_data = $isBlocked ? [] : getMetersData($link, $selectedCounteragentId, $userId, $orgId);
