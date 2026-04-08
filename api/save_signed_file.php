@@ -112,6 +112,9 @@ mysqli_set_charset($link, 'utf8');
 
 /////// накладання підпису на чистий PDF /////////////////////////////////////////////////////////
 
+$doctype = $_POST['doctype'] ?? 'invoice';
+$tableName = ($doctype === 'act') ? 'DOC_COUNTER_READINGS' : 'DOC_INVOICE';
+
 $signData_Counteragent = json_decode($InfoOwnerSignature);
 
 require_once('../../www/libs/tcpdf/tcpdf.php');
@@ -120,94 +123,70 @@ require_once('../../www/libs/fpdi/src/autoload.php');
 use setasign\Fpdi\Tcpdf\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
 
-$sql = "
-    SELECT 
-        di.DOC_PDF,
-        di.DOC_PDF_SIGN_ORG_INFO
-        
-    FROM DOC_INVOICE di
-    INNER JOIN ACCESS acc 
-        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
-       AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-    WHERE di.ID = ? 
-      AND acc.ID_USERS = ?
-      AND di.ID_ORGANIZATIONS = ?
-    LIMIT 1
-";
+// Для рахунків тягнемо і PDF, і підпис Організації. Для актів - тільки PDF.
+if ($doctype === 'act') {
+    $sql = "SELECT di.DOC_PDF FROM {$tableName} di INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1";
+} else {
+    $sql = "SELECT di.DOC_PDF, di.DOC_PDF_SIGN_ORG_INFO FROM {$tableName} di INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1";
+}
 
 $stmt = mysqli_prepare($link, $sql);
 mysqli_stmt_bind_param($stmt, "iii", $documentId, $userId, $IDOrganizations);
 mysqli_stmt_execute($stmt);
-mysqli_stmt_bind_result($stmt, $pdfBlob, $Str_signData);
+
+if ($doctype === 'act') {
+    mysqli_stmt_bind_result($stmt, $pdfBlob);
+    $Str_signData = null; // В актах поки немає підпису організації
+} else {
+    mysqli_stmt_bind_result($stmt, $pdfBlob, $Str_signData);
+}
 mysqli_stmt_fetch($stmt);
 mysqli_stmt_close($stmt);
 
-// Допустим, $pdfBlob — это твой PDF из базы или API
 if (empty($pdfBlob)) {
-     echo json_encode([
-        'status' => 'error', 
-        'message' => 'Відсутній PDF файл !'
-    ]);
-   exit;
+     die(json_encode(['status' => 'error', 'message' => 'Відсутній PDF файл!']));
 }
 
 try {
-    $signData_Org = json_decode($Str_signData);
     $pdf = new Fpdi();
-
     $stream    = StreamReader::createByString($pdfBlob);
     $pageCount = $pdf->setSourceFile($stream);
 
     for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
         $templateId = $pdf->importPage($pageNo);
         $size       = $pdf->getTemplateSize($templateId);
-        
         $pdf->AddPage($size['orientation'], $size);
-
         $pdf->useTemplate($templateId);
 
-        $y = 245;
-        $w = 30;
-        $h = $w;
+        $y = 245; $w = 30; $h = $w;
 
-        $is_owner_document = true;
-        addStamp($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
-        addSignerInformation($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+        // Малюємо печатку Організації (тільки якщо вона є - для рахунків)
+        if (!empty($Str_signData)) {
+            $signData_Org = json_decode($Str_signData);
+            $is_owner_document = true;
+            addStamp($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+            addSignerInformation($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+        }
         
-        $is_owner_document = false;
-        addStamp($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
-        addSignerInformation($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
+        // Малюємо печатку Контрагента (завжди)
+        if (!empty($signData_Counteragent)) {
+            $is_owner_document = false;
+            addStamp($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
+            addSignerInformation($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
+        }
     }
-  //  if (ob_get_level()) ob_end_clean();
     
     $doc_pdf = $pdf->Output('', 'S');
 
 } catch (\Exception $e) {
-    echo json_encode([
-        'status' => 'error', 
-        'message' => $e->getMessage()
-    ]);
-   exit;
+    die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*$sql = "
-    UPDATE DOC_INVOICE di
-    INNER JOIN ACCESS acc ON 
-        di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
-        di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-    SET di.DOC_PDF_SIGN_COUNTERAGENT = ?,
-        di.DOC_PDF = ?
-    WHERE di.ID = ? 
-      AND acc.ID_USERS = ? 
-      AND di.ID_ORGANIZATIONS = ?
-";*/
 
 // Отримуємо вміст підписаного файлу
 $fileData = file_get_contents($_FILES['SignedFile']['tmp_name']);
 
-$sql = "
-    UPDATE DOC_INVOICE di
+$sqlUpdate = "
+    UPDATE {$tableName} di
     INNER JOIN ACCESS acc ON 
         di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
         di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
@@ -219,20 +198,16 @@ $sql = "
       AND di.ID_ORGANIZATIONS = ?
 ";
 
-$stmt = mysqli_prepare($link, $sql);
-
+$stmtUpdate = mysqli_prepare($link, $sqlUpdate);
 $null = NULL;
-mysqli_stmt_bind_param($stmt, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
-mysqli_stmt_send_long_data($stmt, 0, $fileData);
-mysqli_stmt_send_long_data($stmt, 1, $doc_pdf);
+mysqli_stmt_bind_param($stmtUpdate, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
+mysqli_stmt_send_long_data($stmtUpdate, 0, $fileData);
+mysqli_stmt_send_long_data($stmtUpdate, 1, $doc_pdf);
 
-if (mysqli_stmt_execute($stmt)) {
-    $_POST['id'] = $documentId;
-
+if (mysqli_stmt_execute($stmtUpdate)) {
     echo json_encode([
         'status' => 'success', 
         'message' => 'Документ успішно підписано, електронну печатку накладено!'
-        
     ]);
 } else {
     echo json_encode([
@@ -241,6 +216,6 @@ if (mysqli_stmt_execute($stmt)) {
     ]);
 }
 
-mysqli_stmt_close($stmt);
+mysqli_stmt_close($stmtUpdate);
 mysqli_close($link);
 ?>

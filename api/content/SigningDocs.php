@@ -26,15 +26,20 @@ if (!$userId) {
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
+$doctype = $_GET['doctype'] ?? 'invoice'; 
+
+// Динамічно обираємо таблицю залежно від типу документа
+$tableName = ($doctype === 'act') ? 'DOC_COUNTER_READINGS' : 'DOC_INVOICE';
+
 $sqlCheck = "
     SELECT di.ID, di.DOC_PDF_SIGN_COUNTERAGENT, rc.EDRPOU
-    FROM DOC_INVOICE di
+    FROM {$tableName} di
     INNER JOIN ACCESS acc ON 
         di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
         di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
     INNER JOIN REF_COUNTERAGENT rc ON 
-	     rc.ID_ORGANIZATIONS = di.ID_ORGANIZATIONS and
-	     rc.ID = di.ID_REF_COUNTERAGENT    
+         rc.ID_ORGANIZATIONS = di.ID_ORGANIZATIONS and
+         rc.ID = di.ID_REF_COUNTERAGENT  
     WHERE di.ID = ? 
       AND acc.ID_USERS = ? 
       AND di.ID_ORGANIZATIONS = ?
@@ -75,7 +80,18 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>IIT Підпис - Рахунок № <?php echo $iddoc; ?></title>
+    <title>IIT Підпис - Рахунок № <?php
+    $iddoc = $_GET['iddoc'] ?? '';
+    // Якщо тип не передано, за замовчуванням вважаємо, що це рахунок (для зворотної сумісності)
+    $doctype = $_GET['doctype'] ?? 'invoice'; 
+
+    // Визначаємо правильний URL для перегляду документа
+    if ($doctype === 'act') {
+        $view_url = "/api/get_act_pdf.php?id=" . htmlspecialchars($iddoc);
+    } else {
+        $view_url = "/api/get_ent_invoice.php?id=" . htmlspecialchars($iddoc);
+    }
+?></title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -302,10 +318,16 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         <span class="stage-group__title">Документ:</span>
                         <span id="FileTypeName">Рахунок № <?php echo htmlspecialchars($iddoc); ?> </span>
                         
-                        <a href="/api/get_ent_invoice.php?id=<?php echo htmlspecialchars($iddoc); ?>" target="_blank" class="btn" style="background:#eee; color:#333; text-decoration:none; display:inline-block; margin-bottom:10px;">Переглянути</a>
+                        <a href="<?php echo $view_url; ?>" target="_blank" class="btn" style="background:#eee; color:#333; text-decoration:none; display:inline-block; margin-bottom:10px;">
+                            Переглянути
+                        </a>
                     </div>
                     
-                    <a id="FileToSign" href="/api/get_ent_invoice.php?type=1&id=<?php echo htmlspecialchars($iddoc); ?>" data-filename="invoice_<?php echo htmlspecialchars($iddoc); ?>.pdf.p7s"></a>
+                    <?php if ($doctype === 'act'): ?>
+                        <a id="FileToSign" href="/api/get_act_pdf.php?id=<?php echo htmlspecialchars($iddoc); ?>" data-filename="act_<?php echo htmlspecialchars($iddoc); ?>.pdf"></a>
+                    <?php else: ?>
+                        <a id="FileToSign" href="/api/get_ent_invoice.php?type=1&id=<?php echo htmlspecialchars($iddoc); ?>" data-filename="invoice_<?php echo htmlspecialchars($iddoc); ?>.pdf.p7s"></a>
+                    <?php endif; ?>
                     <br>
                     <button id="SignFileButton" class="btn btn_blue" onclick="app.SignFile()">Підписати</button>
                 </div>
@@ -317,6 +339,7 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         <input id="FileTypeId" type="hidden" name="FileTypeId">
                         <input id="DocumentId" type="hidden" name="DocumentId" value="<?php echo htmlspecialchars($iddoc); ?>">
                         <input type="hidden" name="SignedFile" value="1">
+                        <input type="hidden" name="doctype" value="<?php echo htmlspecialchars($doctype); ?>">
                         <div class="stage-header">
                             <span class="stage-header__num">Крок 4 з 4</span>
                             <span class="stage-header__title">Відправка підписаного файлу</span>
@@ -465,7 +488,21 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         let res = typeof response === 'object' ? response : JSON.parse(response);
                         if (res.status === 'success') {
                             showAlert(res.message, 'success'); 
-                            setTimeout(function() { window.close(); }, 3000);
+                            
+                            setTimeout(function() { 
+                                // Читаємо тип документа з URL
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const currentDoctype = urlParams.get('doctype') || 'invoice';
+                                
+                                if (currentDoctype === 'act') {
+                                    // Якщо це був акт — перекидаємо назад до показників/історії
+                                    // (якщо у тебе ця сторінка називається history_readings_2, то зміни тут назву)
+                                    window.location.href = '?page=history_readings'; 
+                                } else {
+                                    // Якщо рахунок — повертаємо в список рахунків підприємства
+                                    window.location.href = '?page=ent_list_accounts';
+                                }
+                            }, 2000); // 2 секунди, щоб людина встигла прочитати зелений алерт
                         } else {
                             showAlert(res.message, 'error');
                         }

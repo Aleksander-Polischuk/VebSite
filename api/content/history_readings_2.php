@@ -14,36 +14,31 @@ $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? 0;
 
 $enterprises = [];
 
-// 2. --- ОСНОВНИЙ SQL ЗАПИТ ---
-$sql = "
-    SELECT DISTINCT
-        rc.ID as ContractID,
-        rc.NAME as ContractName,
-        CONCAT(IFNULL(rci.NAME, ''), ', ', IFNULL(rs.NAME, ''), ', буд. ', IFNULL(rh.NAME, '')) AS Address,
-        rcn.ID as CounterID,
-        rcn.FIRM_NUM as CounterNum,
-        rtc.NAME as CounterType,
-        icr._DATE as ReadingDate,
-        icr.CNT_CURRENT as ReadingValue,
-        icr.CNT_LAST as PreviousValue,
-        src.NAME as SourceName
-    FROM INF_COUNTER_READINGS icr
-    
-    JOIN REF_ACCOUNT ra ON                    (ra.ID = icr.ID_REF_ACCOUNT        AND ra.ID_ORGANIZATIONS  = icr.ID_ORGANIZATIONS)
-    JOIN REF_COUNTER rcn ON                   (rcn.ID = icr.ID_REF_COUNTER       AND rcn.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    LEFT JOIN REF_TYPE_COUNTER rtc ON         (rtc.id = rcn.ID_REF_TYPE_COUNTER  AND rtc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    LEFT JOIN REF_HOUSE rh ON                 (rh.id = ra.ID_REF_HOUSE           AND rh.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    LEFT JOIN REF_STREET rs ON                (rs.id = rh.ID_REF_STREET          AND rs.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    LEFT JOIN REF_CITY rci ON                 (rci.id = rs.ID_REF_CITY           AND rci.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    JOIN REF_CONTRACT rc ON                   (rc.ID = ra.ID_REF_CONTRACT        AND rc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    LEFT JOIN REF_COUNTERREADINGSOURCE src ON (src.ID = icr.ID_REF_COUNTERREADINGSOURCE AND src.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    JOIN ACCESS acc ON                        (acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND acc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-    
-    // Якщо масив порожній (доступу немає), очищаємо сесію
-    if (empty($enterprises)) {
-        $selectedCounteragentId = null;
-        unset($_SESSION['selected_counteragent_id']);
-    }
+// 1. Спочатку отримаємо список доступних підприємств (контрагентів) для користувача
+$sqlEnt = "
+    SELECT DISTINCT rc.ID, rc.NAME 
+    FROM ACCESS acc
+    JOIN REF_COUNTERAGENT rc ON (rc.ID = acc.ID_REF_COUNTERAGENT AND rc.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS)
+    WHERE acc.ID_USERS = ? AND acc.ID_ORGANIZATIONS = ? AND acc.DEL <> 1";
+
+$stmtEnt = mysqli_prepare($link, $sqlEnt);
+mysqli_stmt_bind_param($stmtEnt, "ii", $userId, $orgId);
+mysqli_stmt_execute($stmtEnt);
+$resEnt = mysqli_stmt_get_result($stmtEnt);
+while($rowE = mysqli_fetch_assoc($resEnt)) {
+    $enterprises[] = $rowE;
+}
+
+// Якщо контрагент не обраний, але підприємства є — беремо перше
+if ($selectedCounteragentId == 0 && !empty($enterprises)) {
+    $selectedCounteragentId = $enterprises[0]['ID'];
+    $_SESSION['selected_counteragent_id'] = $selectedCounteragentId;
+}
+
+// Якщо масив порожній (доступу немає), очищаємо сесію
+if (empty($enterprises)) {
+    $selectedCounteragentId = null;
+    unset($_SESSION['selected_counteragent_id']);
 }
 
 $years = [];
@@ -51,27 +46,27 @@ $selectedYear = date('Y');
 $treeData = [];
 $addressMap = []; 
 
-// Якщо доступ є, завантажуємо дані
-if (!empty($enterprises)) {
-    // 1. --- ОТРИМАННЯ ДОСТУПНИХ РОКІВ ---
+// 2. Якщо доступ є, завантажуємо дані для обраного контрагента
+if (!empty($enterprises) && $selectedCounteragentId) {
+    
+    // ОТРИМАННЯ ДОСТУПНИХ РОКІВ
     $sqlYears = "
-        SELECT DISTINCT YEAR(PERIOD) as y
-        FROM ENT_MUTUAL_SETTLEMENTS 
-        WHERE ID_ORGANIZATIONS = ? AND 
-              ID_REF_COUNTERAGENT = ? 
+        SELECT DISTINCT YEAR(_DATE) as y
+        FROM INF_COUNTER_READINGS 
+        WHERE ID_ORGANIZATIONS = ? 
         ORDER BY y DESC";
     $stmtY = mysqli_prepare($link, $sqlYears);
-    mysqli_stmt_bind_param($stmtY, "ii", $orgId, $selectedCounteragentId);
+    mysqli_stmt_bind_param($stmtY, "i", $orgId);
     mysqli_stmt_execute($stmtY);
     $resY = mysqli_stmt_get_result($stmtY);
     while($rowY = mysqli_fetch_assoc($resY)) {
         if (!empty($rowY['y'])) $years[] = $rowY['y'];
     }
+    
     if (empty($years)) $years[] = date('Y');
-
     $selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : $years[0];
 
-    // 2. --- ОСНОВНИЙ SQL ЗАПИТ ---
+    // ОСНОВНИЙ SQL ЗАПИТ (тепер він закритий правильно)
     $sql = "
         SELECT DISTINCT
             rc.ID as ContractID,
@@ -85,49 +80,21 @@ if (!empty($enterprises)) {
             icr.CNT_LAST as PreviousValue,
             src.NAME as SourceName
         FROM INF_COUNTER_READINGS icr
-        
-        JOIN REF_ACCOUNT ra 
-        ON(ra.ID = icr.ID_REF_ACCOUNT AND 
-           ra.ID_ORGANIZATIONS  = icr.ID_ORGANIZATIONS)
-           
-        JOIN REF_COUNTER rcn 
-        ON(rcn.ID = icr.ID_REF_COUNTER AND 
-           rcn.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-           
-        LEFT JOIN REF_TYPE_COUNTER rtc 
-        ON(rtc.id = rcn.ID_REF_TYPE_COUNTER  AND 
-           rtc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-           
-        LEFT JOIN REF_HOUSE rh 
-        ON (rh.id = ra.ID_REF_HOUSE AND 
-            rh.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-            
-        LEFT JOIN REF_STREET rs 
-        ON (rs.id = rh.ID_REF_STREET AND 
-           rs.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-           
-        LEFT JOIN REF_CITY rci 
-        ON (rci.id = rs.ID_REF_CITY AND 
-           rci.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-           
-        JOIN REF_CONTRACT rc 
-        ON (rc.ID = ra.ID_REF_CONTRACT AND 
-            rc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-            
-        LEFT JOIN REF_COUNTERREADINGSOURCE src 
-        ON (src.ID = icr.ID_REF_COUNTERREADINGSOURCE AND 
-            src.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-            
-        LEFT JOIN ACCESS acc 
-        ON (acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND 
-            acc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
-        
+        JOIN REF_ACCOUNT ra ON (ra.ID = icr.ID_REF_ACCOUNT AND ra.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        JOIN REF_COUNTER rcn ON (rcn.ID = icr.ID_REF_COUNTER AND rcn.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        LEFT JOIN REF_TYPE_COUNTER rtc ON (rtc.id = rcn.ID_REF_TYPE_COUNTER AND rtc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        LEFT JOIN REF_HOUSE rh ON (rh.id = ra.ID_REF_HOUSE AND rh.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        LEFT JOIN REF_STREET rs ON (rs.id = rh.ID_REF_STREET AND rs.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        LEFT JOIN REF_CITY rci ON (rci.id = rs.ID_REF_CITY AND rci.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        JOIN REF_CONTRACT rc ON (rc.ID = ra.ID_REF_CONTRACT AND rc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        LEFT JOIN REF_COUNTERREADINGSOURCE src ON (src.ID = icr.ID_REF_COUNTERREADINGSOURCE AND src.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+        JOIN ACCESS acc ON (acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND acc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
         WHERE icr.ID_ORGANIZATIONS = ? 
           AND YEAR(icr._DATE) = ? 
           AND acc.ID_USERS = ? 
           AND acc.ID_REF_COUNTERAGENT = ?
-        ORDER BY rc.NAME, Address, rcn.FIRM_NUM, icr._DATE DESC
-    ";
+          AND acc.DEL <> 1
+        ORDER BY rc.NAME, Address, rcn.FIRM_NUM, icr._DATE DESC";
 
     $stmt = mysqli_prepare($link, $sql);
     mysqli_stmt_bind_param($stmt, "iiii", $orgId, $selectedYear, $userId, $selectedCounteragentId);

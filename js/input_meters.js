@@ -426,28 +426,74 @@ function generatePdfClientSide(data) {
 }
 
 // Функція відкриття модалки
-function openPdfModal(pdfUrl, docId) {
+function openPdfModal(pdfUrl, pdfBlob) {
     const modal = document.getElementById('pdf-preview-modal');
     const iframe = document.getElementById('pdf-iframe');
-    const signBtn = document.getElementById('btn-sign-act');
-    
-    iframe.src = pdfUrl;
-    modal.style.display = 'flex';
+    const signBtn = document.getElementById('btn-sign-act'); // Твоя кнопка "Підписати КЕП"
+    const cancelBtn = document.querySelector('.close-pdf-modal'); // Кнопка "Скасувати"
 
-    // Вішаємо на кнопку "Підписати" ID документа!
+    // Показуємо PDF в модалці
+    iframe.src = pdfUrl;
+    modal.style.display = 'flex'; // або 'block'
+
+    // Якщо натиснули "Скасувати"
+    cancelBtn.onclick = function() {
+        modal.style.display = 'none';
+        URL.revokeObjectURL(pdfUrl); // Очищаємо пам'ять
+    };
+
+    // ЯКЩО НАТИСНУЛИ "ПІДПИСАТИ КЕП"
     signBtn.onclick = function() {
-        console.log("Запускаємо підпис для документа ID:", docId);
         
-        closePdfModal();
+        // Змінюємо текст кнопки, щоб користувач не клікав двічі
+        const originalText = signBtn.innerText;
+        signBtn.innerText = 'Відправка на сервер...';
+        signBtn.disabled = true;
+
+        // Пакуємо наш PDF-файл для відправки
+        let formData = new FormData();
+        formData.append('act_pdf', pdfBlob, 'act_readings.pdf');
         
-        // ТУТ починається робота з твоїм модулем IIT (euscp.js)
-        // Логіка така: 
-        // 1. Через fetch(/api/view_act.php?id=docId) завантажуєш файл у вигляді Blob.
-        // 2. Передаєш його в бібліотеку підпису.
-        // 3. Отриманий .p7s файл відправляєш на сервер (наприклад, api/save_signature.php), 
-        // де він оновлює колонку `DOC_PDF_SIGN_COUNTERAGENT` для рядка з ID = docId.
-        
-        showAlert("Модуль підпису ініціалізовано!", "success", "Успіх");
+        // Якщо треба передати ID контрагента чи договору з JS, розкоментуй і додай:
+        // formData.append('id_contract', myContractIdVariable); 
+        // formData.append('id_counteragent', myCounteragentIdVariable);
+
+        // Відправляємо файл на наш новий API
+        fetch('/api/save_act_pdf.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Закриваємо модалку
+                modal.style.display = 'none';
+                URL.revokeObjectURL(pdfUrl);
+                
+                // ВАЖЛИВО: Робимо редірект на сторінку підпису, 
+                // передаючи ID збереженого акту та параметр doctype=act
+                window.location.href = `index.php?page=SigningDocs&id=${data.doc_id}&doctype=act`;
+            } else {
+                // Якщо помилка — повертаємо кнопку як було
+                signBtn.innerText = originalText;
+                signBtn.disabled = false;
+                
+                if (typeof showAlert === 'function') {
+                    showAlert('Помилка збереження: ' + data.error, 'error');
+                } else {
+                    alert('Помилка збереження: ' + data.error);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Помилка fetch:', error);
+            signBtn.innerText = originalText;
+            signBtn.disabled = false;
+            
+            if (typeof showAlert === 'function') {
+                showAlert('Помилка з\'єднання з сервером', 'error');
+            }
+        });
     };
 }
 
@@ -455,3 +501,62 @@ function closePdfModal() {
     document.getElementById('pdf-preview-modal').style.display = 'none';
     document.getElementById('pdf-iframe').src = '';
 }
+
+/**
+ * Зберігає згенерований PDF акт у базу даних та перенаправляє на підпис
+ * @param {Object} docDefinition - структура PDF для pdfMake
+ * @param {Blob} pdfBlob - готовий файл (якщо він вже згенерований)
+ */
+function saveActAndRedirect(docDefinition, pdfBlob) {
+    const signBtn = document.getElementById('btn-sign-act');
+    const originalText = signBtn.innerText;
+
+    // Блокуємо кнопку, щоб уникнути дублів при повільному інтернеті
+    signBtn.innerText = 'Збереження...';
+    signBtn.disabled = true;
+
+    // Якщо ми передали docDefinition, але не передали Blob - генеруємо його
+    const processUpload = (blob) => {
+        let formData = new FormData();
+        formData.append('act_pdf', blob, 'act_readings.pdf');
+        
+        // Відправляємо на бекенд
+        fetch('/api/save_act_pdf.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Закриваємо модалку перед редіректом (опціонально)
+                if (typeof closePdfModal === 'function') closePdfModal();
+                
+                // Перекидаємо на сторінку підписання
+                // Важливо: додаємо doctype=act, щоб SigningDocs.php знав, з якою таблицею працювати
+                window.location.href = `index.php?page=SigningDocs&id=${data.doc_id}&doctype=act`;
+            } else {
+                throw new Error(data.error || 'Невідома помилка сервера');
+            }
+        })
+        .catch(error => {
+            console.error('Помилка:', error);
+            signBtn.innerText = originalText;
+            signBtn.disabled = false;
+            
+            if (typeof showAlert === 'function') {
+                showAlert('Помилка збереження акту: ' + error.message, 'error');
+            } else {
+                alert('Помилка збереження акту: ' + error.message);
+            }
+        });
+    };
+
+    if (pdfBlob) {
+        processUpload(pdfBlob);
+    } else {
+        pdfMake.createPdf(docDefinition).getBlob(processUpload);
+    }
+}
+
+// Виклик усередині твоєї openPdfModal тепер виглядатиме так:
+// signBtn.onclick = function() { saveActAndRedirect(null, pdfBlob); };
