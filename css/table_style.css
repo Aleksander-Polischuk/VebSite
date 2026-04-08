@@ -69,34 +69,3 @@
     text-decoration: none;
     border-bottom: 1px dashed #3f6df6;
 }
-
-/* Універсальний блок повідомлення про відсутність підприємств / блокування */
-.blocking-notice {
-    padding: 50px 20px;
-    text-align: center;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    margin: 20px 0;
-}
-
-.blocking-notice-icon-wrapper {
-    margin-bottom: 15px;
-}
-
-.blocking-notice-icon {
-    width: 60px;
-    height: 60px;
-}
-
-.blocking-notice-title {
-    color: #d9534f;
-    font-size: 1.4em;
-    margin-bottom: 10px;
-}
-
-.blocking-notice-text {
-    color: #666;
-    font-size: 1.1em;
-    line-height: 1.6;
-}

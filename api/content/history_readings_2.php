@@ -14,18 +14,30 @@ $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? 0;
 
 $enterprises = [];
 
-// Перевіряємо, чи є доступ до обраного підприємства (DEL = 0)
-if ($selectedCounteragentId) {
-    // ВИПРАВЛЕНО: Правильний запит до таблиці ACCESS
-    $checkSql = "SELECT ID FROM ACCESS WHERE ID_USERS = ? AND ID_ORGANIZATIONS = ? AND ID_REF_COUNTERAGENT = ? AND (DEL = 0 OR DEL IS NULL)";
-    $checkStmt = mysqli_prepare($link, $checkSql);
-    mysqli_stmt_bind_param($checkStmt, "iii", $userId, $orgId, $selectedCounteragentId);
-    mysqli_stmt_execute($checkStmt);
-    $checkRes = mysqli_stmt_get_result($checkStmt);
+// 2. --- ОСНОВНИЙ SQL ЗАПИТ ---
+$sql = "
+    SELECT DISTINCT
+        rc.ID as ContractID,
+        rc.NAME as ContractName,
+        CONCAT(IFNULL(rci.NAME, ''), ', ', IFNULL(rs.NAME, ''), ', буд. ', IFNULL(rh.NAME, '')) AS Address,
+        rcn.ID as CounterID,
+        rcn.FIRM_NUM as CounterNum,
+        rtc.NAME as CounterType,
+        icr._DATE as ReadingDate,
+        icr.CNT_CURRENT as ReadingValue,
+        icr.CNT_LAST as PreviousValue,
+        src.NAME as SourceName
+    FROM INF_COUNTER_READINGS icr
     
-    while ($row = mysqli_fetch_assoc($checkRes)) {
-        $enterprises[] = $row;
-    }
+    JOIN REF_ACCOUNT ra ON                    (ra.ID = icr.ID_REF_ACCOUNT        AND ra.ID_ORGANIZATIONS  = icr.ID_ORGANIZATIONS)
+    JOIN REF_COUNTER rcn ON                   (rcn.ID = icr.ID_REF_COUNTER       AND rcn.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    LEFT JOIN REF_TYPE_COUNTER rtc ON         (rtc.id = rcn.ID_REF_TYPE_COUNTER  AND rtc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    LEFT JOIN REF_HOUSE rh ON                 (rh.id = ra.ID_REF_HOUSE           AND rh.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    LEFT JOIN REF_STREET rs ON                (rs.id = rh.ID_REF_STREET          AND rs.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    LEFT JOIN REF_CITY rci ON                 (rci.id = rs.ID_REF_CITY           AND rci.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    JOIN REF_CONTRACT rc ON                   (rc.ID = ra.ID_REF_CONTRACT        AND rc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    LEFT JOIN REF_COUNTERREADINGSOURCE src ON (src.ID = icr.ID_REF_COUNTERREADINGSOURCE AND src.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
+    JOIN ACCESS acc ON                        (acc.ID_REF_COUNTERAGENT = rc.ID_REF_COUNTERAGENT AND acc.ID_ORGANIZATIONS = icr.ID_ORGANIZATIONS)
     
     // Якщо масив порожній (доступу немає), очищаємо сесію
     if (empty($enterprises)) {
