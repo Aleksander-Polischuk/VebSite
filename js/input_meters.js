@@ -215,3 +215,243 @@ function sendReadingsToServer(data) {
         }
     });
 }
+
+
+//Функція для підтвердження та формування акту передачі показників
+ 
+/**
+ * Функція для підтвердження та формування акту передачі показників
+ */
+function confirmGenerateAct() {
+    const inputs = document.querySelectorAll('.input-reading');
+    const contracts = {};
+
+    // 1. Збираємо статистику по кожному договору
+    inputs.forEach(input => {
+        const cName = input.dataset.contractName || 'Без договору';
+        const mName = input.dataset.counterName || 'Невідомий лічильник';
+        const prevVal = input.dataset.prev || '0.000'; 
+        const val = input.value.trim();
+
+        // Ініціалізуємо договір у нашому об'єкті, якщо його ще немає
+        if (!contracts[cName]) {
+            contracts[cName] = { total: 0, filled: 0, emptyMeters: [], data: [] };
+        }
+
+        contracts[cName].total++;
+
+        if (val !== '') {
+            contracts[cName].filled++;
+            contracts[cName].data.push({
+                // ДОДАЙ ОСЬ ЦІ ДВА РЯДКИ:
+                contractName: cName,
+                counteragent: input.dataset.counteragent || "Організація",
+                
+                // Це те, що в тебе вже є:
+                meterName: mName,
+                prevValue: prevVal,
+                currValue: val,
+                objectName: input.dataset.objectName || '---', 
+                addressName: input.dataset.addressName || '---',
+                meterMark: input.dataset.meterMark || '---',
+                meterNum: input.dataset.meterNum || '---'
+            });
+        } else {
+            // Якщо пусто, запам'ятовуємо назву лічильника для тексту помилки
+            contracts[cName].emptyMeters.push(mName);
+        }
+    });
+
+    let hasPartiallyFilled = false;
+    let completelyEmptyContracts = 0;
+    let totalContracts = Object.keys(contracts).length;
+    let errorMessage = "";
+    let finalDataToGenerate = [];
+
+    // 2. Перевіряємо правила заповнення для кожного договору
+    for (const [cName, stats] of Object.entries(contracts)) {
+        // Якщо заповнено більше 0, але менше ніж усього лічильників
+        if (stats.filled > 0 && stats.filled < stats.total) {
+            hasPartiallyFilled = true;
+            errorMessage += `<br><br><b style="color:#e74c3c;">${cName}</b><br>Пропущено: ${stats.emptyMeters.join(', ')}`;
+        } 
+        // Якщо договір заповнено повністю
+        else if (stats.filled === stats.total) {
+            // Додаємо дані цього договору в загальний масив для генерації ПДФ
+            finalDataToGenerate = finalDataToGenerate.concat(stats.data);
+        } 
+        // Якщо взагалі не чіпали (ігноруємо)
+        else if (stats.filled === 0) {
+            completelyEmptyContracts++;
+        }
+    }
+
+    // 3. Відловлюємо помилки
+
+    // Якщо взагалі на сторінці нічого не заповнили
+    if (completelyEmptyContracts === totalContracts) {
+        if (typeof showAlert === 'function') {
+            showAlert("Будь ласка, введіть показники для формування акту.", "error", "Помилка");
+        } else {
+            alert("Будь ласка, введіть показники.");
+        }
+        return;
+    }
+
+    // Якщо є договори, заповнені лише частково
+    if (hasPartiallyFilled) {
+        const msg = "Для формування акту необхідно заповнити <b>всі</b> лічильники в межах договору!" + errorMessage;
+        if (typeof showAlert === 'function') {
+            showAlert(msg, "warning", "Увага! Незаповнені поля");
+        } else {
+            alert("Заповніть всі лічильники для розпочатого договору!");
+        }
+        return;
+    }
+
+    // 4. Якщо перевірки пройдені успішно — викликаємо фінальне вікно
+    if (typeof showAlert === 'function') {
+        showAlert(
+            "Сформувати акт передачі за поточними показниками?", 
+            "warning", 
+            "Підтвердження", 
+            [
+                {
+                    text: "Сформувати", 
+                    className: "btn-alert-ok",
+                    onClick: () => {
+                        // Передаємо ТІЛЬКИ повністю заповнені договори в pdfmake
+                        generatePdfClientSide(finalDataToGenerate);
+                    }
+                },
+                {
+                    text: "Скасувати", 
+                    className: "btn-alert-cancel",
+                    onClick: () => {}
+                }
+            ]
+        );
+    }
+}
+// ОСНОВНА ФУНКЦІЯ ГЕНЕРАЦІЇ ПДФ НА СТОРОНІ КЛІЄНТА (через pdfmake)
+function generatePdfClientSide(data) {
+    const currentDateStr = new Date().toLocaleDateString('uk-UA');
+    
+    document.getElementById('overlay').style.display = 'block';
+    
+    // Дістаємо загальні дані з першого лічильника (назва контрагента і номер договору)
+    const contractName = data[0]?.contractName || "___";
+    const counteragentName = data[0]?.counteragent || "Організація";
+
+    // 2. Формуємо шапку таблиці
+    const tableBody = [
+        [
+            { text: '№ п/п', rowSpan: 2, alignment: 'center', margin: [0, 10, 0, 0] },
+            { text: 'Назва об’єкту', rowSpan: 2, alignment: 'center', margin: [0, 10, 0, 0] },
+            { text: 'Адреса', rowSpan: 2, alignment: 'center', margin: [0, 10, 0, 0] },
+            { text: 'Лічильник', colSpan: 2, alignment: 'center' },
+            {}, 
+            { text: 'Показники лічильника (м3)', colSpan: 2, alignment: 'center' },
+            {}, 
+            { text: 'Різниця всього (м3)', rowSpan: 2, alignment: 'center', margin: [0, 5, 0, 0] },
+            { text: 'в т.ч. різниця населення', rowSpan: 2, alignment: 'center' }
+        ],
+        [
+            {}, {}, {}, 
+            { text: 'марка', alignment: 'center' },
+            { text: 'заводський №', alignment: 'center' },
+            { text: 'попередні', alignment: 'center' },
+            { text: 'поточні', alignment: 'center' },
+            {}, {} 
+        ]
+    ];
+
+    // 3. Динамічно заповнюємо рядки таблиці реальними даними з БД
+    data.forEach((item, index) => {
+        let prev = parseFloat(item.prevValue.replace(',', '.')) || 0;
+        let curr = parseFloat(item.currValue.replace(',', '.')) || 0;
+        let diff = (curr - prev).toFixed(3);
+
+        tableBody.push([
+            { text: (index + 1).toString(), alignment: 'center' },
+            { text: item.objectName, alignment: 'left' },   // З БД
+            { text: item.addressName, alignment: 'left' },  // З БД
+            { text: item.meterMark, alignment: 'center' },    // З БД
+            { text: item.meterNum, alignment: 'center' },     // З БД
+            { text: item.prevValue, alignment: 'center' },
+            { text: item.currValue, alignment: 'center', bold: true },
+            { text: diff, alignment: 'center' },
+            { text: '0.000', alignment: 'center' }            // З БД (якщо є такий показник)
+        ]);
+    });
+
+    // 4. Структура PDF документа
+    const docDefinition = {
+        pageOrientation: 'portrait', 
+        pageSize: 'A4',
+        pageMargins: [30, 40, 30, 40], 
+
+        content: [
+            { text: `Додаток № 4 до договору ${contractName}`, alignment: 'right', margin: [0, 0, 0, 15] },
+            { text: 'Звіт про об’єми використаної води', fontSize: 12, bold: true, alignment: 'center' },
+            { text: `станом на ${currentDateStr}`, alignment: 'center', margin: [0, 0, 0, 20] },
+
+            { text: counteragentName, alignment: 'center', bold: true, decoration: 'underline' },
+            { text: '(назва організації)', alignment: 'center', fontSize: 9, color: '#555', margin: [0, 0, 0, 15] },
+
+            {
+                style: 'tableStyle',
+                table: {
+                    headerRows: 2,
+                    widths: ['2%', '20%', '25%', '8%', '10%', '9%', '9%', '8%', '9%'],
+                    body: tableBody
+                }
+            },
+            {
+                text: '"Рахунок виставлений згідно звіту, зобов’язуємось оплатити протягом 3-х днів з дня його отримання."',
+                italics: true,
+                margin: [0, 30, 0, 0]
+            }
+        ],
+        styles: { tableStyle: { fontSize: 8 } },
+        defaultStyle: { fontSize: 10 }
+    };
+
+    const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+    pdfDocGenerator.getBlob((blob) => {
+        document.getElementById('overlay').style.display = 'none';
+        const blobUrl = URL.createObjectURL(blob);
+        openPdfModal(blobUrl, blob); // Відкриваємо вікно для підпису
+    });
+}
+
+// Функція відкриття модалки
+function openPdfModal(pdfUrl, docId) {
+    const modal = document.getElementById('pdf-preview-modal');
+    const iframe = document.getElementById('pdf-iframe');
+    const signBtn = document.getElementById('btn-sign-act');
+    
+    iframe.src = pdfUrl;
+    modal.style.display = 'flex';
+
+    // Вішаємо на кнопку "Підписати" ID документа!
+    signBtn.onclick = function() {
+        console.log("Запускаємо підпис для документа ID:", docId);
+        
+        closePdfModal();
+        
+        // ТУТ починається робота з твоїм модулем IIT (euscp.js)
+        // Логіка така: 
+        // 1. Через fetch(/api/view_act.php?id=docId) завантажуєш файл у вигляді Blob.
+        // 2. Передаєш його в бібліотеку підпису.
+        // 3. Отриманий .p7s файл відправляєш на сервер (наприклад, api/save_signature.php), 
+        // де він оновлює колонку `DOC_PDF_SIGN_COUNTERAGENT` для рядка з ID = docId.
+        
+        showAlert("Модуль підпису ініціалізовано!", "success", "Успіх");
+    };
+}
+
+function closePdfModal() {
+    document.getElementById('pdf-preview-modal').style.display = 'none';
+    document.getElementById('pdf-iframe').src = '';
+}

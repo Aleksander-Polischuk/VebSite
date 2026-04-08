@@ -11,11 +11,6 @@ $userId = $_SESSION['id_users'] ?? 0;
 $orgId = $IDOrganizations ?? 1;
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
-if (!$selectedCounteragentId) {
-    echo "<div style='padding:20px; color: red;'>Будь ласка, оберіть підприємство у списку зверху.</div>";
-    exit;
-}
-
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
 
 $sql_tariff = "

@@ -1,7 +1,5 @@
 <?php
-/** * LOGIC PART (Controller)
- * Отримуємо та готуємо всі дані заздалегідь
- */
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -13,7 +11,6 @@ mysqli_set_charset($link, 'utf8');
 $userId = (int)($_SESSION['id_users'] ?? 0);
 $orgId = (int)($IDOrganizations ?? 0);
 
-// Запит до бази даних
 $SQLExec = "
     SELECT 
         RC.ID,
@@ -23,11 +20,11 @@ $SQLExec = "
     INNER JOIN REF_COUNTERAGENT AS RC ON (RC.ID = A.ID_REF_COUNTERAGENT AND RC.ID_ORGANIZATIONS = A.ID_ORGANIZATIONS)
     WHERE 
        A.ID_USERS = $userId AND 
-       A.ID_ORGANIZATIONS = $orgId";
+       A.ID_ORGANIZATIONS = $orgId AND
+       (A.DEL = 0 OR A.DEL IS NULL)";
 
 $s_res = mysqli_query($link, $SQLExec);
 
-// Обробка автовибору (якщо нічого не обрано, беремо перше підприємство)
 $enterprises = [];
 while ($row = mysqli_fetch_array($s_res)) {
     if (empty($_SESSION['selected_counteragent_id']) && empty($enterprises)) {
@@ -35,8 +32,13 @@ while ($row = mysqli_fetch_array($s_res)) {
     }
     $enterprises[] = $row;
 }
-?>
 
+// Якщо підприємств немає взагалі, очищаємо сесію
+if (empty($enterprises)) {
+    unset($_SESSION['selected_counteragent_id']);
+}
+
+?>
 <link href="../../css/list_enterprise.css" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header enterprise-header">
@@ -44,26 +46,32 @@ while ($row = mysqli_fetch_array($s_res)) {
 </div>
 
 <div class="table-container">
-    <table class="data-table fixed-layout simple-list shadow-table">
-        <thead>
-            <tr>
-                <th>Назва</th>
-                <th>ЄДРПОУ</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($enterprises)): ?>
+    <?php if (empty($enterprises)): ?>
+        <div class="blocking-notice">
+            <div class="blocking-notice-icon-wrapper">
+                <img src="/img/exclamation-triangle-fill.svg" class="blocking-notice-icon" alt="Увага">
+            </div>
+            <h4 class="blocking-notice-title">У вас немає доступних підприємств</h4>
+            <p class="blocking-notice-text">
+                Наразі за вашим обліковим записом не закріплено жодного активного підприємства, або доступ було призупинено. Дякуємо за розуміння!
+            </p>
+        </div>
+    <?php else: ?>
+        <table class="data-table fixed-layout simple-list shadow-table">
+            <thead>
                 <tr>
-                    <td colspan="2" class="cell-no-data">Підприємств не знайдено.</td>
+                    <th>Назва</th>
+                    <th>ЄДРПОУ</th>
                 </tr>
-            <?php else: ?>
+            </thead>
+            <tbody>
                 <?php foreach ($enterprises as $ent): ?>
                     <tr>
                         <td><?php echo htmlspecialchars($ent['NAME']); ?></td>
                         <td><?php echo htmlspecialchars($ent['EDRPOU']); ?></td>
                     </tr>
                 <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    <?php endif; ?>
 </div>

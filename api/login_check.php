@@ -76,7 +76,7 @@
                             a.ID_USERS
                         From ENT_REGISTRATION as r
                         LEFT JOIN ACCESS AS a ON (a.ID_ENT_REGISTRATION = r.ID)
-                        WHERE r.PHONE=? AND r.ACTIVATION_CODE=? AND r.ID_ORGANIZATIONS =?
+                        WHERE r.DEL <> 1 and r.PHONE=? AND r.ACTIVATION_CODE=? AND r.ID_ORGANIZATIONS =?
                     ) AS Res
 
                     WHERE ID_USERS IS null";
