@@ -83,7 +83,7 @@ if (!empty($errorMessage)):
     include "page_head.php";
     include "CustomAlert.php";
 ?>
-  <script src="/js/CustomAlert.js"></script>
+  <script src="/js/CustomAlert.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/CustomAlert.js'); ?>"></script>
   <script>
       document.addEventListener("DOMContentLoaded", function() {
           if (typeof showAlert === 'function') {

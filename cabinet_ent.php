@@ -126,7 +126,7 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
-        <a href="#" id="nav-docs">Документи</a> <a href="#">Тарифи</a>
+        <a href="#" id="nav-docs">Документи</a>
         <a href="#">Тарифи</a>
         <a href="#">Поширені запитання</a>
 
@@ -155,11 +155,12 @@ include "CustomAlert.php";
 <script src="/js/Popular_Questions.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/Popular_Questions.js'); ?>"></script>
 <script src="/js/ent_invoice.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/ent_invoice.js'); ?>"></script>
 
-<link href="/css/quill.snow.css" rel="stylesheet">
+<link href="/css/quill.snow.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/quill.snow.css'); ?>" rel="stylesheet">
+<script src="/js/libs/PDFmake.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/libs/PDFmake.js'); ?>" type="text/javascript"></script>
+<script src="/js/libs/vfs_fonts.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/libs/vfs_fonts.js'); ?>" type="text/javascript"></script>
+<script src="/js/libs/quill.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/libs/quill.js'); ?>" type="text/javascript"></script>
 
-<script src="js/libs/PDFmake.js"   type="text/javascript"></script>
-<script src="js/libs/vfs_fonts.js" type="text/javascript"></script>
-<script src="js/libs/quill.js"     type="text/javascript"></script>
+
 <script>
 //Кількість непідписаних документів    
 window.updateDocumentBadge = function() {
@@ -174,11 +175,11 @@ window.updateDocumentBadge = function() {
             if (!badge) {
                 badge = document.createElement('span');
                 badge.className = 'menu-badge';
+                badge.title = "Кількість непідписаних документів"; 
                 docLink.appendChild(badge);
             }
             badge.innerText = data.count;
         } else if (badge) {
-            // Якщо документів 0, ховаємо кружечок
             badge.remove(); 
         }
     })

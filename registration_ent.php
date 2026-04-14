@@ -85,7 +85,6 @@
 
   </div>
 
-<script src="/js/registration_ent.js"></script>
-
+<script src="/js/registration_ent.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/registration_ent.js'); ?>"></script>
 </body>
 </html>

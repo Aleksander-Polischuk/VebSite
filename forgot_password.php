@@ -43,6 +43,6 @@
     </div>
 </div>
 
-<script src="/js/forgot_password.js"></script>
+<script src="/js/forgot_password.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/forgot_password.js'); ?>"></script>
 </body>
 </html>

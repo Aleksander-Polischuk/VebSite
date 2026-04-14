@@ -87,7 +87,7 @@
 
   </div>
 
-<script src="/js/login.js"></script>
-<script src="js/CustomAlert.js"></script>
+<script src="/js/login.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/login.js'); ?>"></script>
+<script src="/js/CustomAlert.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/CustomAlert.js'); ?>"></script>
 </body>
 </html>

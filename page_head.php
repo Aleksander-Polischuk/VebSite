@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="uk">
 	<head>
@@ -20,17 +19,21 @@
                 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 		<script type="text/javascript" src="https://kgonline.in.ua/js/jquery.mask.js"></script>
 <?php
-	    if (isset($list_css)) {
-			foreach ($list_css as $el_css) {
-               print '        <link rel="stylesheet" type="text/css" href="'.$el_css.'"/>'."\n";	
-            }	
-		}
-		
-		if (isset($list_js)) {
-			foreach ($list_js as $el_js) {
-               print '        <script type="text/javascript" src="'.$el_js.'"></script>'."\n";	
-            }	
-		}
+    if (isset($list_css)) {
+        foreach ($list_css as $el_css) {
+            $abs_path = $_SERVER['DOCUMENT_ROOT'] . $el_css;
+            $v = file_exists($abs_path) ? filemtime($abs_path) : '1.0';
+            print '        <link rel="stylesheet" type="text/css" href="'.$el_css.'?v='.$v.'"/>'."\n";	
+        }	
+    }
+    
+    if (isset($list_js)) {
+        foreach ($list_js as $el_js) {
+            $abs_path = $_SERVER['DOCUMENT_ROOT'] . $el_js;
+            $v = file_exists($abs_path) ? filemtime($abs_path) : '1.0';
+            print '        <script type="text/javascript" src="'.$el_js.'?v='.$v.'"></script>'."\n";	
+        }	
+    }
 ?>		
 		<meta name="viewport" content="width = device-width, initial-scale = 1.0, minimum-scale = 1.0, maximum-scale = 1.0, user-scalable = no" />
 	</head>
