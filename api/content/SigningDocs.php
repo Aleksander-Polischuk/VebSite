@@ -5,11 +5,29 @@ if (session_status() === PHP_SESSION_NONE) {
 
 include "../../config.php";
 
-// Отримуємо ID документа
+// Отримуємо ID документа та його тип
 $iddoc = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$doctype = $_GET['doctype'] ?? 'invoice'; 
 
 if (!$iddoc) {
     die("<div style='padding: 20px; color: red;'>Помилка: Не вказано номер документа для підпису.</div>");
+}
+
+// =========================================================================
+// Динамічні змінні для Рахунків та Актів
+// =========================================================================
+if ($doctype === 'act') {
+    $tableName = 'DOC_COUNTER_READINGS';
+    $docNameUI = 'Акт';
+    $linkView  = "/api/get_act_pdf.php?id=" . $iddoc;
+    $linkSign  = "/api/get_act_pdf.php?type=1&id=" . $iddoc;
+    $fileName  = "act_" . $iddoc . ".pdf.p7s";
+} else {
+    $tableName = 'DOC_INVOICE';
+    $docNameUI = 'Рахунок';
+    $linkView  = "/api/get_ent_invoice.php?id=" . $iddoc;
+    $linkSign  = "/api/get_ent_invoice.php?type=1&id=" . $iddoc;
+    $fileName  = "invoice_" . $iddoc . ".pdf.p7s";
 }
 
 // =========================================================================
@@ -26,11 +44,6 @@ if (!$userId) {
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
-$doctype = $_GET['doctype'] ?? 'invoice'; 
-
-// Динамічно обираємо таблицю залежно від типу документа
-$tableName = ($doctype === 'act') ? 'DOC_COUNTER_READINGS' : 'DOC_INVOICE';
-
 $sqlCheck = "
     SELECT di.ID, di.DOC_PDF_SIGN_COUNTERAGENT, rc.EDRPOU
     FROM {$tableName} di
@@ -39,7 +52,7 @@ $sqlCheck = "
         di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
     INNER JOIN REF_COUNTERAGENT rc ON 
          rc.ID_ORGANIZATIONS = di.ID_ORGANIZATIONS and
-         rc.ID = di.ID_REF_COUNTERAGENT  
+         rc.ID = di.ID_REF_COUNTERAGENT    
     WHERE di.ID = ? 
       AND acc.ID_USERS = ? 
       AND di.ID_ORGANIZATIONS = ?
@@ -54,7 +67,6 @@ $docData = mysqli_fetch_assoc($resCheck);
 mysqli_stmt_close($stmtCheck);
 mysqli_close($link);
 
-// 1. Якщо запит нічого не повернув — це чужий документ або вигаданий ID
 if (!$docData) {
     die("
     <div style='font-family: sans-serif; padding: 40px; text-align: center; background: #f8d7da; color: #721c24; border-bottom: 3px solid #f5c6cb;'>
@@ -63,35 +75,20 @@ if (!$docData) {
     </div>");
 }
 
-// 2. Якщо поле DOC_PDF_SIGN_COUNTERAGENT не пусте — документ вже підписано
-
 if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
     die("
     <div style='font-family: sans-serif; padding: 40px; text-align: center; background: #d4edda; color: #155724; border-bottom: 3px solid #c3e6cb;'>
         <h2>Документ вже підписано!</h2>
-        <p>Цей рахунок вже має ваш електронний підпис. Повторне підписання неможливе.</p>
+        <p>Цей документ вже має ваш електронний підпис. Повторне підписання неможливе.</p>
     </div>");
 }
-
-// =========================================================================
 ?>
 
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>IIT Підпис - Рахунок № <?php
-    $iddoc = $_GET['iddoc'] ?? '';
-    // Якщо тип не передано, за замовчуванням вважаємо, що це рахунок (для зворотної сумісності)
-    $doctype = $_GET['doctype'] ?? 'invoice'; 
-
-    // Визначаємо правильний URL для перегляду документа
-    if ($doctype === 'act') {
-        $view_url = "/api/get_act_pdf.php?id=" . htmlspecialchars($iddoc);
-    } else {
-        $view_url = "/api/get_ent_invoice.php?id=" . htmlspecialchars($iddoc);
-    }
-?></title>
+    <title>IIT Підпис - <?php echo $docNameUI; ?> № <?php echo $iddoc; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -112,109 +109,22 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
         .fn_iit_module_status { display: block; margin-bottom: 10px; padding: 10px; background: #e8f4fd; color: #0c5460; border-left: 4px solid #3C9ADC; font-size: 14px; }
         .hidden { display: none; }
         
-        .input-error {
-            border-color: #ff8fa3 !important; 
-            background-color: #fffcfc !important; 
-            box-shadow: 0 0 8px rgba(255, 143, 163, 0.8) !important; 
-            border-radius: 6px !important; 
-            transition: box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease !important; 
-        }
+        .input-error { border-color: #ff8fa3 !important; background-color: #fffcfc !important; box-shadow: 0 0 8px rgba(255, 143, 163, 0.8) !important; border-radius: 6px !important; transition: box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease !important; }
         
-        .file-input-wrapper {
-            position: relative;
-            width: 100%;
-            display: inline-block;
-        }
+        .file-input-wrapper { position: relative; width: 100%; display: inline-block; }
+        #pkReadFileInput { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 10; }
 
-        #pkReadFileInput {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .custom-file-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 10px 15px;
-            font-family: inherit;
-            font-weight: 500;
-            color: #3C9ADC; 
-            background-color: #fff;
-            border: 2px dashed #3C9ADC; 
-            border-radius: 6px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        .custom-file-label:hover {
-            background-color: #f0f8ff; 
-            border-style: solid; 
-        }
-
-        .custom-file-label::before {
-            content: '📂';
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-
-        .custom-file-label.file-selected::before {
-            content: '📄'; /*🔐 📝 */
-        }
-
-        .custom-file-label.input-error {
-            border-color: #ff8fa3 !important;
-            border-style: solid !important;
-            background-color: #fffcfc !important;
-            box-shadow: 0 0 8px rgba(255, 143, 163, 0.4) !important;
-            color: #d63384 !important;
-        }
+        .custom-file-label { display: flex; align-items: center; justify-content: center; width: 100%; padding: 10px 15px; font-family: inherit; font-weight: 500; color: #3C9ADC; background-color: #fff; border: 2px dashed #3C9ADC; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-sizing: border-box; }
+        .custom-file-label:hover { background-color: #f0f8ff; border-style: solid; }
+        .custom-file-label::before { content: '📂'; margin-right: 10px; font-size: 1.2em; }
+        .custom-file-label.file-selected::before { content: '📄'; }
+        .custom-file-label.input-error { border-color: #ff8fa3 !important; border-style: solid !important; background-color: #fffcfc !important; box-shadow: 0 0 8px rgba(255, 143, 163, 0.4) !important; color: #d63384 !important; }
         
-        .password-wrap {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .password-wrap input {
-            width: 100%;
-            padding-right: 40px !important;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            background-color: transparent !important;
-            border: none !important;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            background-image: url("../../img/view.svg"); 
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain; 
-
-            opacity: 0.6;
-            transition: opacity 0.2s;
-            padding: 0 !important;
-            box-shadow: none !important;
-        }
-
-        .toggle-password:hover {
-            opacity: 1; 
-        }
-
-        .toggle-password.show {
-            background-image: url("../../img/no-view.svg"); 
-        }
+        .password-wrap { position: relative; display: flex; align-items: center; }
+        .password-wrap input { width: 100%; padding-right: 40px !important; }
+        .toggle-password { position: absolute; right: 10px; background-color: transparent !important; border: none !important; width: 24px; height: 24px; cursor: pointer; background-image: url("../../img/view.svg"); background-repeat: no-repeat; background-position: center; background-size: contain; opacity: 0.6; transition: opacity 0.2s; padding: 0 !important; box-shadow: none !important; }
+        .toggle-password:hover { opacity: 1; }
+        .toggle-password.show { background-image: url("../../img/no-view.svg"); }
     </style>
     <link href="../../css/CustomAlert.css" rel="stylesheet">
 </head>
@@ -302,7 +212,6 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         <span class="stage-group__title">ІПН / Код:</span>
                         <div id="PKeyOwnerInfoSubjDRFOCodeSelect" style="display:none;"><?php echo $docData['EDRPOU']; ?></div>
                         <div id="PKeyOwnerInfoSubjDRFOCode">-</div>
-                                                
                         <div id="PKeyOwnerInfoSubjDRFOCodeDescr" style="display:none; font-weight:bold; margin-top: 10px;">Зверніть увагу ІПН/Код не збігається з обраною організацією</div>
                     </div>
                     <button class="btn btn-danger" onclick="app.NextStage('fn_iit_module_data_verification_stage','fn_iit_module_init_key_stage')">Повернутись</button>
@@ -316,18 +225,12 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                     </div>
                     <div class="stage-group">
                         <span class="stage-group__title">Документ:</span>
-                        <span id="FileTypeName">Рахунок № <?php echo htmlspecialchars($iddoc); ?> </span>
+                        <span id="FileTypeName" style="font-weight: bold; font-size: 16px; color: #3C9ADC;"><?php echo $docNameUI; ?> № <?php echo $iddoc; ?></span>
                         
-                        <a href="<?php echo $view_url; ?>" target="_blank" class="btn" style="background:#eee; color:#333; text-decoration:none; display:inline-block; margin-bottom:10px;">
-                            Переглянути
-                        </a>
+                        <a href="<?php echo $linkView; ?>" target="_blank" class="btn" style="background:#eee; color:#333; text-decoration:none; display:inline-block; margin-bottom:10px;">Переглянути</a>
                     </div>
                     
-                    <?php if ($doctype === 'act'): ?>
-                        <a id="FileToSign" href="/api/get_act_pdf.php?id=<?php echo htmlspecialchars($iddoc); ?>" data-filename="act_<?php echo htmlspecialchars($iddoc); ?>.pdf"></a>
-                    <?php else: ?>
-                        <a id="FileToSign" href="/api/get_ent_invoice.php?type=1&id=<?php echo htmlspecialchars($iddoc); ?>" data-filename="invoice_<?php echo htmlspecialchars($iddoc); ?>.pdf.p7s"></a>
-                    <?php endif; ?>
+                    <a id="FileToSign" href="<?php echo $linkSign; ?>" data-filename="<?php echo $fileName; ?>"></a>
                     <br>
                     <button id="SignFileButton" class="btn btn_blue" onclick="app.SignFile()">Підписати</button>
                 </div>
@@ -339,7 +242,8 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         <input id="FileTypeId" type="hidden" name="FileTypeId">
                         <input id="DocumentId" type="hidden" name="DocumentId" value="<?php echo htmlspecialchars($iddoc); ?>">
                         <input type="hidden" name="SignedFile" value="1">
-                        <input type="hidden" name="doctype" value="<?php echo htmlspecialchars($doctype); ?>">
+                        <input type="hidden" name="DocType" value="<?php echo htmlspecialchars($doctype); ?>">
+                        
                         <div class="stage-header">
                             <span class="stage-header__num">Крок 4 з 4</span>
                             <span class="stage-header__title">Відправка підписаного файлу</span>
@@ -366,7 +270,7 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                 <select id="pkReadFileAliasSelect"></select>
                 <div id="pkKSPUserIdBlock"></div>
                 <input id="pkKSPUserId">
-                </div>
+            </div>
 
         </div>
     </div>
@@ -398,78 +302,55 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                 document.head.appendChild(s);
             });
         }
-        console.log("IIT Library fully loaded");
     }
 
     $(document).ready(function() {
-        // ==========================================
-        // 1. ПОДІЯ: ЗМІНА ФАЙЛУ КЛЮЧА
-        // ==========================================
         $('#pkReadFileInput').on('change', function() {
             const fileName = $(this).val().split('\\').pop(); 
             const label = $('#pkReadFileLabel');
 
             if (fileName) {
-                // Якщо файл обрано: показуємо ім'я, прибираємо помилку, ДОДАЄМО КЛАС ІКОНКИ
                 label.text(fileName);
                 label.removeClass('input-error');
-                label.addClass('file-selected'); // Змінює 📂 на 📄
+                label.addClass('file-selected'); 
             } else {
-                // Якщо вибір скасовано: повертаємо текст, ЗНІМАЄМО КЛАС ІКОНКИ
                 label.text('Натисніть, щоб обрати файл ключа...');
-                label.removeClass('file-selected'); // Повертає 📂
+                label.removeClass('file-selected'); 
             }
         });
 
-        // ==========================================
-        // 2. ПОДІЯ: ЗНЯТТЯ ПОМИЛОК ПРИ ВВЕДЕННІ
-        // ==========================================
         $('#pkCASelect, #pkReadFilePasswordTextField').on('input change', function() {
             $(this).removeClass('input-error');
         });
 
-        // ==========================================
-        // 3. ПОДІЯ: КЛІК ПО КНОПЦІ "ЗЧИТАТИ КЛЮЧ"
-        // ==========================================
         $('#customReadFileButton').on('click', function(e) {
             e.preventDefault();
             let hasError = false;
 
-            // Спочатку скидаємо всі попередні підсвічування (УВАГА: тут тепер pkReadFileLabel)
             $('#pkCASelect, #pkReadFileLabel, #pkReadFilePasswordTextField').removeClass('input-error');
 
-            // Перевіряємо селект ЦСК
             if (!$('#pkCASelect').val()) {
                 $('#pkCASelect').addClass('input-error');
                 hasError = true;
             }
 
-            // Перевіряємо файл ключа
             const fileInput = document.getElementById('pkReadFileInput');
             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                 $('#pkReadFileLabel').addClass('input-error');
                 hasError = true;
             }
 
-            // Перевіряємо пароль
             const password = $('#pkReadFilePasswordTextField').val();
             if (!password || password.trim() === '') {
                 $('#pkReadFilePasswordTextField').addClass('input-error');
                 hasError = true;
             }
 
-            // Якщо є помилки - зупиняємось
-            if (hasError) {
-                return; 
-            }
+            if (hasError) return; 
 
-            // Передаємо команду бібліотеці ІІТ
             $('#pkReadFileButton').trigger('click');
         });
         
-        // ==========================================
-        // ІНІЦІАЛІЗАЦІЯ
-        // ==========================================
         loadIITScripts();
         
         $('#fn_sending_signed_file').on('submit', function(e) {
@@ -489,20 +370,15 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
                         if (res.status === 'success') {
                             showAlert(res.message, 'success'); 
                             
-                            setTimeout(function() { 
-                                // Читаємо тип документа з URL
-                                const urlParams = new URLSearchParams(window.location.search);
-                                const currentDoctype = urlParams.get('doctype') || 'invoice';
-                                
-                                if (currentDoctype === 'act') {
-                                    // Якщо це був акт — перекидаємо назад до показників/історії
-                                    // (якщо у тебе ця сторінка називається history_readings_2, то зміни тут назву)
-                                    window.location.href = '?page=history_readings'; 
+                            if (window.opener && !window.opener.closed) {
+                                if (typeof window.opener.refreshActiveContent === 'function') {
+                                    window.opener.refreshActiveContent();
                                 } else {
-                                    // Якщо рахунок — повертаємо в список рахунків підприємства
-                                    window.location.href = '?page=ent_list_accounts';
+                                    window.opener.location.reload();
                                 }
-                            }, 2000); // 2 секунди, щоб людина встигла прочитати зелений алерт
+                            }
+
+                            setTimeout(function() { window.close(); }, 3000);
                         } else {
                             showAlert(res.message, 'error');
                         }
@@ -517,25 +393,20 @@ if (!empty($docData['DOC_PDF_SIGN_COUNTERAGENT'])) {
             });
         });
         
-        setupSignature($('#FileToSign').attr('href'), $('#FileTypeName').text(), <?php echo $iddoc; ?>);
+        setupSignature('<?php echo $linkSign; ?>', '<?php echo $docNameUI; ?> № <?php echo $iddoc; ?>', <?php echo $iddoc; ?>);
         
-        // ==========================================
-        // КНОПКА ПОКАЗАТИ/ПРИХОВАТИ ПАРОЛЬ
-        // ==========================================
         $('#toggleKeyPassword').on('click', function() {
             const pwdInput = $('#pkReadFilePasswordTextField');
             const iconBtn = $(this);
             
-            // Якщо зараз пароль - робимо текст, якщо текст - робимо пароль
             if (pwdInput.attr('type') === 'password') {
                 pwdInput.attr('type', 'text');
-                iconBtn.addClass('show'); // Змінюємо іконку
+                iconBtn.addClass('show'); 
             } else {
                 pwdInput.attr('type', 'password');
-                iconBtn.removeClass('show'); // Повертаємо початкову іконку
+                iconBtn.removeClass('show'); 
             }
         });
-        
     });
 
     function setupSignature(fileUrl, typeName, docId) {

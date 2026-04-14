@@ -24,16 +24,17 @@ if (!$actId) {
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
     
-// Отримуємо файл з нової таблиці, одразу перевіряючи права (ACCESS)
+// Отримуємо файл з нової таблиці, одразу перевіряючи права
 $sql = "
     SELECT di.DOC_PDF 
     FROM DOC_COUNTER_READINGS di
     INNER JOIN ACCESS acc 
-        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT 
-       AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-    WHERE di.ID = ? 
-      AND acc.ID_USERS = ?
-      AND di.ID_ORGANIZATIONS = ?
+        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+           di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+    
+    WHERE di.ID = ? AND 
+          acc.ID_USERS = ? AND 
+          di.ID_ORGANIZATIONS = ?
     LIMIT 1
 ";
 

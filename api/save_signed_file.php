@@ -1,5 +1,4 @@
 <?php
-// Функція для підпису
 function addStamp($pdf, $signatoryData, $y, $w, $h, $is_owner_document) {
     $text = '';
     $x = $is_owner_document ? 10 : 110;
@@ -35,6 +34,7 @@ function addStamp($pdf, $signatoryData, $y, $w, $h, $is_owner_document) {
 
     $pdf->MultiCell($w, $h, $text, 0, "C", false, true, $x, $y, true, 0, false, true, $w, "M");
 }
+
 function addSignerInformation($pdf, $signatoryData, $y, $w, $h, $is_owner_document) {
     $x = $is_owner_document ? 10 : 110;
     $text = 'Електронний підпис' . PHP_EOL;
@@ -69,7 +69,7 @@ function addSignerInformation($pdf, $signatoryData, $y, $w, $h, $is_owner_docume
      
     //Час перевірки ЕЦП
     if (!empty($signatoryData->signTimeStamp) && strtotime($signatoryData->signTimeStamp)) {
-        $text .= 'Час перевірки КЕП/ЕЦП: ' . date("H:i d.m.Y", strtotime($signatoryData->signTimeStamp)) . PHP_EOL;
+        $text .= 'Час перевірки КЕП: ' . date("H:i d.m.Y", strtotime($signatoryData->signTimeStamp)) . PHP_EOL;
     }
 
     //Серійний номер
@@ -107,13 +107,14 @@ if ($InfoOwnerSignature == '') {
    exit; 
 }
 
+// тип документа
+$docType = isset($_POST['DocType']) ? $_POST['DocType'] : 'invoice';
+$tableName = ($docType === 'act') ? 'DOC_COUNTER_READINGS' : 'DOC_INVOICE';
+
 $link = mysqli_connect($dbhostname, $dbusername, $dbpassword, $dbName);
 mysqli_set_charset($link, 'utf8');
 
 /////// накладання підпису на чистий PDF /////////////////////////////////////////////////////////
-
-$doctype = $_POST['doctype'] ?? 'invoice';
-$tableName = ($doctype === 'act') ? 'DOC_COUNTER_READINGS' : 'DOC_INVOICE';
 
 $signData_Counteragent = json_decode($InfoOwnerSignature);
 
@@ -123,28 +124,36 @@ require_once('../../www/libs/fpdi/src/autoload.php');
 use setasign\Fpdi\Tcpdf\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
 
-// Для рахунків тягнемо і PDF, і підпис Організації. Для актів - тільки PDF.
-if ($doctype === 'act') {
-    $sql = "SELECT di.DOC_PDF FROM {$tableName} di INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1";
+// Для актів немає DOC_PDF_SIGN_ORG_INFO, тому беремо NULL як затичку
+if ($docType === 'act') {
+    $sql = "
+        SELECT di.DOC_PDF, NULL as DOC_PDF_SIGN_ORG_INFO
+        FROM {$tableName} di
+        INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+        WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1
+    ";
 } else {
-    $sql = "SELECT di.DOC_PDF, di.DOC_PDF_SIGN_ORG_INFO FROM {$tableName} di INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1";
+    $sql = "
+        SELECT di.DOC_PDF, di.DOC_PDF_SIGN_ORG_INFO
+        FROM {$tableName} di
+        INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+        WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1
+    ";
 }
 
 $stmt = mysqli_prepare($link, $sql);
 mysqli_stmt_bind_param($stmt, "iii", $documentId, $userId, $IDOrganizations);
 mysqli_stmt_execute($stmt);
-
-if ($doctype === 'act') {
-    mysqli_stmt_bind_result($stmt, $pdfBlob);
-    $Str_signData = null; // В актах поки немає підпису організації
-} else {
-    mysqli_stmt_bind_result($stmt, $pdfBlob, $Str_signData);
-}
+mysqli_stmt_bind_result($stmt, $pdfBlob, $Str_signData);
 mysqli_stmt_fetch($stmt);
 mysqli_stmt_close($stmt);
 
 if (empty($pdfBlob)) {
-     die(json_encode(['status' => 'error', 'message' => 'Відсутній PDF файл!']));
+     echo json_encode([
+        'status' => 'error', 
+        'message' => 'Відсутній PDF файл у базі даних!'
+    ]);
+   exit;
 }
 
 try {
@@ -155,41 +164,49 @@ try {
     for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
         $templateId = $pdf->importPage($pageNo);
         $size       = $pdf->getTemplateSize($templateId);
+        
         $pdf->AddPage($size['orientation'], $size);
         $pdf->useTemplate($templateId);
 
-        $y = 245; $w = 30; $h = $w;
+        $y = 245;
+        $w = 30;
+        $h = $w;
 
-        // Малюємо печатку Організації (тільки якщо вона є - для рахунків)
-        if (!empty($Str_signData)) {
+        // Якщо це РАХУНОК і є підпис Організації — ставимо її печатку
+        if ($docType !== 'act' && !empty($Str_signData)) {
             $signData_Org = json_decode($Str_signData);
-            $is_owner_document = true;
-            addStamp($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
-            addSignerInformation($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+            if ($signData_Org) {
+                $is_owner_document = true;
+                addStamp($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+                addSignerInformation($pdf, $signData_Org, $y, $w, $h, $is_owner_document);
+            }
         }
         
-        // Малюємо печатку Контрагента (завжди)
-        if (!empty($signData_Counteragent)) {
-            $is_owner_document = false;
-            addStamp($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
-            addSignerInformation($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
-        }
+        // Підпис клієнта (контрагента) ставиться ЗАВЖДИ (і для рахунків, і для актів)
+        $is_owner_document = false;
+        addStamp($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
+        addSignerInformation($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
     }
     
     $doc_pdf = $pdf->Output('', 'S');
 
 } catch (\Exception $e) {
-    die(json_encode(['status' => 'error', 'message' => $e->getMessage()]));
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Помилка генерації PDF: ' . $e->getMessage()
+    ]);
+   exit;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Отримуємо вміст підписаного файлу
 $fileData = file_get_contents($_FILES['SignedFile']['tmp_name']);
 
-$sqlUpdate = "
+// Оновлюємо потрібну таблицю (Акти або Рахунки)
+$sql = "
     UPDATE {$tableName} di
-    INNER JOIN ACCESS acc ON 
-        di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
-        di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+    INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
     SET di.DOC_PDF_SIGN_COUNTERAGENT = ?,
         di.DOC_PDF = ?,
         di.ID_ENUM_SIGN_STATUS = 2
@@ -198,13 +215,14 @@ $sqlUpdate = "
       AND di.ID_ORGANIZATIONS = ?
 ";
 
-$stmtUpdate = mysqli_prepare($link, $sqlUpdate);
-$null = NULL;
-mysqli_stmt_bind_param($stmtUpdate, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
-mysqli_stmt_send_long_data($stmtUpdate, 0, $fileData);
-mysqli_stmt_send_long_data($stmtUpdate, 1, $doc_pdf);
+$stmt = mysqli_prepare($link, $sql);
 
-if (mysqli_stmt_execute($stmtUpdate)) {
+$null = NULL;
+mysqli_stmt_bind_param($stmt, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
+mysqli_stmt_send_long_data($stmt, 0, $fileData);
+mysqli_stmt_send_long_data($stmt, 1, $doc_pdf);
+
+if (mysqli_stmt_execute($stmt)) {
     echo json_encode([
         'status' => 'success', 
         'message' => 'Документ успішно підписано, електронну печатку накладено!'
@@ -212,10 +230,10 @@ if (mysqli_stmt_execute($stmtUpdate)) {
 } else {
     echo json_encode([
         'status' => 'error', 
-        'message' => 'Виникла помилка при збереженні підпису в базі даних.'
+        'message' => 'Виникла помилка при збереженні підпису в базі даних: ' . mysqli_error($link)
     ]);
 }
 
-mysqli_stmt_close($stmtUpdate);
+mysqli_stmt_close($stmt);
 mysqli_close($link);
 ?>
