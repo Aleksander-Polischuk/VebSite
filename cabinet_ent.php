@@ -54,14 +54,16 @@ while ($s_row = mysqli_fetch_assoc($s_res)) {
     }
 }
 
-// Якщо ми знайшли активного 
+if ($activeRow === null && count($rows) > 0) {
+    $activeRow = $rows[0];
+}
+
 if ($activeRow) {
     $_SESSION['selected_counteragent_id'] = $activeRow['ID'];
 }
 
-// 5. ПІДКЛЮЧЕННЯ ШАПКИ
+// ПІДКЛЮЧЕННЯ ШАПКИ
 $title = 'Особистий кабінет';
-// ДОДАНО: підключаємо table_style.css, щоб запрацював клас .blocking-notice-title
 $list_css = ['/css/table_style.css', '/css/cabinet_ent.css', '/css/CustomAlert.css'];
 include "page_head.php";
 include "CustomAlert.php";
@@ -124,7 +126,7 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
-        <a href="#">Документи</a>
+        <a href="#" id="nav-docs">Документи</a> <a href="#">Тарифи</a>
         <a href="#">Тарифи</a>
         <a href="#">Поширені запитання</a>
 
@@ -143,21 +145,49 @@ include "CustomAlert.php";
   </main>
 </div>
 
-<script src="/js/CustomAlert.js"></script>
-<script src="/js/cabinet_ent.js"></script>
-<script src="/js/table_tree.js"></script>
-<script src="js/personal_acc.js"></script>
-<script src="js/input_meters.js"></script>
-<script src="js/history_readings.js"></script>
-<script src="js/feedback.js"></script>
-<script src="js/Popular_Questions.js"></script>
+<script src="/js/CustomAlert.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/CustomAlert.js'); ?>"></script>
+<script src="/js/cabinet_ent.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/cabinet_ent.js'); ?>"></script>
+<script src="/js/table_tree.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/table_tree.js'); ?>"></script>
+<script src="/js/personal_acc.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/personal_acc.js'); ?>"></script>
+<script src="/js/input_meters.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/input_meters.js'); ?>"></script>
+<script src="/js/history_readings.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/history_readings.js'); ?>"></script>
+<script src="/js/feedback.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/feedback.js'); ?>"></script>
+<script src="/js/Popular_Questions.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/Popular_Questions.js'); ?>"></script>
+<script src="/js/ent_invoice.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/ent_invoice.js'); ?>"></script>
 
 <link href="/css/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="js/libs/PDFmake.js"   type="text/javascript"></script>
+<script src="js/libs/vfs_fonts.js" type="text/javascript"></script>
+<script src="js/libs/quill.js"     type="text/javascript"></script>
 <script>
+//Кількість непідписаних документів    
+window.updateDocumentBadge = function() {
+    const docLink = document.getElementById('nav-docs');
+    if (!docLink) return;
+
+    fetch('/api/get_unsigned_count.php')
+    .then(res => res.json())
+    .then(data => {
+        let badge = docLink.querySelector('.menu-badge');
+        if (data.count > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'menu-badge';
+                docLink.appendChild(badge);
+            }
+            badge.innerText = data.count;
+        } else if (badge) {
+            // Якщо документів 0, ховаємо кружечок
+            badge.remove(); 
+        }
+    })
+    .catch(err => console.error("Помилка бейджика:", err));
+};
+
+// Викликаємо функцію одразу при завантаженні сторінки
+window.updateDocumentBadge();    
+    
 // 1. Пріоритет віддаємо збереженій вкладці в браузері, якщо її немає — беремо з сесії PHP
 <?php $defaultMenu = $_SESSION['active_menu'] ?? 'Підприємства'; ?>
 const activeMenu = localStorage.getItem('activeCabinetPage') || <?php echo json_encode($defaultMenu); ?>; 
@@ -166,13 +196,12 @@ const userSelect = document.querySelector('.user-select');
 const btn = document.getElementById('userSelectBtn');
 const dropdown = document.getElementById('userSelectDropdown');
 
-// БЕЗПЕЧНА ІНІЦІАЛІЗАЦІЯ (щоб не було помилок, коли селект відсутній в HTML)
 const textBox = btn ? btn.querySelector('.u-text') : null; 
 
 // Функція для підсвітки активного пункту
 function highlightActiveMenu(pageName) {
     document.querySelectorAll('.sidebar a').forEach(a => {
-        a.classList.toggle('active', a.innerText.trim() === pageName);
+        a.classList.toggle('active', a.childNodes[0].textContent.trim() === pageName);
     });
 }
 
@@ -208,6 +237,9 @@ if (dropdown) {
             if (typeof updateHeaderBalance === 'function') {
                 updateHeaderBalance();
             }
+            if (typeof window.updateDocumentBadge === 'function') {
+                window.updateDocumentBadge();
+            }
         });
     });
 }
@@ -216,13 +248,12 @@ document.addEventListener('click', e => {
     if (userSelect && !userSelect.contains(e.target)) userSelect.classList.remove('open');
 });
 
-// Додаємо обробник для кліків по сайдбару, щоб зберігати вибір
 document.querySelectorAll('.sidebar a').forEach(link => {
     link.addEventListener('click', function(e) {
         if (this.classList.contains('btn-logout')) return;
         
-        const pageName = this.innerText.trim();
-        // Зберігаємо назву сторінки в браузері
+        const pageName = this.childNodes[0].textContent.trim(); 
+        
         localStorage.setItem('activeCabinetPage', pageName);
         highlightActiveMenu(pageName);
     });

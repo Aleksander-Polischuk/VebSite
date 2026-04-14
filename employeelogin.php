@@ -40,7 +40,9 @@ if (empty($code)) {
 
             if ($rowUser = mysqli_fetch_assoc($resultUser)) {
                 $is_ent = (int)$rowUser['IS_ENT'];
-
+                
+                session_unset();
+                
                 // Авторизація
                 $_SESSION['id_users'] = $userId;
                 
