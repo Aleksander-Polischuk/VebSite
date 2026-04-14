@@ -169,8 +169,7 @@ function saveReadings() {
             : alert("Нічого не змінено.");
     }
 
-    // Визначаємо текст підтвердження
-    let subConfirmText = 'Зберегти ці дані?';
+    let subConfirmText = 'Зберегти ці дані? Формування наступного акту буде доступне лише в наступному місяці!';
     if (isVolumeWarning) {
         subConfirmText = 'Увага! Ви ввели дуже великі об’єми споживання (виділено помаранчевим). Ви впевнені, що показники вірні?';
     }
@@ -217,23 +216,20 @@ function sendReadingsToServer(data) {
 }
 
 
-//Функція для підтвердження та формування акту передачі показників
- 
-/**
+/* =========================================
  * Функція для підтвердження та формування акту передачі показників
- */
+=========================================*/
 function confirmGenerateAct() {
     const inputs = document.querySelectorAll('.input-reading');
     const contracts = {};
+    let validationErrors = []; 
 
-    // 1. Збираємо статистику по кожному договору
     inputs.forEach(input => {
         const cName = input.dataset.contractName || 'Без договору';
         const mName = input.dataset.counterName || 'Невідомий лічильник';
         const prevVal = input.dataset.prev || '0.000'; 
         const val = input.value.trim();
 
-        // Ініціалізуємо договір у нашому об'єкті, якщо його ще немає
         if (!contracts[cName]) {
             contracts[cName] = { total: 0, filled: 0, emptyMeters: [], data: [] };
         }
@@ -241,26 +237,68 @@ function confirmGenerateAct() {
         contracts[cName].total++;
 
         if (val !== '') {
-            contracts[cName].filled++;
-            contracts[cName].data.push({
-                // ДОДАЙ ОСЬ ЦІ ДВА РЯДКИ:
-                contractName: cName,
-                counteragent: input.dataset.counteragent || "Організація",
-                
-                // Це те, що в тебе вже є:
-                meterName: mName,
-                prevValue: prevVal,
-                currValue: val,
-                objectName: input.dataset.objectName || '---', 
-                addressName: input.dataset.addressName || '---',
-                meterMark: input.dataset.meterMark || '---',
-                meterNum: input.dataset.meterNum || '---'
-            });
+            // Перевірка лімітів
+            const currentNum = parseFloat(val.replace(/,/g, '.')) || 0;
+            const prevNum = parseFloat(prevVal.replace(/,/g, '.')) || 0;
+            const diff = currentNum - prevNum;
+            const maxVol = parseFloat(input.dataset.maxVol) || 0;
+
+            let hasError = false;
+
+            // Блокуємо від'ємні показники
+            if (currentNum < 0) {
+                validationErrors.push(`[${cName}] <b>${mName}</b>: показник не може бути від'ємним.`);
+                hasError = true;
+            } 
+            // Блокуємо, якщо введено менше, ніж було
+            else if (currentNum < prevNum) {
+                validationErrors.push(`[${cName}] <b>${mName}</b>: поточний показник (${currentNum}) менший за попередній (${prevNum}).`);
+                hasError = true;
+            } 
+            // Блокуємо, якщо різниця перевищує ліміт
+            else if (maxVol > 0 && diff > maxVol) {
+                validationErrors.push(`[${cName}] <b>${mName}</b>: різниця <b>${diff.toFixed(3)} м³</b> перевищує допустимий ліміт (макс. ${maxVol} м³).`);
+                hasError = true;
+            }
+
+            // Якщо значення пройшло перевірку, додаємо до списку
+            if (!hasError) {
+                contracts[cName].filled++;
+                contracts[cName].data.push({
+                    contractName: cName,
+                    idContract: input.dataset.contractId || input.dataset.contract || 0,
+                    counteragent: input.dataset.counteragent || "Організація",
+                    meterName: mName,
+                    prevValue: prevVal,
+                    currValue: val,
+                    objectName: input.dataset.objectName || '---', 
+                    addressName: input.dataset.addressName || '---',
+                    meterMark: input.dataset.meterMark || '---',
+                    meterNum: input.dataset.meterNum || '---'
+                });
+            }
         } else {
-            // Якщо пусто, запам'ятовуємо назву лічильника для тексту помилки
             contracts[cName].emptyMeters.push(mName);
         }
     });
+
+    // ЯКЩО Є ПОМИЛКИ В ЦИФРАХ — ВИВОДИМО ЇХ І БЛОКУЄМО СТВОРЕННЯ АКТУ
+    if (validationErrors.length > 0) {
+        const errorHtml = `
+            Виправте наступні помилки перед формуванням акту:
+            <br><br>
+            <div style="text-align: left; background: #fff3f3; padding: 12px; border-left: 4px solid #dc3545; border-radius: 4px; font-size: 13px; max-height: 30vh; overflow-y: auto;">
+                ${validationErrors.join('<br><br>')}
+            </div>
+        `;
+        
+        if (typeof showAlert === 'function') {
+            showAlert(errorHtml, "error", "Помилка валідації показників");
+        } else {
+            alert("Помилки:\n" + validationErrors.join('\n').replace(/<[^>]*>?/gm, ''));
+        }
+        return; 
+    }
 
     let hasPartiallyFilled = false;
     let completelyEmptyContracts = 0;
@@ -268,27 +306,21 @@ function confirmGenerateAct() {
     let errorMessage = "";
     let finalDataToGenerate = [];
 
-    // 2. Перевіряємо правила заповнення для кожного договору
+    // Перевіряємо правила заповнення для кожного договору (часткове чи повне)
     for (const [cName, stats] of Object.entries(contracts)) {
-        // Якщо заповнено більше 0, але менше ніж усього лічильників
         if (stats.filled > 0 && stats.filled < stats.total) {
             hasPartiallyFilled = true;
             errorMessage += `<br><br><b style="color:#e74c3c;">${cName}</b><br>Пропущено: ${stats.emptyMeters.join(', ')}`;
         } 
-        // Якщо договір заповнено повністю
         else if (stats.filled === stats.total) {
-            // Додаємо дані цього договору в загальний масив для генерації ПДФ
             finalDataToGenerate = finalDataToGenerate.concat(stats.data);
         } 
-        // Якщо взагалі не чіпали (ігноруємо)
         else if (stats.filled === 0) {
             completelyEmptyContracts++;
         }
     }
 
-    // 3. Відловлюємо помилки
-
-    // Якщо взагалі на сторінці нічого не заповнили
+    // помилки порожніх полів
     if (completelyEmptyContracts === totalContracts) {
         if (typeof showAlert === 'function') {
             showAlert("Будь ласка, введіть показники для формування акту.", "error", "Помилка");
@@ -298,7 +330,6 @@ function confirmGenerateAct() {
         return;
     }
 
-    // Якщо є договори, заповнені лише частково
     if (hasPartiallyFilled) {
         const msg = "Для формування акту необхідно заповнити <b>всі</b> лічильники в межах договору!" + errorMessage;
         if (typeof showAlert === 'function') {
@@ -309,18 +340,73 @@ function confirmGenerateAct() {
         return;
     }
 
-    // 4. Якщо перевірки пройдені успішно — викликаємо фінальне вікно
+    //Вікно підтвердження
+    let summaryHtml = `
+        <div style="text-align: left; max-height: 45vh; overflow-y: auto; margin-top: 15px; border: 1px solid #e3e6f0; border-radius: 8px; background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead style="background: #f8f9fc; position: sticky; top: 0; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
+                    <tr>
+                        <th style="padding: 12px 10px; text-align: left; color: #4e73df; border-bottom: 2px solid #e3e6f0;">Договір / Адреса</th>
+                        <th style="padding: 12px 10px; text-align: left; color: #4e73df; border-bottom: 2px solid #e3e6f0;">Лічильник</th>
+                        <th style="padding: 12px 10px; text-align: center; color: #4e73df; border-bottom: 2px solid #e3e6f0;">Об'єм</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    let totalVolume = 0;
+
+    finalDataToGenerate.forEach((item, index) => {
+        let prev = parseFloat(item.prevValue.replace(',', '.')) || 0;
+        let curr = parseFloat(item.currValue.replace(',', '.')) || 0;
+        let diff = (curr - prev);
+        totalVolume += diff;
+
+        let rowBg = index % 2 === 0 ? '#ffffff' : '#fcfcfc'; 
+
+        summaryHtml += `
+            <tr style="background: ${rowBg}; border-bottom: 1px solid #f1f1f1;">
+                <td style="padding: 10px; vertical-align: top;">
+                    <strong style="color: #333;">${item.contractName}</strong><br>
+                    <span style="font-size: 11px; color: #888;">${item.addressName}</span>
+                </td>
+                <td style="padding: 10px; vertical-align: middle; color: #555;">
+                    ${item.meterName}
+                </td>
+                <td style="padding: 10px; vertical-align: middle; text-align: center; font-weight: bold; color: #1cc88a; font-size: 14px;">
+                    +${diff.toFixed(3)} м³
+                </td>
+            </tr>
+        `;
+    });
+
+    summaryHtml += `
+                </tbody>
+                <tfoot style="background: #f8f9fc;">
+                    <tr>
+                        <td colspan="2" style="padding: 12px 10px; text-align: right; font-weight: bold; color: #333;">Всього передано:</td>
+                        <td style="padding: 12px 10px; text-align: center; font-weight: bold; color: #1cc88a; font-size: 15px;">
+                            ${totalVolume.toFixed(3)} м³
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p style="margin-top: 15px; font-size: 14px; text-align: center; color: #555;">
+            Ви підтверджуєте правильність введених даних та готові сформувати акт?
+        </p>
+    `;
+
     if (typeof showAlert === 'function') {
         showAlert(
-            "Сформувати акт передачі за поточними показниками?", 
-            "warning", 
-            "Підтвердження", 
+            summaryHtml, 
+            "info", 
+            "Перевірка даних перед збереженням", 
             [
                 {
-                    text: "Сформувати", 
+                    text: "Так, сформувати", 
                     className: "btn-alert-ok",
                     onClick: () => {
-                        // Передаємо ТІЛЬКИ повністю заповнені договори в pdfmake
                         generatePdfClientSide(finalDataToGenerate);
                     }
                 },
@@ -331,19 +417,24 @@ function confirmGenerateAct() {
                 }
             ]
         );
+    } else {
+        if (confirm("Сформувати акт передачі показників?")) {
+            generatePdfClientSide(finalDataToGenerate);
+        }
     }
 }
-// ОСНОВНА ФУНКЦІЯ ГЕНЕРАЦІЇ ПДФ НА СТОРОНІ КЛІЄНТА (через pdfmake)
+
+
+//ФУНКЦІЯ ГЕНЕРАЦІЇ ПДФ НА СТОРОНІ КЛІЄНТА
 function generatePdfClientSide(data) {
     const currentDateStr = new Date().toLocaleDateString('uk-UA');
     
     document.getElementById('overlay').style.display = 'block';
     
-    // Дістаємо загальні дані з першого лічильника (назва контрагента і номер договору)
     const contractName = data[0]?.contractName || "___";
     const counteragentName = data[0]?.counteragent || "Організація";
 
-    // 2. Формуємо шапку таблиці
+    // шапка таблиці
     const tableBody = [
         [
             { text: '№ п/п', rowSpan: 2, alignment: 'center', margin: [0, 10, 0, 0] },
@@ -366,26 +457,26 @@ function generatePdfClientSide(data) {
         ]
     ];
 
-    // 3. Динамічно заповнюємо рядки таблиці реальними даними з БД
+    // рядки таблиці
     data.forEach((item, index) => {
         let prev = parseFloat(item.prevValue.replace(',', '.')) || 0;
         let curr = parseFloat(item.currValue.replace(',', '.')) || 0;
         let diff = (curr - prev).toFixed(3);
 
         tableBody.push([
-            { text: (index + 1).toString(), alignment: 'center' },
-            { text: item.objectName, alignment: 'left' },   // З БД
-            { text: item.addressName, alignment: 'left' },  // З БД
-            { text: item.meterMark, alignment: 'center' },    // З БД
-            { text: item.meterNum, alignment: 'center' },     // З БД
-            { text: item.prevValue, alignment: 'center' },
-            { text: item.currValue, alignment: 'center', bold: true },
-            { text: diff, alignment: 'center' },
-            { text: '0.000', alignment: 'center' }            // З БД (якщо є такий показник)
+            { text: (index + 1).toString(), alignment: 'center' },    //номер
+            { text: item.objectName, alignment: 'left' },             //лічильник
+            { text: item.addressName, alignment: 'left' },            //адреса
+            { text: item.meterMark, alignment: 'center' },            //марка
+            { text: item.meterNum, alignment: 'center' },             //заводський номер
+            { text: item.prevValue, alignment: 'center' },            //попередні
+            { text: item.currValue, alignment: 'center', bold: true },//поточні
+            { text: diff, alignment: 'center' },                      //різниця
+            { text: '0.000', alignment: 'center' }                    //в т.ч. населення
         ]);
     });
 
-    // 4. Структура PDF документа
+    // Структура PDF документа
     const docDefinition = {
         pageOrientation: 'portrait', 
         pageSize: 'A4',
@@ -421,33 +512,63 @@ function generatePdfClientSide(data) {
     pdfDocGenerator.getBlob((blob) => {
         document.getElementById('overlay').style.display = 'none';
         const blobUrl = URL.createObjectURL(blob);
-        openPdfModal(blobUrl, blob); // Відкриваємо вікно для підпису
+
+        const idContract = data[0]?.idContract || 0; 
+
+        openPdfModal(blobUrl, blob, idContract); 
     });
 }
 
-// Функція відкриття модалки
-function openPdfModal(pdfUrl, docId) {
+function openPdfModal(pdfUrl, pdfBlob, idContract = 0) {
     const modal = document.getElementById('pdf-preview-modal');
     const iframe = document.getElementById('pdf-iframe');
     const signBtn = document.getElementById('btn-sign-act');
     
+    if (!modal || !iframe || !signBtn) return;
+
     iframe.src = pdfUrl;
     modal.style.display = 'flex';
 
-    // Вішаємо на кнопку "Підписати" ID документа!
     signBtn.onclick = function() {
-        console.log("Запускаємо підпис для документа ID:", docId);
+        const originalText = signBtn.innerText;
+        signBtn.innerText = 'Збереження...';
+        signBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('act_pdf', pdfBlob, 'act_readings.pdf');
         
-        closePdfModal();
-        
-        // ТУТ починається робота з твоїм модулем IIT (euscp.js)
-        // Логіка така: 
-        // 1. Через fetch(/api/view_act.php?id=docId) завантажуєш файл у вигляді Blob.
-        // 2. Передаєш його в бібліотеку підпису.
-        // 3. Отриманий .p7s файл відправляєш на сервер (наприклад, api/save_signature.php), 
-        // де він оновлює колонку `DOC_PDF_SIGN_COUNTERAGENT` для рядка з ID = docId.
-        
-        showAlert("Модуль підпису ініціалізовано!", "success", "Успіх");
+        formData.append('id_contract', idContract); 
+
+        fetch('/api/save_act_pdf.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(async response => {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("Сервер повернув не JSON:", text);
+                throw new Error("Помилка сервера. Деталі в консолі.");
+            }
+        })
+        .then(data => {
+            if (data.success && data.doc_id) {
+                if (typeof closePdfModal === 'function') closePdfModal();
+                
+                const signUrl = `/api/content/SigningDocs.php?id=${data.doc_id}&doctype=act`;
+                window.open(signUrl, 'sign_window_' + data.doc_id);
+                
+                if (window.refreshActiveContent) window.refreshActiveContent();
+            } else {
+                throw new Error(data.error || 'Сервер не повернув ID документа');
+            }
+        })
+        .catch(error => {
+            signBtn.innerText = originalText;
+            signBtn.disabled = false;
+            showAlert('Помилка: ' + error.message, 'error');
+        });
     };
 }
 

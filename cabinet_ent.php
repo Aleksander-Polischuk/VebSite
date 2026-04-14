@@ -36,7 +36,9 @@ $SQLExec = "
     ON (RC.ID = A.ID_REF_COUNTERAGENT AND 
         RC.ID_ORGANIZATIONS = A.ID_ORGANIZATIONS)
     
-    WHERE A.DEL <> 1 and A.ID_USERS = $userId AND A.ID_ORGANIZATIONS = $orgId";
+    WHERE (A.DEL = 0 OR A.DEL IS NULL) 
+      AND A.ID_USERS = $userId 
+      AND A.ID_ORGANIZATIONS = $orgId";
 
 $s_res = mysqli_query($link, $SQLExec);
 
@@ -122,7 +124,7 @@ include "CustomAlert.php";
         <a href="#">Розрахунки за послуги</a>
         <a href="#">Передача показників</a>
         <a href="#">Історія показників</a>
-        <a href="#">Рахунки</a>
+        <a href="#">Документи</a>
         <a href="#">Тарифи</a>
         <a href="#">Поширені запитання</a>
 

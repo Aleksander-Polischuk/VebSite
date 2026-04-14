@@ -23,7 +23,7 @@ switch ($page) {
     case 'Історія показників':
         include "content/history_readings_2.php";
         break;
-    case 'Рахунки':
+    case 'Документи':
         include "content/ent_invoice.php";
         break;
     case 'Тарифи':
