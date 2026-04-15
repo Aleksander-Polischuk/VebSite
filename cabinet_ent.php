@@ -259,6 +259,55 @@ document.querySelectorAll('.sidebar a').forEach(link => {
         highlightActiveMenu(pageName);
     });
 });
+
+// Глобальний обробник переходу по внутрішніх вкладках та посиланнях
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('.quill-content a, .notice-text a');
+    if (!link) return; 
+
+    let href = link.getAttribute('href');
+    if (!href) return;
+
+    let rawTarget = '';
+    try {
+        rawTarget = decodeURIComponent(href).toLowerCase();
+    } catch(err) {
+        rawTarget = href.toLowerCase();
+    }
+    
+    // Якщо це зовнішнє посилання АБО файл, дозволяємо браузеру просто відкрити його
+    if (href.startsWith('http') || href.startsWith('mailto') || href.includes('/uploads/') || href.match(/\.(pdf|doc|docx|xls|xlsx|csv|png|jpg|zip|rar)$/i)) {
+        link.setAttribute('target', '_blank'); // Відкрити в новому вікні
+        return; 
+    }
+    
+    // Очистка посилання від зайвих символів
+    let cleanTarget = rawTarget.replace(/^https?:\/\//, '').replace(/^#|^\//, '').trim();
+    
+    // Пошук вкладки в лівому меню
+    const sidebarLinks = document.querySelectorAll('.sidebar a');
+    let foundMatch = false;
+
+    for (let sidebarLink of sidebarLinks) {
+        let linkText = sidebarLink.innerText.trim().toLowerCase();
+        
+        // Якщо назва вкладки збігається з посиланням
+        if (cleanTarget.includes(linkText) || (cleanTarget.length > 3 && linkText.includes(cleanTarget))) {
+            e.preventDefault(); 
+            
+            sidebarLink.click(); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            foundMatch = true;
+            break; 
+        }
+    }
+
+    // Якщо це якесь невідоме посилання, відкриваємо в новій вкладці
+    if (!foundMatch) {
+        link.setAttribute('target', '_blank'); 
+    }
+});
 </script>
 
 </body>
