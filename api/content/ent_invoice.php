@@ -64,18 +64,32 @@ $treeData = [];
 if (!empty($enterprises)) {
     // ОТРИМАННЯ СПИСКУ ДОСТУПНИХ РОКІВ для рахунків та актів
     $sqlYears = "
-        SELECT DISTINCT YEAR(PERIOD) as y FROM (
+        SELECT DISTINCT YEAR(PERIOD) as y 
+        FROM (
             SELECT di.PERIOD 
             FROM ACCESS acc
-            INNER JOIN DOC_INVOICE di ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-            WHERE acc.ID_USERS = ? AND acc.ID_ORGANIZATIONS = ? AND acc.ID_REF_COUNTERAGENT = ?
+            
+            INNER JOIN DOC_INVOICE di 
+            ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+               di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+               
+            WHERE acc.ID_USERS = ? AND 
+                  acc.ID_ORGANIZATIONS = ? AND 
+                  acc.ID_REF_COUNTERAGENT = ?
             
             UNION
             
             SELECT da.MTIME as PERIOD 
             FROM ACCESS acc
-            INNER JOIN DOC_COUNTER_READINGS da ON da.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND da.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-            WHERE acc.ID_USERS = ? AND acc.ID_ORGANIZATIONS = ? AND acc.ID_REF_COUNTERAGENT = ?
+            
+            INNER JOIN DOC_COUNTER_READINGS da 
+            ON da.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+               da.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+               
+            WHERE acc.ID_USERS = ? AND 
+                  acc.ID_ORGANIZATIONS = ? AND 
+                  acc.ID_REF_COUNTERAGENT = ?
+                  
         ) as combined_years
         ORDER BY y DESC
     ";
@@ -97,7 +111,7 @@ if (!empty($enterprises)) {
 
     $selectedYear = isset($_GET['year']) ? (int)$_GET['year'] : $years[0];
 
-    // ОТРИМАННЯ РАХУНКІВ ТА АКТІВ (З LEFT JOIN ДЛЯ ДОГОВОРІВ)
+    // ОТРИМАННЯ РАХУНКІВ ТА АКТІВ
     $sql = "
         SELECT 
             rc.ID as ContractID,
@@ -188,12 +202,25 @@ if (!empty($enterprises)) {
 }
 ?>
 
-<link href="../../css/ent_invoice.css" rel="stylesheet" type="text/css"/>
+<link href="/css/ent_invoice.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/ent_invoice.css'); ?>" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header bills-header">
     <h3>Документи</h3>
     <?php if (!empty($enterprises)): ?>
     <div class="header-controls">
+        
+        <select id="filter-type" class="year-select-custom bills-year-select" onchange="filterDocuments()" title="Тип документа">
+            <option value="all">Всі документи</option>
+            <option value="act">Акти передачі показників</option>
+            <option value="invoice">Рахунки-акти на оплату</option>
+        </select>
+        
+        <select id="filter-status" class="year-select-custom bills-year-select" onchange="filterDocuments()" title="Статус підпису">
+            <option value="all">Всі статуси</option>
+            <option value="signed">Підписані</option>
+            <option value="unsigned">Не підписані</option>
+        </select>
+        
         <button type="button" class="btn-tree-custom" onclick="stepTree(-1)" title="Згорнути все">
             <img src="/img/arrow-up.svg" width="16" height="16" alt="Згорнути" class="icon-no-pointer">
         </button>
@@ -226,12 +253,10 @@ if (!empty($enterprises)) {
         <table class="data-table tree-table shadow-table bills-table">
             <thead>
                 <tr>
-                    <th>Договір / Період</th>
+                    <th>Період / Об'єкт</th>
                     <th>Номер</th>
-                    <th>Сума з ПДВ</th>
-                    <th></th> 
-                    <th></th> 
-                    <th>Статус</th> 
+                    <th>Сума (грн)</th>
+                    <th></th> <th></th> <th></th> <th>Статус</th>
                 </tr>
             </thead>
             <tbody>
@@ -252,14 +277,15 @@ if (!empty($enterprises)) {
                             <?php echo $caret_icon; ?>
                             <strong>Договір:</strong> <?php echo htmlspecialchars($contractData['ContractName']); ?>
                         </td>
-                        <td></td><td></td><td></td><td></td><td></td>
+                        <td></td><td></td><td></td><td></td><td></td><td></td>
                     </tr>
 
                     <?php 
                     if (!empty($contractData['invoices'])): 
                         foreach ($contractData['invoices'] as $invoice): 
                             $isAct = ($invoice['type'] === 'act');
-                            $docLabel = $isAct ? 'Акт' : 'Рахунок';
+                            $canDelete = ($isAct && !$invoice['sign_ca']);
+                            $docLabel = $isAct ? 'Акт передачі показників за' : 'Рахунок-акт на оплату за';
                             $viewUrl = $isAct ? '/api/get_act_pdf.php' : '/api/get_ent_invoice.php';
                             $windowName = ($isAct ? "act_view_" : "invoice_view_") . $invoice['number'];
 
@@ -273,8 +299,12 @@ if (!empty($enterprises)) {
 
                             $isFullySigned = ($invoice['has_pdf'] && $invoice['sign_org'] && $invoice['sign_ca']);
                             $isButtonDisabled = $isFullySigned && !$forceSign;
+                            
+                            $rowStatus = $isFullySigned ? 'signed' : 'unsigned';
                         ?>
-                        <tr class="child-row show <?php echo $cGroupId; ?> detail-row">
+                        <tr class="child-row show <?php echo $cGroupId; ?> detail-row" 
+                            data-type="<?php echo $invoice['type']; ?>" 
+                            data-status="<?php echo $rowStatus; ?>">
                             <td>
                                 <span class="bullet-icon">•</span> 
                                 <?php echo $docLabel . ': ' . getUkrMonth($invoice['period']); ?>
@@ -293,9 +323,23 @@ if (!empty($enterprises)) {
                             <td>
                                 <button type="button" 
                                     class="btn-action btn-sign" 
-                                    onclick="<?php echo $isButtonDisabled ? 'return false;' : "window.open('/api/content/SigningDocs.php?id=" . htmlspecialchars($invoice['number']) . "&doctype=" . $invoice['type'] . "', 'sign_window_" . htmlspecialchars($invoice['number']) . "')"; ?>"
+                                    onclick="openSignWindow('<?php echo htmlspecialchars($invoice['number']); ?>', '<?php echo $invoice['type']; ?>')"
                                     <?php echo $isButtonDisabled ? 'disabled' : ''; ?>>
                                     Підписати
+                                </button>
+                            </td>
+
+                            <td>
+                                <?php 
+                                    $isAct = ($invoice['type'] === 'act');
+                                    // Видалити можна тільки Акт, і тільки якщо він ще НЕ підписаний клієнтом
+                                    $canDelete = ($isAct && !$invoice['sign_ca']); 
+                                ?>
+                               <button type="button" 
+                                    class="btn-action btn-delete" 
+                                    onclick="confirmDeleteDocument('<?php echo htmlspecialchars($invoice['number']); ?>', '<?php echo $invoice['type']; ?>', this)"
+                                    <?php echo !$canDelete ? 'disabled title="Вилучення недоступне"' : ''; ?>>
+                                    Вилучити
                                 </button>
                             </td>
 
@@ -310,5 +354,3 @@ if (!empty($enterprises)) {
         </table>
     <?php endif; ?>
 </div>
-
-<script src="../../js/bills.js" type="text/javascript"></script>

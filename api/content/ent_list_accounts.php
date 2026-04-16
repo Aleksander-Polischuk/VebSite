@@ -17,13 +17,16 @@ $warning_text_msg = '<span style="color: #d32f2f; font-weight: normal; font-size
 $enterprises = [];
 $treeData = [];
 
-// Перевіряємо, чи є доступ до обраного підприємства (DEL = 0)
+// Перевіряємо, чи є доступ до обраного підприємства 
 if ($selectedCounteragentId) {
     $SQLExec = "
         SELECT 
             rc.ID as ContractID,
             rc.`NAME` as ContractName,
-            CONCAT(IFNULL(rci.`NAME`, ''), ', ', IFNULL(rs.`NAME`, ''), ', буд. ', IFNULL(rh.`NAME`, '')) AS Address,
+            CONCAT(IFNULL(rci.`NAME`, ''), ', ', 
+                   IFNULL(rs.`NAME`, ''), 
+                   IF(rh.`NAME` IS NOT NULL AND rh.`NAME` != '', CONCAT(', буд. ', rh.`NAME`), '')
+            ) AS Address,
             rcn.ID as CounterID,
             rcn.FIRM_NUM as CounterNum,
             rtc.NAME as CounterType,
@@ -67,16 +70,13 @@ if ($selectedCounteragentId) {
 
     $s_res = mysqli_query($link, $SQLExec);
 
-    while ($row = mysqli_fetch_array($s_res)) {
-        if (empty($_SESSION['selected_counteragent_id']) && empty($enterprises)) {
-            $_SESSION['selected_counteragent_id'] = $row['ContractID']; // Тут був баг в оригінальному коді (row['ID'] не існувало), змінив на ContractID, хоча ця логіка вже не дуже потрібна
-        }
+    while ($row = mysqli_fetch_assoc($s_res)) {
         $enterprises[] = $row;
     }
 
-    // --- ЛОГІКА ОБРОБКИ (3 РІВНІ) ---
+    // --- ЛОГІКА ОБРОБКИ ---
     if (!empty($enterprises)) {
-        mysqli_data_seek($s_res, 0); // Повертаємо вказівник на початок
+        mysqli_data_seek($s_res, 0);
         $dateThreshold = date('Y-m-d', strtotime('+1 month'));
 
         while ($row = mysqli_fetch_assoc($s_res)) {
@@ -120,7 +120,7 @@ if (empty($enterprises)) {
 }
 ?>
 
-<link href="../../css/ent_list_accounts.css" rel="stylesheet" type="text/css"/>
+<link href="/css/ent_list_accounts.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/ent_list_accounts.css'); ?>" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header accounts-header">
     <h3>Список адрес та лічильників</h3>  

@@ -22,7 +22,7 @@ mysqli_stmt_execute($stmt);
 $userData = mysqli_stmt_get_result($stmt)->fetch_assoc();
 ?>
 
-<link href="/css/personal_acc.css" rel="stylesheet" type="text/css"/>
+<link href="/css/personal_acc.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/personal_acc.css'); ?>" rel="stylesheet" type="text/css"/>
 
 <div class="profile-page-container">
     <div class="profile-grid">

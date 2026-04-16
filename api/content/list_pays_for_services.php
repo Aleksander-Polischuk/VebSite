@@ -74,7 +74,7 @@ function formatCurrency($value) {
 }
 ?>
 
-<link href="../../css/list_pays_for_services.css" rel="stylesheet" type="text/css"/>
+<link href="/css/list_pays_for_services.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/list_pays_for_services.css'); ?>" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header">
     <h3>Розрахунки за послуги</h3>

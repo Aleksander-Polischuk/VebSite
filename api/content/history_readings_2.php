@@ -146,7 +146,7 @@ $savedAddress  = $_SESSION['h2_address'] ?? '';
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon" width="16" height="16" alt="" style="pointer-events: none;">';
 ?>
 
-<link href="/css/history_readings_2.css" rel="stylesheet" type="text/css"/>
+<link href="/css/history_readings_2.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/history_readings_2.css'); ?>" rel="stylesheet" type="text/css"/>
 
 <div class="table-header-row sticky-header history-header-wrapper" id="history-start">
     

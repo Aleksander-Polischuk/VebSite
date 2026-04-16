@@ -39,7 +39,8 @@ if (empty($enterprises)) {
 }
 
 ?>
-<link href="../../css/list_enterprise.css" rel="stylesheet" type="text/css"/>
+<link href="/css/list_enterprise.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/list_enterprise.css'); ?>" rel="stylesheet" type="text/css"/>
+
 
 <div class="table-header-row sticky-header enterprise-header">
      <h3>Список підприємств</h3>    

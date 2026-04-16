@@ -10,13 +10,18 @@ mysqli_set_charset($link, 'utf8');
 $selectedCounteragentId = $_SESSION['selected_counteragent_id'] ?? null;
 
 
-$sql = "SELECT question, content_data FROM REF_POPULAR_QUESTIONS WHERE is_active = 1 ORDER BY sort_order ASC";
+$sql = "SELECT question, "
+            . "content_data "
+     . "FROM REF_POPULAR_QUESTIONS "
+     . "WHERE is_active = 1 "
+     . "ORDER BY sort_order ASC";
 $res = mysqli_query($link, $sql);
 
 $caret_icon = '<img src="/img/caret-down-fill.svg" class="tree-icon faq-pointer-none" width="16" height="16" alt="">';
 ?>
 
-<link href="../../css/Popular_Questions.css" rel="stylesheet" type="text/css"/>
+<link href="/css/Popular_Questions.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/Popular_Questions.css'); ?>" rel="stylesheet" type="text/css"/>
+
 
 <div class="table-header-row sticky-header">
     <h3 class="faq-header-title">Поширені запитання</h3>

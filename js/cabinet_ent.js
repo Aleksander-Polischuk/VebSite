@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedPage = localStorage.getItem('activeCabinetPage');
     if (savedPage) {
         document.querySelectorAll('.sidebar a:not(.btn-logout)').forEach(link => {
-            if (link.innerText.trim() === savedPage) {
+            if (link.childNodes[0].textContent.trim() === savedPage) { // ВИПРАВЛЕНО
                 // Знімаємо клас з тієї вкладки, яку випадково призначив PHP
                 document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
                 // Ставимо збережену
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const links = Array.from(document.querySelectorAll('.sidebar a:not(.btn-logout)'));
         
         const fetchPromises = links.map(link => {
-            const pageName = link.innerText.trim();
+            const pageName = link.childNodes[0].textContent.trim(); // ВИПРАВЛЕНО
             return loadPage(pageName, link);
         });
 
@@ -70,9 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Шукаємо вкладку з класом active
                 const activeLink = document.querySelector('.sidebar a.active');
                 if (activeLink) {
-                   showPage(activeLink.innerText.trim());
+                   showPage(activeLink.childNodes[0].textContent.trim()); // ВИПРАВЛЕНО
                 } else if (links.length > 0) {
-                   showPage(links[0].innerText.trim());
+                   showPage(links[0].childNodes[0].textContent.trim()); // ВИПРАВЛЕНО
                    links[0].classList.add('active');
                 }
             })
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.sidebar a').forEach(item => item.classList.remove('active'));
             this.classList.add('active');
 
-            const pageName = this.innerText.trim();
+            const pageName = this.childNodes[0].textContent.trim(); // ВИПРАВЛЕНО
             
             // === Зберігаємо вибір вкладки в пам'ять браузера ===
             localStorage.setItem('activeCabinetPage', pageName);
@@ -178,7 +178,7 @@ function changeYear(year) {
     const activeLink = document.querySelector('.sidebar a.active');
     if (!activeLink) return;
     
-    const pageName = activeLink.innerText.trim();
+    const pageName = activeLink.childNodes[0].textContent.trim(); // ВИПРАВЛЕНО
     const pageWrapper = document.getElementById(`page-${pageName}`);
     
     if (!pageWrapper) return;
@@ -203,58 +203,51 @@ function changeYear(year) {
         });
 }
 
-// Оновлення контенту всіх вкладок
-window.refreshActiveContent = () => {
+// Оновлення контенту вкладок
+window.refreshActiveContent = async () => {
     const mainContent = document.getElementById('mainContent');
     if (!mainContent) return;
     
     mainContent.style.opacity = '0.5';
 
-    //  Беремо всі вкладки з меню
+    // Беремо всі вкладки з меню
     const links = Array.from(document.querySelectorAll('.sidebar a:not(.btn-logout)'));
     
-    //  Створюємо запити для кожної вкладки
-    const fetchPromises = links.map(link => {
-        const pageName = link.innerText.trim();
+    // Завантажуємо вкладки ПО ЧЕРЗІ, щоб не перевантажувати сервер
+    for (const link of links) {
+        const pageName = link.childNodes[0].textContent.trim();
         const pageWrapper = document.getElementById(`page-${pageName}`);
         
-        if (!pageWrapper) return Promise.resolve();
-
-        // Завантажуємо свіжі дані з новим контрагентом для кожної сторінки
-        return fetch(`/api/get_content.php?page=${encodeURIComponent(pageName)}`)
-            .then(r => r.text())
-            .then(data => {
-                 pageWrapper.innerHTML = data; 
-            });
-    });
-
-    //  Чекаємо, поки всі вкладки оновляться
-    Promise.all(fetchPromises)
-        .then(() => {
-            mainContent.style.opacity = '1';
-            
-            // Перезапуск скриптів
-            if (typeof initQuillEditor === 'function') initQuillEditor();
-            if (typeof initHistoryPageLogic === 'function') initHistoryPageLogic();
-            
-            const activeLink = document.querySelector('.sidebar a.active');
-            if (activeLink) {
-                const activePageName = activeLink.innerText.trim();
-                const activeWrapper = document.getElementById(`page-${activePageName}`);
-                if (activeWrapper) {
-                    const inputs = activeWrapper.querySelectorAll('.input-reading');
-                    inputs.forEach(input => {
-                        if (input.value.trim() !== '') {
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    });
-                }
+        if (pageWrapper) {
+            try {
+                const response = await fetch(`/api/get_content.php?page=${encodeURIComponent(pageName)}`);
+                pageWrapper.innerHTML = await response.text();
+            } catch (err) {
+                console.error(`Помилка завантаження ${pageName}:`, err);
             }
-        })
-        .catch(err => {
-            console.error("Помилка оновлення сторінок:", err);
-            mainContent.style.opacity = '1';
-        });
+        }
+    }
+
+    // Коли цикл закінчився — всі вкладки оновлено
+    mainContent.style.opacity = '1';
+    
+    // Перезапуск скриптів
+    if (typeof initQuillEditor === 'function') initQuillEditor();
+    if (typeof initHistoryPageLogic === 'function') initHistoryPageLogic();
+    
+    const activeLink = document.querySelector('.sidebar a.active');
+    if (activeLink) {
+        const activePageName = activeLink.childNodes[0].textContent.trim();
+        const activeWrapper = document.getElementById(`page-${activePageName}`);
+        if (activeWrapper) {
+            const inputs = activeWrapper.querySelectorAll('.input-reading');
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+        }
+    }
 };
 
 function openSignWindow(invoiceId) {

@@ -38,7 +38,9 @@ if ($result_tariff) {
     }
 }
 ?>
-<link href="../../css/Tariffs.css" rel="stylesheet" type="text/css"/>
+<link href="/css/Tariffs.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/Tariffs.css'); ?>" rel="stylesheet" type="text/css"/>
+
+
 <div class="table-header-row sticky-header" id="history-start">
     <h3 style="margin: 0;">Тарифи на послуги</h3>  
 

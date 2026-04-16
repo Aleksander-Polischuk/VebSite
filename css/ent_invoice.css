@@ -24,12 +24,12 @@
     width: 100%;
 }
 .bills-table th:nth-child(1) { width: auto; }   /* Договір / Період */
-.bills-table th:nth-child(2) { width: 150px; }  /* Номер */
-.bills-table th:nth-child(3) { width: 150px; }  /* Сума з ПДВ */
-.bills-table th:nth-child(4) { width: 130px; }  /* Переглянути */
-.bills-table th:nth-child(5) { width: 130px; }  /* Підписати */
-.bills-table th:nth-child(6) { width: 220px; }  /* Статус */
-
+.bills-table th:nth-child(2) { width: 130px; }  /* Номер */
+.bills-table th:nth-child(3) { width: 130px; }  /* Сума з ПДВ */
+.bills-table th:nth-child(4) { width: 120px; }  /* Переглянути */
+.bills-table th:nth-child(5) { width: 120px; }  /* Підписати */
+.bills-table th:nth-child(6) { width: 120px; }  /* Вилучити  */
+.bills-table th:nth-child(7) { width: 220px; }  /* Статус  */
 /* Текст */
 .text-dark { color: #444; }
 .text-bold { font-weight: bold; }
@@ -95,6 +95,26 @@
     color: #666;
     cursor: not-allowed;
     opacity: 0.8;
+}
+
+.btn-delete {
+    background-color: #e74c3c; /* Червоний */
+    color: white;
+}
+
+.btn-delete:hover:not(:disabled) {
+    background-color: #c0392b; /* Темно-червоний при наведенні */
+}
+
+.btn-delete:disabled {
+    background-color: #e3e6f0;
+    color: #a0a0a0;
+    cursor: not-allowed;
+    border: none;
+}
+
+.filtered-hidden {
+    display: none !important;
 }
 
 /* =========================================

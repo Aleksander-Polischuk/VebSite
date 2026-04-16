@@ -237,7 +237,6 @@ function confirmGenerateAct() {
         contracts[cName].total++;
 
         if (val !== '') {
-            // Перевірка лімітів
             const currentNum = parseFloat(val.replace(/,/g, '.')) || 0;
             const prevNum = parseFloat(prevVal.replace(/,/g, '.')) || 0;
             const diff = currentNum - prevNum;
@@ -245,28 +244,27 @@ function confirmGenerateAct() {
 
             let hasError = false;
 
-            // Блокуємо від'ємні показники
             if (currentNum < 0) {
                 validationErrors.push(`[${cName}] <b>${mName}</b>: показник не може бути від'ємним.`);
                 hasError = true;
             } 
-            // Блокуємо, якщо введено менше, ніж було
             else if (currentNum < prevNum) {
                 validationErrors.push(`[${cName}] <b>${mName}</b>: поточний показник (${currentNum}) менший за попередній (${prevNum}).`);
                 hasError = true;
             } 
-            // Блокуємо, якщо різниця перевищує ліміт
             else if (maxVol > 0 && diff > maxVol) {
                 validationErrors.push(`[${cName}] <b>${mName}</b>: різниця <b>${diff.toFixed(3)} м³</b> перевищує допустимий ліміт (макс. ${maxVol} м³).`);
                 hasError = true;
             }
 
-            // Якщо значення пройшло перевірку, додаємо до списку
             if (!hasError) {
                 contracts[cName].filled++;
                 contracts[cName].data.push({
                     contractName: cName,
                     idContract: input.dataset.contractId || input.dataset.contract || 0,
+                    idAccount: input.dataset.account || 0,     
+                    idService: input.dataset.service || 0,     
+                    idCounter: input.dataset.counter || 0,    
                     counteragent: input.dataset.counteragent || "Організація",
                     meterName: mName,
                     prevValue: prevVal,
@@ -282,7 +280,6 @@ function confirmGenerateAct() {
         }
     });
 
-    // ЯКЩО Є ПОМИЛКИ В ЦИФРАХ — ВИВОДИМО ЇХ І БЛОКУЄМО СТВОРЕННЯ АКТУ
     if (validationErrors.length > 0) {
         const errorHtml = `
             Виправте наступні помилки перед формуванням акту:
@@ -291,7 +288,6 @@ function confirmGenerateAct() {
                 ${validationErrors.join('<br><br>')}
             </div>
         `;
-        
         if (typeof showAlert === 'function') {
             showAlert(errorHtml, "error", "Помилка валідації показників");
         } else {
@@ -304,9 +300,10 @@ function confirmGenerateAct() {
     let completelyEmptyContracts = 0;
     let totalContracts = Object.keys(contracts).length;
     let errorMessage = "";
-    let finalDataToGenerate = [];
+    
+    let contractsQueue = [];
+    let finalDataToGenerate = []; 
 
-    // Перевіряємо правила заповнення для кожного договору (часткове чи повне)
     for (const [cName, stats] of Object.entries(contracts)) {
         if (stats.filled > 0 && stats.filled < stats.total) {
             hasPartiallyFilled = true;
@@ -314,13 +311,13 @@ function confirmGenerateAct() {
         } 
         else if (stats.filled === stats.total) {
             finalDataToGenerate = finalDataToGenerate.concat(stats.data);
+            contractsQueue.push(stats.data); // Зберігаємо як окремий договір
         } 
         else if (stats.filled === 0) {
             completelyEmptyContracts++;
         }
     }
 
-    // помилки порожніх полів
     if (completelyEmptyContracts === totalContracts) {
         if (typeof showAlert === 'function') {
             showAlert("Будь ласка, введіть показники для формування акту.", "error", "Помилка");
@@ -340,7 +337,6 @@ function confirmGenerateAct() {
         return;
     }
 
-    //Вікно підтвердження
     let summaryHtml = `
         <div style="text-align: left; max-height: 45vh; overflow-y: auto; margin-top: 15px; border: 1px solid #e3e6f0; border-radius: 8px; background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -361,7 +357,6 @@ function confirmGenerateAct() {
         let curr = parseFloat(item.currValue.replace(',', '.')) || 0;
         let diff = (curr - prev);
         totalVolume += diff;
-
         let rowBg = index % 2 === 0 ? '#ffffff' : '#fcfcfc'; 
 
         summaryHtml += `
@@ -393,7 +388,7 @@ function confirmGenerateAct() {
             </table>
         </div>
         <p style="margin-top: 15px; font-size: 14px; text-align: center; color: #555;">
-            Ви підтверджуєте правильність введених даних та готові сформувати акт?
+            Ви підтверджуєте правильність введених даних та готові сформувати акт(и)?
         </p>
     `;
 
@@ -404,10 +399,12 @@ function confirmGenerateAct() {
             "Перевірка даних перед збереженням", 
             [
                 {
-                    text: "Так, сформувати", 
+                    text: "Так, сформувати та підписати КЕП", 
                     className: "btn-alert-ok",
                     onClick: () => {
-                        generatePdfClientSide(finalDataToGenerate);
+                        window.generatedDocIds = [];
+                        window.globalContractsQueue = contractsQueue; 
+                        processNextContractInQueue();                 
                     }
                 },
                 {
@@ -418,23 +415,60 @@ function confirmGenerateAct() {
             ]
         );
     } else {
-        if (confirm("Сформувати акт передачі показників?")) {
-            generatePdfClientSide(finalDataToGenerate);
+        if (confirm("Сформувати акт(и) передачі показників?")) {
+            window.globalContractsQueue = contractsQueue;
+            processNextContractInQueue();
         }
     }
 }
 
+// ---------------------------------------------------------
+// Бере наступний договір і генерує для нього ПДФ
+// ---------------------------------------------------------
+function processNextContractInQueue() {
+    if (!window.globalContractsQueue || window.globalContractsQueue.length === 0) {
+        const overlay = document.getElementById('overlay');
+        if (overlay) overlay.style.display = 'none';
+        
+        if (window.generatedDocIds && window.generatedDocIds.length > 0) {
+            const ids = window.generatedDocIds.join(',');
+            const signUrl = `/api/content/SigningDocs.php?ids=${ids}&doctype=act`;
+            
+            // Відкриваємо вкладку підпису
+            window.open(signUrl, '_blank');
+            
+            window.generatedDocIds = [];
 
-//ФУНКЦІЯ ГЕНЕРАЦІЇ ПДФ НА СТОРОНІ КЛІЄНТА
+            // оновлення кабінету
+            if (typeof window.updateDocumentBadge === 'function') {
+                window.updateDocumentBadge();
+            }
+
+            if (typeof window.refreshActiveContent === 'function') {
+                window.refreshActiveContent();
+            } else {
+                window.location.reload();
+            }
+        }
+        return;
+    }
+
+    // Беремо перший договір з черги
+    const currentContractData = window.globalContractsQueue.shift();
+    generatePdfClientSide(currentContractData);
+}
+
+// ---------------------------------------------------------
+// ГЕНЕРАЦІЯ ПДФ
+// ---------------------------------------------------------
 function generatePdfClientSide(data) {
     const currentDateStr = new Date().toLocaleDateString('uk-UA');
-    
-    document.getElementById('overlay').style.display = 'block';
+    const overlay = document.getElementById('overlay');
+    if (overlay) overlay.style.display = 'block';
     
     const contractName = data[0]?.contractName || "___";
     const counteragentName = data[0]?.counteragent || "Організація";
 
-    // шапка таблиці
     const tableBody = [
         [
             { text: '№ п/п', rowSpan: 2, alignment: 'center', margin: [0, 10, 0, 0] },
@@ -457,51 +491,43 @@ function generatePdfClientSide(data) {
         ]
     ];
 
-    // рядки таблиці
     data.forEach((item, index) => {
         let prev = parseFloat(item.prevValue.replace(',', '.')) || 0;
         let curr = parseFloat(item.currValue.replace(',', '.')) || 0;
         let diff = (curr - prev).toFixed(3);
 
         tableBody.push([
-            { text: (index + 1).toString(), alignment: 'center' },    //номер
-            { text: item.objectName, alignment: 'left' },             //лічильник
-            { text: item.addressName, alignment: 'left' },            //адреса
-            { text: item.meterMark, alignment: 'center' },            //марка
-            { text: item.meterNum, alignment: 'center' },             //заводський номер
-            { text: item.prevValue, alignment: 'center' },            //попередні
+            { text: (index + 1).toString(), alignment: 'center' },    //номер   
+            { text: item.counteragent, alignment: 'left' },           //контрагент 
+            { text: item.addressName, alignment: 'left' },            //адреса  
+            { text: item.meterMark, alignment: 'center' },            //марка лічильника  
+            { text: item.meterNum, alignment: 'center' },             //заводський  
+            { text: item.prevValue, alignment: 'center' },            //попередні  
             { text: item.currValue, alignment: 'center', bold: true },//поточні
             { text: diff, alignment: 'center' },                      //різниця
             { text: '0.000', alignment: 'center' }                    //в т.ч. населення
         ]);
     });
 
-    // Структура PDF документа
     const docDefinition = {
-        pageOrientation: 'portrait', 
-        pageSize: 'A4',
-        pageMargins: [30, 40, 30, 40], 
-
+        pageOrientation: 'portrait', pageSize: 'A4', pageMargins: [30, 40, 30, 40], 
         content: [
             { text: `Додаток № 4 до договору ${contractName}`, alignment: 'right', margin: [0, 0, 0, 15] },
             { text: 'Звіт про об’єми використаної води', fontSize: 12, bold: true, alignment: 'center' },
             { text: `станом на ${currentDateStr}`, alignment: 'center', margin: [0, 0, 0, 20] },
-
             { text: counteragentName, alignment: 'center', bold: true, decoration: 'underline' },
             { text: '(назва організації)', alignment: 'center', fontSize: 9, color: '#555', margin: [0, 0, 0, 15] },
-
             {
                 style: 'tableStyle',
                 table: {
                     headerRows: 2,
-                    widths: ['2%', '20%', '25%', '8%', '10%', '9%', '9%', '8%', '9%'],
+                    widths: ['2%', '20%', '25%', '8%', '10%', '9%', '9%', '8%', '9%'], //розміри кожної колонки у таблиці
                     body: tableBody
                 }
             },
             {
                 text: '"Рахунок виставлений згідно звіту, зобов’язуємось оплатити протягом 3-х днів з дня його отримання."',
-                italics: true,
-                margin: [0, 30, 0, 0]
+                italics: true, margin: [0, 30, 0, 0]
             }
         ],
         styles: { tableStyle: { fontSize: 8 } },
@@ -510,69 +536,44 @@ function generatePdfClientSide(data) {
 
     const pdfDocGenerator = pdfMake.createPdf(docDefinition);
     pdfDocGenerator.getBlob((blob) => {
-        document.getElementById('overlay').style.display = 'none';
-        const blobUrl = URL.createObjectURL(blob);
-
         const idContract = data[0]?.idContract || 0; 
-
-        openPdfModal(blobUrl, blob, idContract); 
+        saveAndSignActDirectly(blob, idContract, data);
     });
 }
 
-function openPdfModal(pdfUrl, pdfBlob, idContract = 0) {
-    const modal = document.getElementById('pdf-preview-modal');
-    const iframe = document.getElementById('pdf-iframe');
-    const signBtn = document.getElementById('btn-sign-act');
+// ---------------------------------------------------------
+// Зберігає на сервер
+// ---------------------------------------------------------
+function saveAndSignActDirectly(pdfBlob, idContract = 0, metersData = []) {
+    const formData = new FormData();
+    formData.append('act_pdf', pdfBlob, 'act_readings.pdf');
+    formData.append('id_contract', idContract); 
+    formData.append('meters_data', JSON.stringify(metersData));
     
-    if (!modal || !iframe || !signBtn) return;
+    if (typeof setStatus === 'function') setStatus('Збереження акту на сервері...');
 
-    iframe.src = pdfUrl;
-    modal.style.display = 'flex';
-
-    signBtn.onclick = function() {
-        const originalText = signBtn.innerText;
-        signBtn.innerText = 'Збереження...';
-        signBtn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('act_pdf', pdfBlob, 'act_readings.pdf');
-        
-        formData.append('id_contract', idContract); 
-
-        fetch('/api/save_act_pdf.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(async response => {
-            const text = await response.text();
-            try {
-                return JSON.parse(text);
-            } catch (e) {
-                console.error("Сервер повернув не JSON:", text);
-                throw new Error("Помилка сервера. Деталі в консолі.");
-            }
-        })
-        .then(data => {
-            if (data.success && data.doc_id) {
-                if (typeof closePdfModal === 'function') closePdfModal();
-                
-                const signUrl = `/api/content/SigningDocs.php?id=${data.doc_id}&doctype=act`;
-                window.open(signUrl, 'sign_window_' + data.doc_id);
-                
-                if (window.refreshActiveContent) window.refreshActiveContent();
-            } else {
-                throw new Error(data.error || 'Сервер не повернув ID документа');
-            }
-        })
-        .catch(error => {
-            signBtn.innerText = originalText;
-            signBtn.disabled = false;
-            showAlert('Помилка: ' + error.message, 'error');
-        });
-    };
-}
-
-function closePdfModal() {
-    document.getElementById('pdf-preview-modal').style.display = 'none';
-    document.getElementById('pdf-iframe').src = '';
+    fetch('/api/save_act_pdf.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(async response => {
+        const text = await response.text();
+        return JSON.parse(text);
+    })
+    .then(data => {
+        if (data.success && data.doc_id) {
+            if (!window.generatedDocIds) window.generatedDocIds = [];
+            window.generatedDocIds.push(data.doc_id);
+            
+            //наступний договір
+            processNextContractInQueue();
+        } else {
+            throw new Error(data.error || 'Сервер не повернув ID документа');
+        }
+    })
+    .catch(error => {
+        const overlay = document.getElementById('overlay');
+        if (overlay) overlay.style.display = 'none';
+        alert('Помилка збереження: ' + error.message);
+    });
 }

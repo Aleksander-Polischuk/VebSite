@@ -1,4 +1,4 @@
-<?php
+    <?php
     header('Content-Type: application/json');
 
     // Функція відправки листа активації
@@ -94,25 +94,48 @@
         }
         
         // Генеруємо хеш пароля та токен
+        // Генеруємо хеш пароля та токен
         $passwd_hash = password_hash($password, PASSWORD_DEFAULT);
         $token = bin2hex(random_bytes(16));
         
-        // Вставляємо в USERS
-        $SQLExecInsert = "INSERT INTO USERS (PHONE, PASSWD_HASH, EMAIL, IS_ENT, ID_ENT_REGISTRATION, RECOVERY_TOKEN, IS_CONFIRMED) VALUES (?, ?, ?, ?, ?, ?, 0)";
-        $stmtInsert = mysqli_prepare($link, $SQLExecInsert);
-        mysqli_stmt_bind_param($stmtInsert, "sssiis", $phone, $passwd_hash, $email, $is_ent, $id_ent_registration, $token);
-        mysqli_stmt_execute($stmtInsert);
-
-        $id_users = mysqli_insert_id($link);
-
-        // Вставляємо в ACCESS
-            $SQLExecAccess = "INSERT INTO ACCESS (ID_USERS, ID_REF_COUNTERAGENT, ID_REF_ACCOUNT, ID_ORGANIZATIONS, ID_ENT_REGISTRATION) VALUES (?, ?, ?, ?, ?)";
-        $stmtAccess = mysqli_prepare($link, $SQLExecAccess);
-        mysqli_stmt_bind_param($stmtAccess, "iiiii", $id_users, $id_ref_counteragent, $id_ref_account, $IDOrganizations, $id_ent_registration);
-        mysqli_stmt_execute($stmtAccess);
+        // ПОЧАТОК ТРАНЗАКЦІЇ
+        mysqli_begin_transaction($link);
         
-        // Відправляємо лист
-        SendActivationMail($email, $token);   
+        try {
+            // 1. Вставляємо в USERS
+            $SQLExecInsert = "INSERT INTO USERS (PHONE, PASSWD_HASH, EMAIL, IS_ENT, ID_ENT_REGISTRATION, RECOVERY_TOKEN, IS_CONFIRMED) VALUES (?, ?, ?, ?, ?, ?, 0)";
+            $stmtInsert = mysqli_prepare($link, $SQLExecInsert);
+            mysqli_stmt_bind_param($stmtInsert, "sssiis", $phone, $passwd_hash, $email, $is_ent, $id_ent_registration, $token);
+            
+            if (!mysqli_stmt_execute($stmtInsert)) {
+                throw new Exception("Помилка створення користувача");
+            }
+            $id_users = mysqli_insert_id($link);
+
+            // 2. Вставляємо в ACCESS
+            $SQLExecAccess = "INSERT INTO ACCESS (ID_USERS, ID_REF_COUNTERAGENT, ID_REF_ACCOUNT, ID_ORGANIZATIONS, ID_ENT_REGISTRATION) VALUES (?, ?, ?, ?, ?)";
+            $stmtAccess = mysqli_prepare($link, $SQLExecAccess);
+            mysqli_stmt_bind_param($stmtAccess, "iiiii", $id_users, $id_ref_counteragent, $id_ref_account, $IDOrganizations, $id_ent_registration);
+            
+            if (!mysqli_stmt_execute($stmtAccess)) {
+                throw new Exception("Помилка надання доступу");
+            }
+            
+            // Якщо все успішно - фіксуємо в базі
+            mysqli_commit($link);
+            
+            // Відправляємо лист
+            SendActivationMail($email, $token);
+
+        } catch (Exception $e) {
+            mysqli_rollback($link);
+            echo json_encode([
+                'success' => false,
+                'code'    => 3,
+                'message' => 'Помилка реєстрації на сервері. Спробуйте пізніше.'
+            ]);
+            exit;
+        }  
     }
         
     // Одразу авторизуємо користувача в сесії

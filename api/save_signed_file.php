@@ -127,17 +127,33 @@ use setasign\Fpdi\PdfParser\StreamReader;
 // Для актів немає DOC_PDF_SIGN_ORG_INFO, тому беремо NULL як затичку
 if ($docType === 'act') {
     $sql = "
-        SELECT di.DOC_PDF, NULL as DOC_PDF_SIGN_ORG_INFO
+        SELECT di.DOC_PDF, 
+               NULL as DOC_PDF_SIGN_ORG_INFO
         FROM {$tableName} di
-        INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-        WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1
+            
+        INNER JOIN ACCESS acc 
+        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+           di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+           
+        WHERE di.ID = ? AND 
+              acc.ID_USERS = ? AND 
+              di.ID_ORGANIZATIONS = ? 
+        LIMIT 1
     ";
 } else {
     $sql = "
-        SELECT di.DOC_PDF, di.DOC_PDF_SIGN_ORG_INFO
+        SELECT di.DOC_PDF, 
+               di.DOC_PDF_SIGN_ORG_INFO
         FROM {$tableName} di
-        INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-        WHERE di.ID = ? AND acc.ID_USERS = ? AND di.ID_ORGANIZATIONS = ? LIMIT 1
+            
+        INNER JOIN ACCESS acc 
+        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+           di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+           
+        WHERE di.ID = ? AND 
+              acc.ID_USERS = ? AND 
+              di.ID_ORGANIZATIONS = ? 
+        LIMIT 1
     ";
 }
 
@@ -182,7 +198,7 @@ try {
             }
         }
         
-        // Підпис клієнта (контрагента) ставиться ЗАВЖДИ (і для рахунків, і для актів)
+        // Підпис контрагента ставиться для рахунків і актів
         $is_owner_document = false;
         addStamp($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
         addSignerInformation($pdf, $signData_Counteragent, $y, $w, $h, $is_owner_document);
@@ -203,37 +219,68 @@ try {
 // Отримуємо вміст підписаного файлу
 $fileData = file_get_contents($_FILES['SignedFile']['tmp_name']);
 
-// Оновлюємо потрібну таблицю (Акти або Рахунки)
-$sql = "
-    UPDATE {$tableName} di
-    INNER JOIN ACCESS acc ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
-    SET di.DOC_PDF_SIGN_COUNTERAGENT = ?,
-        di.DOC_PDF = ?,
-        di.ID_ENUM_SIGN_STATUS = 2
-    WHERE di.ID = ?
-      AND acc.ID_USERS = ? 
-      AND di.ID_ORGANIZATIONS = ?
-";
+mysqli_begin_transaction($link);
 
-$stmt = mysqli_prepare($link, $sql);
+try {
+    // Оновлюємо таблицю Акти або Рахунки
+    $sql = "
+        UPDATE {$tableName} di
+            
+        INNER JOIN ACCESS acc 
+        ON di.ID_REF_COUNTERAGENT = acc.ID_REF_COUNTERAGENT AND 
+           di.ID_ORGANIZATIONS = acc.ID_ORGANIZATIONS
+           
+        SET di.DOC_PDF_SIGN_COUNTERAGENT = ?,
+            di.DOC_PDF = ?,
+            di.ID_ENUM_SIGN_STATUS = 2
+            
+        WHERE di.ID = ?
+          AND acc.ID_USERS = ? 
+          AND di.ID_ORGANIZATIONS = ?
+    ";
 
-$null = NULL;
-mysqli_stmt_bind_param($stmt, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
-mysqli_stmt_send_long_data($stmt, 0, $fileData);
-mysqli_stmt_send_long_data($stmt, 1, $doc_pdf);
+    $stmt = mysqli_prepare($link, $sql);
+    if (!$stmt) throw new Exception('Помилка підготовки запиту оновлення документа: ' . mysqli_error($link));
 
-if (mysqli_stmt_execute($stmt)) {
+    $null = NULL;
+    mysqli_stmt_bind_param($stmt, "bbiii", $null, $null, $documentId, $userId, $IDOrganizations);
+    mysqli_stmt_send_long_data($stmt, 0, $fileData);
+    mysqli_stmt_send_long_data($stmt, 1, $doc_pdf);
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception('Виникла помилка при збереженні підпису в базі даних: ' . mysqli_stmt_error($stmt));
+    }
+    mysqli_stmt_close($stmt);
+
+    if ($docType === 'act') {
+        $sql_sync = "UPDATE INF_NEW_COUNTER_READINGS SET ID_ENUM_SIGN_STATUS = 2 WHERE ID_DOC_COUNTER_READINGS = ?";
+        $stmt_sync = mysqli_prepare($link, $sql_sync);
+        
+        if (!$stmt_sync) throw new Exception('Помилка підготовки запиту синхронізації лічильників: ' . mysqli_error($link));
+        
+        mysqli_stmt_bind_param($stmt_sync, "i", $documentId);
+        
+        if (!mysqli_stmt_execute($stmt_sync)) {
+            throw new Exception('Виникла помилка при оновленні статусу лічильників: ' . mysqli_stmt_error($stmt_sync));
+        }
+        mysqli_stmt_close($stmt_sync);
+    }
+    
+    mysqli_commit($link);
+
     echo json_encode([
         'status' => 'success', 
         'message' => 'Документ успішно підписано, електронну печатку накладено!'
     ]);
-} else {
+
+} catch (Exception $e) {
+    mysqli_rollback($link);
+    
     echo json_encode([
         'status' => 'error', 
-        'message' => 'Виникла помилка при збереженні підпису в базі даних: ' . mysqli_error($link)
+        'message' => $e->getMessage()
     ]);
 }
 
-mysqli_stmt_close($stmt);
 mysqli_close($link);
 ?>

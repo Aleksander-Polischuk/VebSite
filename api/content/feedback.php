@@ -15,9 +15,10 @@ if (!$userId) {
 }
 ?>
 
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<link href="/css/personal_acc.css" rel="stylesheet" type="text/css"/>
-<link href="/css/feedback.css" rel="stylesheet" type="text/css"/>
+<link href="/css/feedback.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/feedback.css'); ?>" rel="stylesheet" type="text/css"/>
+<link href="/css/personal_acc.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/personal_acc.css'); ?>" rel="stylesheet" type="text/css"/>
+<link href="/css/quill.snow.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/css/quill.snow.css'); ?>" rel="stylesheet" type="text/css"/>
+
 
 <div class="feedback-page-wrapper">
     <div class="profile-section">
